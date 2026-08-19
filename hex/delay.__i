@@ -1,0 +1,1 @@
+"Library\Sources\delay.c" OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\delay.lst) OBJECT(.\hex\delay.obj)

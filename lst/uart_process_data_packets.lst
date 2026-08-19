@@ -1,0 +1,258 @@
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART_PROCESS_DATA_PACKETS
+OBJECT MODULE PLACED IN .\hex\uart_process_data_packets.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\uart_process_data_packets.c OMF2 OPTIMIZE(9,SIZE) BROWSE INCDI
+                    -R(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\uart_process_data_packets.lst) OBJECT(.\hex\uart_process_
+                    -data_packets.obj)
+
+line level    source
+
+   1          #include "user_config.h"
+   2          #include "uart_process_data_packets.h"
+   3          #include "Library\includes\uart.h"
+   4          
+   5          volatile u8 buff[20];
+   6          
+   7          static volatile u8 cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
+   8          static volatile u8 cur_recv_cmd_index = 0;
+   9          static volatile u8 dest_recv_cmd_len = 0; // 记录当前要接收的数据指令长度
+  10          
+  11          // volatile
+  12          
+  13          // 定义存放 仪表数据 的变量
+  14          instrument_info_t xdata instrument_info;
+  15          
+  16          // 处理串口接收到的数据包
+  17          void uart_process_data_packets(void)
+  18          {
+  19   1          volatile u8 recv_data = 0;
+  20   1          volatile u8 i; // 循环计数值
+  21   1          volatile u8 check_sum;
+  22   1      
+  23   1          if (uart1_rxbuffer_get_count() == 0) {
+  24   2              return;
+  25   2          }
+  26   1      
+  27   1          recv_data = uart1_rxbuffer_get();
+  28   1      
+  29   1          if (CUR_RECV_CMD_STATUS_NONE == cur_recv_cmd_status) {
+  30   2              if (FORMAT_HEAD_FLAG == recv_data) {
+  31   3                  // 如果收到的是格式头
+  32   3                  buff[0] = recv_data;
+  33   3      
+  34   3                  // 初始化接下来要使用的变量
+  35   3                  cur_recv_cmd_index = 1;
+  36   3      
+  37   3                  cur_recv_cmd_status = CUR_RECV_CMD_STATUS_FORMATHEAD;
+  38   3              }
+  39   2          } else if (CUR_RECV_CMD_STATUS_FORMATHEAD == cur_recv_cmd_status) {
+  40   2              buff[cur_recv_cmd_index++] = recv_data;
+  41   2              if (recv_data > 20) {
+  42   3                  cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
+  43   3                  Uart1_PutChar(0x44);
+  44   3              } else {
+  45   3                  dest_recv_cmd_len = recv_data;
+  46   3                  cur_recv_cmd_status = CUR_RECV_CMD_STATUS_LENGTH;
+  47   3              }
+  48   2          } else if (CUR_RECV_CMD_STATUS_LENGTH == cur_recv_cmd_status) {
+  49   2              buff[cur_recv_cmd_index++] = recv_data;
+  50   2      
+  51   2              if (cur_recv_cmd_index >= dest_recv_cmd_len) {
+  52   3                  // 如果接收到的数据包已经接收完毕
+  53   3                  // cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 2   
+
+  54   3      
+  55   3                  // 处理数据包
+  56   3                  // printf("recv data packet\n");
+  57   3      
+  58   3                  // 计算校验和
+  59   3                  check_sum = 0;
+  60   3                  for (i = 0; i < dest_recv_cmd_len - 1; i++) {
+  61   4                      check_sum += buff[i];
+  62   4                  }
+  63   3      
+  64   3                  if (check_sum != buff[dest_recv_cmd_len - 1]) {
+  65   4                      // 校验和错误
+  66   4                      // printf("\r\n ===================================== \r\n");
+  67   4                      // printf("check sum error\n");
+  68   4      
+  69   4                      // for (i = 0; i < dest_recv_cmd_len; i++)
+  70   4                      // {
+  71   4                      //     printf("%bu ", buff[i]);
+  72   4                      // }
+  73   4      
+  74   4                      // printf("\r\n ===================================== \r\n");
+  75   4      
+  76   4                      cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE; // 重新接收数据
+  77   4                  } else {
+  78   4                      // 校验和正确
+  79   4                      // printf("check sum ok\n");
+  80   4      
+  81   4                      cur_recv_cmd_status = CUR_RECV_CMD_STATUS_END;
+  82   4                      goto Deal_Main_Data_Pro;
+  83   4                  }
+  84   3              }
+  85   2          } else if (CUR_RECV_CMD_STATUS_END == cur_recv_cmd_status) {
+  86   2              // 接收完数据
+  87   2          Deal_Main_Data_Pro:
+  88   2              switch (buff[2]) {
+  89   3              case SEND_GEAR: {
+  90   4                  instrument_info.gear_status = buff[3];
+  91   4      
+  92   4                  // if(instrument_info.gear_status != 0xFF){
+  93   4                  //     Uart0_PutChar(instrument_info.gear_status);
+  94   4                  // }
+  95   4      
+  96   4                  // printf("gear status: %bu\n", instrument_info.gear_status);
+  97   4              } break;
+  98   3      
+  99   3              case SEND_BATTERY: {
+ 100   4                  instrument_info.battery_percent = buff[3];
+ 101   4      
+ 102   4                  // printf("battery percent: %bu\n", instrument_info.battery_percent);
+ 103   4              } break;
+ 104   3      
+ 105   3              case SEND_BRAKE: {
+ 106   4                  instrument_info.brake_status = buff[3];
+ 107   4      
+ 108   4                  // printf("brake status: %bu\n", instrument_info.brake_status);
+ 109   4              } break;
+ 110   3      
+ 111   3              case SEND_LEFT_TURN: {
+ 112   4                  instrument_info.left_turn_status = buff[3];
+ 113   4      
+ 114   4                  // printf("left turn status: %bu\n", instrument_info.left_turn_status);
+ 115   4              } break;
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 3   
+
+ 116   3      
+ 117   3              case SEND_RIGHT_TURN: {
+ 118   4                  instrument_info.right_turn_status = buff[3];
+ 119   4      
+ 120   4                  // printf("right turn status: %bu\n", instrument_info.right_turn_status);
+ 121   4              } break;
+ 122   3      
+ 123   3              case SEND_HIGH_BEAM: {
+ 124   4                  instrument_info.high_beam_status = buff[3];
+ 125   4      
+ 126   4                  // printf("high beam status: %bu\n", instrument_info.high_beam_status);
+ 127   4              } break;
+ 128   3      
+ 129   3              case SEND_ENGINE_SPEED: {
+ 130   4                  instrument_info.engine_speed = ((u16)buff[3] << 8) | buff[4];
+ 131   4      
+ 132   4                  // Uart0_PutChar(buff[3]);
+ 133   4                  // Uart0_PutChar(buff[4]);
+ 134   4      
+ 135   4                  // printf("engine speed: %u\n", instrument_info.engine_speed);
+ 136   4              } break;
+ 137   3      
+ 138   3              case SEND_SPEED: {
+ 139   4                  instrument_info.speed_with_km = buff[3];
+ 140   4      
+ 141   4                  // printf("speed with km: %bu\n", instrument_info.speed_with_km);
+ 142   4              } break;
+ 143   3      
+ 144   3              case SEND_FUEL: {
+ 145   4                  instrument_info.oil_percent = buff[3];
+ 146   4                  // Uart0_PutChar(buff[3]);
+ 147   4                  // printf("oil percent: %bu\n", instrument_info.oil_percent);
+ 148   4              } break;
+ 149   3      
+ 150   3              case SEND_WATER_TEMP: {
+ 151   4      
+ 152   4              } break;
+ 153   3      
+ 154   3              case SEND_TOTAL_MILEAGE_TENTH_OF_KM: {
+ 155   4                  instrument_info.total_mileage_with_km =
+ 156   4                      ((u32)buff[3] << 24) | ((u32)buff[4] << 16) |
+ 157   4                      ((u32)buff[5] << 8) | buff[6];
+ 158   4                  instrument_info.total_mileage_with_mile =
+ 159   4                      instrument_info.total_mileage_with_km * 0.621;
+ 160   4              } break;
+ 161   3      
+ 162   3              case SEND_TOTAL_MILEAGE_TENTH_OF_MILE: {
+ 163   4                  // instrument_info.total_mileage_with_mile = ((u32)buff[3]<<24) | ((u32)buff[4]<<16) | ((u32)b
+             -uff[5]<<8) | buff[6];
+ 164   4              } break;
+ 165   3      
+ 166   3                  // case SEND_TIME:
+ 167   3                  // {
+ 168   3                  //     instrument_info.year = ((u16)buff[3] << 8) | buff[4];
+ 169   3                  //     instrument_info.month = buff[5];
+ 170   3                  //     instrument_info.day = buff[6];
+ 171   3                  //     instrument_info.hour = buff[7];
+ 172   3                  //     instrument_info.minute = buff[8];
+ 173   3                  //     instrument_info.second = buff[9];
+ 174   3                  //     hour_var = instrument_info.hour;
+ 175   3                  //     min_var = instrument_info.minute;
+ 176   3                  //     sec_var = instrument_info.second;
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 4   
+
+ 177   3                  // }
+ 178   3                  // break;
+ 179   3      
+ 180   3                  // case SEND_HMS:
+ 181   3                  // {
+ 182   3                  //     instrument_info.hour = buff[3];
+ 183   3                  //     instrument_info.minute = buff[4];
+ 184   3                  //     instrument_info.second = buff[5];
+ 185   3                  //     hour_var = instrument_info.hour;
+ 186   3                  //     min_var = instrument_info.minute;
+ 187   3                  //     sec_var = instrument_info.second;
+ 188   3                  // }
+ 189   3                  // break;
+ 190   3      
+ 191   3              case SEND_VOLTAGE_OF_BATTERY: {
+ 192   4                  instrument_info.battery_voltage = ((u16)buff[3] << 8) | buff[4];
+ 193   4      
+ 194   4                  // printf("battery voltage: %u\n", instrument_info.battery_voltage);
+ 195   4              } break;
+ 196   3      
+ 197   3              case SEND_SUBTOTAL_MILEAGE_TENTH_OF_KM: {
+ 198   4                  instrument_info.subtotal_mileage_with_km =
+ 199   4                      ((u32)buff[3] << 24) | ((u32)buff[4] << 16) |
+ 200   4                      ((u32)buff[5] << 8) | buff[6];
+ 201   4                  instrument_info.subtotal_mileage_with_mile =
+ 202   4                      instrument_info.subtotal_mileage_with_km * 0.621;
+ 203   4              } break;
+ 204   3      
+ 205   3              case SEND_SUBTOTAL_MILEAGE_TENTH_OF_MILE: {
+ 206   4                  // instrument_info.subtotal_mileage_with_mile = ((u32)buff[3]<<24) | ((u32)buff[4]<<16) | ((u3
+             -2)buff[5]<<8) | buff[6];
+ 207   4              } break;
+ 208   3      
+ 209   3              case SEND_SPEED_WITH_MILE: {
+ 210   4                  instrument_info.speed_with_mile = buff[3];
+ 211   4                  // Uart0_PutChar(buff[3]);
+ 212   4                  // printf("speed with mile: %bu\n", instrument_info.speed_with_mile);
+ 213   4              } break;
+ 214   3      
+ 215   3              default: {
+ 216   4              } break;
+ 217   3              }
+ 218   2      
+ 219   2              cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE; // 重新接收数据
+ 220   2          }
+ 221   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    495    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     36    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     23       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

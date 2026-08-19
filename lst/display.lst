@@ -1,0 +1,13 @@
+C51 COMPILER V9.51   DISPLAY                                                               05/30/2019 11:13:45 PAGE 1   
+
+
+C51 COMPILER V9.51, COMPILATION OF MODULE DISPLAY
+OBJECT MODULE PLACED IN .\hex\display.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE display.c OMF2 OPTIMIZE(9,SIZE) BROWSE DEBUG PRINT(.\lst\display.lst) TABS(
+                    -2) OBJECT(.\hex\display.obj)
+
+line level    source
+
+*** ERROR C318 OF display.c: can't open file 'display.c'
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

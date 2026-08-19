@@ -1,0 +1,1 @@
+"TS_Lib\Sources\ts_api.c" OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\ts_api.lst) OBJECT(.\hex\ts_api.obj)

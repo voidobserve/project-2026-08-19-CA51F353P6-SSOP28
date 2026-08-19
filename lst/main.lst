@@ -1,0 +1,3636 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\hex\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.
+                    -\user_config) DEBUG PRINT(.\lst\main.lst) OBJECT(.\hex\main.obj)
+
+line level    source
+
+   1          
+   2          // =====================================================================
+   3          //                                                      SSOP28
+   4          //                                                   -------------
+   5          //                                            VDD  -|01         28|-  GND
+   6          //                                            P20  -|02         27|-  P30/Uart0_ÉÕÂ¼TX
+   7          //     ÁéÃô¶ÈµçÈÝ       tk_cap          TK_CAP/P21  -|03         26|-  P31/Uart0_ÉÕÂ¼RX
+   8          //                                   ADC0/TK0/P10  -|04         25|-  P32
+   9          //            TX            Uart1_TX/ADC1/TK1/P11  -|05         24|-  P33
+  10          //            RX            Uart1_RX/ADC2/TK2/P12  -|06         23|-  P00/TK19
+  11          //                                   ADC3/TK3/P13  -|07         22|-  P01/TK18
+  12          //       ABS  ABS_Chk(µÍÓÐÐ§)         ADC4/TK4/P14  -|08         21|-  P02/TK17         PD_Chk(µÍÓÐÐ§)·¢¶¯
+             -»ú
+  13          //       ÎíµÆ  WD_Chk(¸ßÓÐÐ§)    PWM0/ADC5/TK5/P15  -|09         20|-  P03/TK16
+  14          //       Ð¡µÆ  XD_Chk(µÍÓÐÐ§)    PWM1/ADC6/TK6/P16  -|10         19|-  P04/TK15
+  15          //                                   ADC7/TK7/P17  -|11         18|-  P05/TK14         AIP3368_DI_L
+  16          //                                        TK8/P37  -|12         17|-  P06/TK13/PWM5    AIP3368_DCK
+  17          //                                        TK9/P36  -|13         16|-  P07/TK12/PWM4    AIP3368_LAT
+  18          //                                  PWM2/TK10/P35  -|14         15|-  P34/TK11/PWM3    AIP3368_DI_R
+  19          //                                                   -------------
+  20          
+  21          // #ifndef _MAIN_C_
+  22          // #define _MAIN_C_
+  23          /*********************************************************************************************************
+             -************/
+  24          #include "ca51f_config.h"
+  25          #include "includes\ca51f3sfr.h"
+  26          #include "includes\ca51f3xsfr.h"
+  27          #include "includes\gpiodef_f3.h"
+  28          
+  29          #include "Library\includes\delay.h"
+  30          #include "Library\includes\flash.h"
+  31          #include "Library\includes\uart.h"
+  32          #include "Library\includes\system_clock.h"
+  33          #include "Library\Includes\rtc.h"
+  34          #include "Library\Includes\pwm.h"
+  35          #include "includes\system.h"
+  36          #include "Library\includes\adc.h"
+  37          #include "Library\includes\wdt.h"
+  38          /*********************************************************************************************************
+             -************/
+  39          #include "TS_Lib\Includes\ts_configuration.h"
+  40          #include "TS_Lib\Includes\ts_def.h"
+  41          #include "TS_Lib\Includes\ts_api.h"
+  42          #include "TS_Lib\Includes\ts_service.h"
+  43          /*********************************************************************************************************
+             -************/
+  44          #include "ticks_module.h"
+  45          #include "aip3368h_module.h"
+  46          #include "aip3368h_app.h"
+  47          #include "uart_process_data_packets.h"
+  48          /********************************************************************************************************
+  49          ËµÃ÷£º
+  50          ----------------------------------------------------------------------------------------------------------
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 2   
+
+             ---
+  51          1.ts_configuration.hÊÇ´¥ÃþµÄÅäÖÃÎÄ¼þ£¬¿ÉÔÚÅäÖÃÎÄ¼þÖÐÉèÖÃ´¥ÃþÍ¨µÀ¡¢ÁéÃô¶ÈµÈ¡£Ïê¼ûts_configuration.hÖÐµÄËµÃ÷
+             -¡£
+  52          ----------------------------------------------------------------------------------------------------------
+             ---
+  53          2.Èç¹ûÐèÒªÊ¹ÓÃUARTÀ´µ÷ÊÔ£¬¿ÉÔÚca51f_config.hÖÐ´ò¿ªºê¶¨ÒåUART0_EN
+  54          ----------------------------------------------------------------------------------------------------------
+             ---
+  55          3.´¥Ãþ¿â¶ÔÍâµÄÊý¾Ý½Ó¿ÚÎªKeysFlagSN£¬ÓÃ»§¿É¸ù¾ÝKeysFlagSNµÄÖµÀ´ÅÐ¶Ï´¥Ãþ¼üÊÇ·ñ°´ÏÂ£¨Èç¹û´¥Ãþ¼ü°´ÏÂ£¬KeysFlag
+             -SN
+  56          µÄ¶ÔÓ¦Î»Ò»Ö±Îª1£¬´¥Ãþ¼üËÉ¿ª£¬¶ÔÓ¦Î»±äÎª0£©£¬TS_KeyÊÇ¸ù¾ÝKeysFlagSNµÄÖµÉú³ÉµÄ°´¼üÏûÏ¢£¬ÓÃ»§Èç²»Ê¹ÓÃ¿ÉºöÂÔ¡£
+  57          ----------------------------------------------------------------------------------------------------------
+             ---
+  58          4.Ê¹ÄÜÁË´¥ÃþÊ¡µçÄ£Ê½ºó£¬ÔÚÎÞ°´¼üÊ±£¬ÔÚµ¹¼ÆÊ±Ê±¼ä½áÊøºó»á½øÈëÊ¡µçÄ£Ê½£¬½øÈëÊ¡µçÄ£Ê½Ç°»á¹Ø±Õ´¥ÃþÖÐ¶Ï£¬ÔÚ´¥Ãþ
+             -Ê¡
+  59          µçÄ£Ê½ÏÂ£¬CPU»á½øÈëSTOPÄ£Ê½£¬ÔÚ±»»½ÐÑºó£¬³ÌÐòÔÚÊ¡µçº¯Êý£¨TS_EnterSleepMode£©µÄÑ­»·ÄÚÔËÐÐ£¨×¢Òâ£¬´¥ÃþÊ¡µçÄ£
+             -Ê½
+  60          ³ÌÐò²»»áÔÚÖ÷Ñ­»·ÄÚÔËÐÐ£©£¬ÔÚ´¥ÃþÊ¡µçÄ£Ê½ÏÂÈç¹û»¹ÒªÏìÓ¦ÆäËûÖÐ¶Ï£¬ÓÃ»§ÐèÔÚ½øÈë´¥ÃþÊ¡µçÄ£Ê½Ç°×ÔÐÐ¿ªÆôÆäËûÖÐ¶Ï
+             -£¬
+  61          Èç¹ûÐèÒªÍË³öÊ¡µçÄ£Ê½£¬ÓÃ»§Ö»ÐèÒªÔÚÊ¡µçº¯ÊýÑ­»·ÄÚ¼ÓÈëÌõ¼þÅÐ¶Ï£¬Ìø³öÑ­»·¼´¿É¡£
+  62          
+  63          ±äÁ¿TS_SleepEnÊÇ¿ØÖÆ´¥ÃþÊ¡µçÄ£Ê½µÄ¿ª¹Ø£¬Èç¹ûÏ£Íû³ÌÐòÔÚÄ³Ð©Ìõ¼þÏÂ²»½øÈëÊ¡µçÄ£Ê½£¬Ö»ÐèÔÚ´ËÌõ¼þÏÂÉèÖÃTS_Sleep
+             -En = 0£»
+  64          ----------------------------------------------------------------------------------------------------------
+             ---
+  65          5.´¥ÃþÍâ¹ÒµçÈÝ(¼´TK_CAPÒý½ÅÁ¬½ÓµçÈÝ)·¶Î§£º10nF~47nF,½¨ÒéÖµ£º22nF£¨¼´223£©
+  66          ----------------------------------------------------------------------------------------------------------
+             ---
+  67          6.´¥ÃþÒý½Å´®Áªµç×è·¶Î§£º0~5K£¬½¨ÒéÖµ£º1KÅ·Ä·£¬Èç¹ûÓÐ¿¹¶Ô½²»úµÈµç´Å¸ÉÈÅÒªÇó£¬ ´Ëµç×èÖÁÉÙ3KÒÔÉÏ¡£
+  68          ********************************************************************************************************/
+  69          
+  70          /*
+  71          ËµÃ÷£ºÔÚ±¾Àý³ÌÖÐ£¬Mcu_FeedDog() º¯ÊýÐèÔÚÖ÷Ñ­»·ÖÐµ÷ÓÃ£»ËùÉè¶¨µÄ (Feed_Wdt_Flag == 0xA5) ÕâÒ»Ìõ¼þÇëÎðÈ¡Ïû»òÐ
+             -Þ¸Ä¡£
+  72          */
+  73          
+  74          /******************************************************************************************************/
+  75          //************************************************************************
+  76          #define com_rx P11
+  77          #define com_tx P12
+  78          
+  79          // #define              com_sun_chk             P10
+  80          // #define              com_jg_chk              P13
+  81          #define com_abs_chk P14
+  82          #define com_wd_chk  P15
+  83          #define com_xd_chk  P16
+  84          #define com_pd_chk  P02
+  85          
+  86          #define com_tk1 P35
+  87          
+  88          // #define com_test P32
+  89          
+  90          //------------------------
+  91          idata unsigned char shake_cnt = 0;
+  92          // idata unsigned char rpm_var = 0;
+  93          // idata unsigned int rpm_tmp = 0;
+  94          // idata unsigned char show_rpm_now = 0;
+  95          // idata unsigned char deb_tmp = 0;
+  96          idata unsigned char gear_num = 0;
+  97          
+  98          idata unsigned char show_gas_var = 0;
+  99          idata unsigned char show_gas_tmp = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 3   
+
+ 100          idata unsigned char show_gas_cnt = 0;
+ 101          idata unsigned char battery_tmp = 0;
+ 102          idata unsigned char speed_tmp = 0;
+ 103          idata unsigned char show_speed_var = 0;
+ 104          idata unsigned char show_tmp = 0;
+ 105          // idata unsigned char speed_show = 0;
+ 106          idata unsigned char kmh_tmp = 0;
+ 107          idata unsigned char mph_tmp = 0;
+ 108          idata unsigned long km_mile_tmp = 0;
+ 109          idata unsigned char u8_tmp = 0;
+ 110          // idata unsigned char powup_cnt = 0;
+ 111          // idata unsigned char powup2_stp = 0;
+ 112          
+ 113          idata unsigned char chg_cnt = 0;
+ 114          idata unsigned char chg_deb = 0;
+ 115          idata unsigned char chg_shake_cnt = 0;
+ 116          
+ 117          idata unsigned char hour_var = 0;
+ 118          idata unsigned char min_var = 0;
+ 119          idata unsigned char sec_var = 0;
+ 120          // idata unsigned char x1sec_cnt = 0;
+ 121          
+ 122          // idata unsigned char u0_recv_data = 0;
+ 123          // idata unsigned char u0_cmd_status = 0;
+ 124          // idata unsigned char uart0_recv_cmd_index = 0;
+ 125          // idata unsigned char uart0_recv_len = 0;
+ 126          idata unsigned char ram_a = 0;
+ 127          idata unsigned char ram_b = 0;
+ 128          idata unsigned char ram_c = 0;
+ 129          idata unsigned char ram_d = 0;
+ 130          // idata unsigned char last_level = 0;
+ 131          // idata unsigned char volpow_var = 0;
+ 132          // idata unsigned char volpow_base = 0;
+ 133          // idata unsigned int base_energy = 0;
+ 134          // idata unsigned int ten_percent = 0;
+ 135          
+ 136          // idata unsigned int volpow_tmp = 0;
+ 137          // idata unsigned char phone_len = 0;
+ 138          // idata unsigned char phone_len_tmp = 0;
+ 139          
+ 140          idata unsigned char send_cmd = 0;
+ 141          
+ 142          idata unsigned int pwm_tmp = 0;
+ 143          idata unsigned int pwm_var = 0;
+ 144          idata unsigned int u16_tmp = 0;
+ 145          
+ 146          idata unsigned char tmp_a = 0;
+ 147          idata unsigned char tmp_b = 0;
+ 148          idata unsigned char tmp_c = 0;
+ 149          idata unsigned char key_tmp = 0;
+ 150          idata unsigned char key_buf = 0;
+ 151          idata unsigned char key_flag = 0;
+ 152          idata unsigned char key_deb = 0;
+ 153          idata unsigned char key_val1 = 0;
+ 154          idata unsigned char key_val2 = 0;
+ 155          idata unsigned char longpress_cnt = 0;
+ 156          idata unsigned char long_deb = 0;
+ 157          idata unsigned char shake_deb = 0;
+ 158          idata unsigned char chg_stp = 0;
+ 159          idata unsigned char enter_chg_cnt = 0;
+ 160          
+ 161          xdata unsigned char ad_cnt = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 4   
+
+ 162          xdata unsigned char ad_data_tmp = 0;
+ 163          xdata unsigned char ad_tmp = 0;
+ 164          xdata unsigned int ad_sum = 0;
+ 165          
+ 166          unsigned char act_cnt = 0;
+ 167          unsigned char act_tmp = 0;
+ 168          unsigned char powup_stp = 0;
+ 169          
+ 170          volatile u8 uart0_buff[20];
+ 171          
+ 172          unsigned char i;
+ 173          idata unsigned char UserDataBuff[10];
+ 174          idata unsigned char BuffTemp[13];
+ 175          // idata unsigned char Phone_buff[15];
+ 176          
+ 177          // idata unsigned char Ring_buff[15];
+ 178          // idata unsigned char Call_buff[15];
+ 179          
+ 180          //------------------------
+ 181          bit powup_en = 0;
+ 182          bit deal_showdat_en = 0;
+ 183          bit chg_init_en = 0;
+ 184          bit shake_show_en = 0;
+ 185          bit chg_shake_show_en = 0;
+ 186          bit keyled_en = 0;
+ 187          bit felh_en = 0;
+ 188          bit gear_en = 0;
+ 189          bit chk_ad_en = 0;
+ 190          bit fog_en = 0;
+ 191          bit light_en = 0;
+ 192          bit far_light_en = 0;
+ 193          bit top_en = 0;
+ 194          bit x1000r_min_en = 0;
+ 195          bit r_en = 0;
+ 196          bit frame_speed_en = 0;
+ 197          bit fix_en = 0;
+ 198          bit warm_water_temperature_en = 0;
+ 199          bit warm_oil_temperature_en = 0;
+ 200          bit warm_battery_en = 0;
+ 201          bit warm_engine_en = 0;
+ 202          bit brake_en = 0;
+ 203          bit phone_en = 0;
+ 204          bit bt_en = 0;
+ 205          bit mp3_en = 0;
+ 206          bit chg_en = 0;
+ 207          bit chg_time_en = 0;
+ 208          bit chg_hour_en = 0;
+ 209          bit chg_show_en = 0;
+ 210          bit shake_en = 0;
+ 211          bit km_en = 0;
+ 212          bit odo_en = 0;
+ 213          bit send_en = 0;
+ 214          bit save_en = 0;
+ 215          bit init_en = 0;
+ 216          bit slow_en = 0;
+ 217          
+ 218          bit fade_en = 0;
+ 219          bit fade_sta_en = 0;
+ 220          
+ 221          bit key_deb_en = 0;
+ 222          bit longpress_en = 0;
+ 223          bit jg_en = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 5   
+
+ 224          bit wd_en = 0;
+ 225          bit xd_en = 0;
+ 226          bit pd_en = 0;
+ 227          bit fe_en = 0;
+ 228          
+ 229          /******************************************************************************************************/
+ 230          
+ 231          #define PWM3DIV_V                                                              \
+ 232              (FOSC /                                                                    \
+ 233               12000) //µ±Ç°Ê¾ÀýÑ¡ÓÃÏµÍ³Ê±ÖÓ×÷ÎªÊ±ÖÓÔ´¡£ÈôPWMÊ±ÖÓ²ÉÓÃÆäËûÆµÂÊµÄÊ±ÖÓÔ´£¬ÔòÐè¸ù¾ÝÑ¡ÔñµÄÊ±ÖÓÔ´£¬µ÷Õû²ÎÊ
+             -ý¡£
+ 234          #define PWM3DUT_V                                                              \
+ 235              (PWM3DIV_V /                                                               \
+ 236               2) //±¾Ê¾ÀýÖÐÕ¼¿Õ±ÈÎª50%£¬Êµ¼ÊÓ¦ÓÃÊ±£¬Çë¸ù¾Ý¾ßÌå²úÆ·ÐèÇó½øÐÐµ÷Õû¡£
+ 237          
+ 238          #define PWM_100_VAL 1
+ 239          #define PWM_90_VAL  184
+ 240          #define PWM_80_VAL  369
+ 241          #define PWM_70_VAL  553
+ 242          #define PWM_60_VAL  738
+ 243          #define PWM_50_VAL  922
+ 244          #define PWM_40_VAL  1107
+ 245          #define PWM_30_VAL  1291
+ 246          #define PWM_20_VAL  1474
+ 247          #define PWM_0_VAL   1845
+ 248          
+ 249          #define SEG_A (1 << 0)
+ 250          #define SEG_B (1 << 1)
+ 251          #define SEG_C (1 << 2)
+ 252          #define SEG_D (1 << 3)
+ 253          #define SEG_E (1 << 4)
+ 254          #define SEG_F (1 << 5)
+ 255          #define SEG_G (1 << 6)
+ 256          
+ 257          #define SHOW_0 (SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F)
+ 258          #define SHOW_1 (SEG_B | SEG_C)
+ 259          #define SHOW_2 (SEG_A | SEG_B | SEG_D | SEG_E | SEG_G)
+ 260          #define SHOW_3 (SEG_A | SEG_B | SEG_C | SEG_D | SEG_G)
+ 261          #define SHOW_4 (SEG_B | SEG_C | SEG_F | SEG_G)
+ 262          #define SHOW_5 (SEG_A | SEG_C | SEG_D | SEG_F | SEG_G)
+ 263          #define SHOW_6 (SEG_A | SEG_C | SEG_D | SEG_E | SEG_F | SEG_G)
+ 264          #define SHOW_7 (SEG_A | SEG_B | SEG_C)
+ 265          #define SHOW_8 (SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F | SEG_G)
+ 266          #define SHOW_9 (SEG_A | SEG_B | SEG_C | SEG_D | SEG_F | SEG_G)
+ 267          #define SHOW_H (SEG_G)
+ 268          
+ 269          const unsigned char SHOW_NUM[11] = {SHOW_0, SHOW_1, SHOW_2, SHOW_3,
+ 270                                              SHOW_4, SHOW_5, SHOW_6, SHOW_7,
+ 271                                              SHOW_8, SHOW_9, SHOW_H};
+ 272          const unsigned char Chg_Tab[5] = {SHOW_1, SHOW_2, SHOW_4, SHOW_4, SHOW_2};
+ 273          
+ 274          #define CHG_EXIT_TIME_VAL 50
+ 275          
+ 276          #define SET_TIMIE_TO_MAIN 0x8E
+ 277          
+ 278          // #define              VOLPOW_LV0_VAL          0x02
+ 279          // #define              VOLPOW_LV1_VAL          0x0B
+ 280          // #define              VOLPOW_LV2_VAL          0x14
+ 281          // #define              VOLPOW_LV3_VAL          0x1D
+ 282          // #define              VOLPOW_LV4_VAL          0x27
+ 283          // #define              VOLPOW_LV5_VAL          0x35
+ 284          // #define              VOLPOW_LV6_VAL          0x4E
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 6   
+
+ 285          // #define              VOLPOW_LV7_VAL          0x61
+ 286          // #define              VOLPOW_LV8_VAL          0x75
+ 287          // #define              VOLPOW_LV9_VAL          0x7D
+ 288          // #define              VOLPOW_LV10_VAL         0x88
+ 289          
+ 290          #define VOLPOW_LV0_VAL  500
+ 291          #define VOLPOW_LV1_VAL  10000
+ 292          #define VOLPOW_LV2_VAL  20000
+ 293          #define VOLPOW_LV3_VAL  25000
+ 294          #define VOLPOW_LV4_VAL  30000
+ 295          #define VOLPOW_LV5_VAL  35000
+ 296          #define VOLPOW_LV6_VAL  40000
+ 297          #define VOLPOW_LV7_VAL  43000
+ 298          #define VOLPOW_LV8_VAL  46000
+ 299          #define VOLPOW_LV9_VAL  50000
+ 300          #define VOLPOW_LV10_VAL 55000
+ 301          
+ 302          #define FLASH_SIZE 32
+ 303          
+ 304          /******************************************************************************************************/
+ 305          void idle_gpio_init(void);
+ 306          void Deal_PowUp_Pro(void);
+ 307          void Deal_ShowDat_Pro(void);
+ 308          void Set_Pwm_Var();
+ 309          void Set_Show_Num(unsigned char tmp);
+ 310          void Rpm_Show_Pro(unsigned char tmp);
+ 311          void Speed_Show_Pro(unsigned char tmp);
+ 312          void VolPow_Show_Pro(unsigned char tmp);
+ 313          void Get_Energy_Level(unsigned int energy);
+ 314          void Show_KMH_Pro();
+ 315          void Show_MPH_Pro();
+ 316          void Set_Show_MPH_KMH(unsigned char data_tmp);
+ 317          void Set_Show_Km_Mile();
+ 318          void Deal_AD_Pro();
+ 319          void Scan_Key();
+ 320          void Chk_LongPress_Pro();
+ 321          void Send_Cmd_Pro(void);
+ 322          void Recv_BT_Pro(void);
+ 323          void Save_Pro();
+ 324          void Pwm_Init();
+ 325          
+ 326          /******************************************************************************************************/
+ 327          void Mcu_FeedDog(void)
+ 328          {
+ 329   1          if (Feed_Wdt_Flag == 0xA5) {
+ 330   2              WDFLG = 0xA5;
+ 331   2              Feed_Wdt_Flag = 0x00;
+ 332   2          }
+ 333   1      }
+ 334          
+ 335          unsigned char read_inner_trim(void)
+ 336          {
+ 337   1          unsigned char value;
+ 338   1          FSCMD = 0x80;
+ 339   1          PTSH = 0x00;
+ 340   1          PTSL = 0x24;
+ 341   1          FSCMD = 0x81;
+ 342   1          value = FSDAT;
+ 343   1          FSCMD = 0;
+ 344   1          return value;
+ 345   1      }
+ 346          
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 7   
+
+ 347          //***************************************************************
+ 348          void SystemInit(void)
+ 349          {
+ 350   1      #ifdef LVD_RST_ENABLE
+ 351   1          LVDCON = 0xE1; //ÉèÖÃLVD¸´Î»µçÑ¹Îª2V
+ 352   1      #endif
+ 353   1      #if (SYSCLK_SRC == PLL)
+ 354   1          Sys_Clk_Set_PLL(PLL_Multiple);
+ 355   1      #endif
+ 356   1      #ifdef UART0_EN
+                  Uart0_Initial(UART0_BAUTRATE);
+              #endif
+ 359   1      #ifdef UART1_EN
+ 360   1          Uart1_Initial(UART1_BAUTRATE);
+ 361   1      #endif
+ 362   1      
+ 363   1      //±¸×¢£ºÐèÄ¬ÈÏ¿ªÆô¿´ÃÅ¹·¹¦ÄÜ£¬²¢½«ÆäÉèÖÃÎª¸´Î»Ä£Ê½
+ 364   1      #if (RTC_CLK_SELECT == IRCL)
+ 365   1          CKCON |= ILCKE; //Ê¹ÄÜIRCL
+ 366   1          WDCON = WDTS(WDTS_IRCL) |
+ 367   1                  WDRE(WDRE_reset); //ÉèÖÃ¿´ÃÅ¹·Ê±ÖÓÔ´ÎªIRCL£¬Ä£Ê½Îª¸´Î»Ä£Ê½
+ 368   1      #elif (RTC_CLK_SELECT == XOSCL)
+                  CKCON |= XLCKE;
+                  while (!(CKCON & XLSTA))
+                      ;
+                  WDCON = WDTS(WDTS_XOSCL) |
+                          WDRE(WDRE_reset); //ÉèÖÃ¿´ÃÅ¹·Ê±ÖÓÔ´ÎªXOSCL£¬Ä£Ê½Îª¸´Î»Ä£Ê½
+              #endif
+ 375   1          WDVTHH = 0;  //¿´ÃÅ¹·¸´Î»ãÐÖµ¸ß°ËÎ»ÉèÖÃ µ±Ç°ÖµÎª5s
+ 376   1          WDVTHL = 75; //¿´ÃÅ¹·¸´Î»ãÐÖµµÍ°ËÎ»ÉèÖÃ
+ 377   1          WDFLG = 0xA5;
+ 378   1      
+ 379   1          ADCFGH = (ADCFGH & 0xC0) | VTRIM(read_inner_trim()); //¼ÓÔØADCÄÚ²¿»ù×¼Ð£×¼Öµ
+ 380   1      }
+ 381          
+ 382          //***************************************************************
+ 383          void AD_Init()
+ 384          {
+ 385   1          /**********ÉèÖÃADCÒý½Å¹¦ÄÜ*************************************************************/
+ 386   1          P10F = P10_ADC0_SETTING; //ÉèÖÃP10ÎªADCÒý½Å¹¦ÄÜ
+ 387   1          //  P11F = P11_ADC1_SETTING;        //ÉèÖÃP11ÎªADCÒý½Å¹¦ÄÜ
+ 388   1          //  P12F = P12_ADC2_SETTING;        //ÉèÖÃP12ÎªADCÒý½Å¹¦ÄÜ
+ 389   1          //  P13F = P13_ADC3_SETTING;        //ÉèÖÃP13ÎªADCÒý½Å¹¦ÄÜ
+ 390   1          //  P14F = P14_ADC4_SETTING;        //ÉèÖÃP14ÎªADCÒý½Å¹¦ÄÜ
+ 391   1          //  P15F = P15_ADC5_SETTING;        //ÉèÖÃP15ÎªADCÒý½Å¹¦ÄÜ
+ 392   1          //  P16F = P16_ADC6_SETTING;        //ÉèÖÃP16ÎªADCÒý½Å¹¦ÄÜ
+ 393   1          //  P17F = P17_ADC7_SETTING;        //ÉèÖÃP17ÎªADCÒý½Å¹¦ÄÜ
+ 394   1      
+ 395   1          //          P10F = P10_ADC_VREF_SETTING;    //Èç¹ûADC²Î¿¼µçÑ¹Ñ¡ÔñÎªÍâ²¿²Î¿¼µçÑ¹£¬ÐèÒªÉèÖÃP10ÎªÍâ²¿²Î¿¼µçÑ¹Òý½Å£¬
+             -²¢ÇÒADC0Í¨µÀ²»ÄÜÊ¹ÓÃ¡£
+ 396   1          /***************************************************************************************/
+ 397   1      
+ 398   1          /**********³õÊ¼»¯ADC¼Ä´æÆ÷£¨ÉèÖÃADCÊ±ÖÓ¡¢Ñ¡ÔñADC²Î¿¼µçÑ¹¡¢ÉèÖÃADCÔË·Å¡¢¼ÓÔØÄÚ²¿1.5VÐ£×¼Öµ£©***********
+             -/
+ 399   1          //  ADCON = AST(0) | ADIE(0) | HTME(7) | VSEL(ADC_REF_INNER);               //ÉèÖÃADC²Î¿¼µçÑ¹ÎªÄÚ²¿1.5V
+ 400   1          ADCON =
+ 401   1              AST(0) | ADIE(0) | HTME(7) | VSEL(ADC_REF_VDD); //ÉèÖÃADC²Î¿¼µçÑ¹ÎªVDD
+ 402   1          //  ADCON = AST(0) | ADIE(0) | HTME(7) | VSEL(ADC_REF_Outer);               //ÉèÖÃADC²Î¿¼µçÑ¹ÎªÍâ²¿²Î¿¼µçÑ¹
+ 403   1      
+ 404   1          ADCFGH = AOPS(NO_AMP) | VTRIM(read_inner_trim()); //¼ÓÔØÄÚ²¿1.5VÐ£×¼Öµ
+ 405   1          /**************************************************************************************************/
+ 406   1      
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 8   
+
+ 407   1          /**********ÉèÖÃADCÍ¨µÀºÍÊ±ÖÓ·ÖÆµ*********************************************************************/
+ 408   1          ADCFGL = ACKD(7) | ADCHS(ADC_CH0); //Ñ¡ÔñADC0Í¨µÀ
+ 409   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH1);      //Ñ¡ÔñADC1Í¨µÀ
+ 410   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH2);      //Ñ¡ÔñADC2Í¨µÀ
+ 411   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH3);      //Ñ¡ÔñADC3Í¨µÀ
+ 412   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH4);      //Ñ¡ÔñADC4Í¨µÀ
+ 413   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH5);      //Ñ¡ÔñADC5Í¨µÀ
+ 414   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH6);      //Ñ¡ÔñADC6Í¨µÀ
+ 415   1          //  ADCFGL = ACKD(7) | ADCHS(ADC_CH7);      //Ñ¡ÔñADC7Í¨µÀ
+ 416   1      }
+ 417          
+ 418          //***************************************************************
+ 419          void my_loop(void)
+ 420          {
+ 421   1          systimer_flag_update();
+ 422   1      
+ 423   1          if (systimer_flag_is_valid(SYSTIME_FLAG_100MS)) {
+ 424   2              // chk_ad_en = 1;
+ 425   2              if (chg_deb) {
+ 426   3                  chg_deb--;
+ 427   3                  if (chg_deb == 0) {
+ 428   4                      chg_en = 0; //ÍË³öµ÷ÕûÄ£Ê½
+ 429   4                      powup_en = 0;
+ 430   4                      save_en = 1;
+ 431   4                      // send_en = 1;
+ 432   4                      // send_cmd = SET_TIMIE_TO_MAIN;
+ 433   4                  }
+ 434   3              }
+ 435   2              // if(sec_var >= 60){           //Ã¿60sÑ¯ÎÊÖ÷»úÊ±¼ä
+ 436   2              //      if(send_en == 0){
+ 437   2              //              send_en = 1;
+ 438   2              //              sec_var = 0;
+ 439   2              //              if(chg_en == 0){
+ 440   2              //                      send_cmd = 0x35;
+ 441   2              //              }
+ 442   2              //      }
+ 443   2              // }
+ 444   2              // else{
+ 445   2              //      x1sec_cnt++;
+ 446   2              //      if(x1sec_cnt >= 10){
+ 447   2              //              x1sec_cnt = 0;
+ 448   2              //              sec_var++;
+ 449   2              //      }
+ 450   2              // }
+ 451   2      
+ 452   2              // if(chg_show_deb){
+ 453   2              //      chg_show_deb--;
+ 454   2              // }
+ 455   2              // if(long_deb){
+ 456   2              //      long_deb--;
+ 457   2              //      if(long_deb == 0){
+ 458   2              //              long_deb = 3;
+ 459   2              //              if(key_val1&0x01){
+ 460   2              //                      Uart0_PutChar(0xA5);
+ 461   2              //                      Uart0_PutChar(0x04);
+ 462   2              //                      Uart0_PutChar(0x02);
+ 463   2              //                      Uart0_PutChar(0xAB);
+ 464   2              //              }
+ 465   2              //              else if(key_val1&0x02){
+ 466   2              //                      Uart0_PutChar(0xA5);
+ 467   2              //                      Uart0_PutChar(0x04);
+ 468   2              //                      Uart0_PutChar(0x01);
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 9   
+
+ 469   2              //                      Uart0_PutChar(0xAA);
+ 470   2              //              }
+ 471   2              //      }
+ 472   2              // }
+ 473   2          }
+ 474   1      
+ 475   1          uart_process_data_packets();
+ 476   1          // Recv_BT_Pro();
+ 477   1          // ledseg_show_test();
+ 478   1          if (systimer_flag_is_valid(SYSTIME_FLAG_50MS)) {
+ 479   2              // if(systimer_flag_is_valid(SYSTIME_FLAG_60MS)){
+ 480   2              aip3368h_module_display();
+ 481   2              // Set_Pwm_Var();
+ 482   2          }
+ 483   1      
+ 484   1          Deal_PowUp_Pro();
+ 485   1      
+ 486   1          Deal_ShowDat_Pro();
+ 487   1      
+ 488   1          Scan_Key();
+ 489   1          Chk_LongPress_Pro();
+ 490   1      #if 0
+                      Deal_AD_Pro();
+              #endif
+ 493   1          Send_Cmd_Pro();
+ 494   1          Save_Pro();
+ 495   1      }
+ 496          
+ 497          //***************************************************************
+ 498          void main(void)
+ 499          {
+ 500   1          SystemInit();
+ 501   1          // idle_gpio_init(); // ½«ËùÓÐÎ´Ê¹ÓÃµÄGPIOÉèÖÃÎª¸ß×è×´Ì¬+ÄÚ²¿ÉÏÀ­£¬¼õÉÙ¹¦ºÄ
+ 502   1          EA = 1;
+ 503   1      
+ 504   1          // Uart0_PutChar(0x5C);
+ 505   1      
+ 506   1      #if 0
+                  TS_init();
+              #endif
+ 509   1      
+ 510   1          tick_timer_config();
+ 511   1          Uart1_Initial(UART1_BAUTRATE); // ³õÊ¼»¯UART1
+ 512   1      
+ 513   1          tick_timer_config(); //¶¨Ê±Æ÷1³õÊ¼»¯
+ 514   1          aip3368h_module_init();
+ 515   1          aip3368h_module_display();
+ 516   1          // pwm_var = PWM_0_VAL;
+ 517   1          // pwm_tmp = pwm_var;
+ 518   1          // Set_Pwm_Var();
+ 519   1      
+ 520   1      #if 0
+                      AD_Init();
+              #endif
+ 523   1      
+ 524   1          powup_en = 1;
+ 525   1          powup_stp = 0;
+ 526   1          act_tmp = 0;
+ 527   1      
+ 528   1          save_en = 1;
+ 529   1          init_en = 1;
+ 530   1          // pwm_var = PWM_20_VAL;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 10  
+
+ 531   1          // pwm_tmp = pwm_var;
+ 532   1          // instrument_info.oil_percent = 0xFF;
+ 533   1      
+ 534   1          while (1) {
+ 535   2              Mcu_FeedDog(); //Î¹¹·
+ 536   2      
+ 537   2      #if 0
+                              TS_Action();
+              #endif
+ 540   2      #if SUPPORT_WHEEL_SLIDER
+                      if (WheelSliderPosition != -1) {
+                          //µ±WheelSliderPosition²»µÈÓÚ-1Ê±£¬ ±íÊ¾»¬Ìõ»òÔ²»·ÓÐ´¥ÃþÊÂ¼þ·¢Éú¡£WheelSliderPositionµÄÖµ±íÊ¾»
+             -¬Ìõ»òÔ²»·µÄÎ»ÖÃ¡£
+                      }
+              #endif
+ 545   2      #if SUPPORT_KEY
+ 546   2              /*************************************************************************************************
+ 547   2      ±äÁ¿KeysFlagSNÊÇ´¥Ãþ¿â¶ÔÍâµÄÊý¾Ý½Ó¿Ú£¬KeysFlagSNµÄÃ¿Ò»Î»¶ÔÓ¦Ò»¸ö´¥Ãþ¼üµÄ×´Ì¬£¬Îª1±íÊ¾´¥Ãþ¼ü´¥·¢¡£¿É¶à¼üÍ¬Ê
+             -±´¥·¢¡£
+ 548   2      *************************************************************************************************/
+ 549   2              key_tmp = 0;
+ 550   2              if (KeysFlagSN != 0) {
+ 551   3                  switch (KeysFlagSN) {
+ 552   4                  case 0x0001:
+ 553   4                      // key_tmp |= 0x01;
+ 554   4                      // Uart0_PutChar(0x01);
+ 555   4                      break;
+ 556   4                  case 0x0002:
+ 557   4                      // key_tmp |= 0x02;
+ 558   4                      // Uart0_PutChar(0x02);
+ 559   4                      break;
+ 560   4                  case 0x0004:
+ 561   4                      // key_tmp |= 0x04;
+ 562   4                      // Uart0_PutChar(0x04);
+ 563   4                      break;
+ 564   4                  case 0x0008:
+ 565   4                      // key_tmp |= 0x08;
+ 566   4                      // Uart0_PutChar(0x08);
+ 567   4                      break;
+ 568   4                  //......
+ 569   4                  default:
+ 570   4                      break;
+ 571   4                  }
+ 572   3              }
+ 573   2      #endif
+ 574   2      
+ 575   2              // my_loop();
+ 576   2          }
+ 577   1      }
+ 578          
+ 579          /******************************************************************************************************/
+ 580          void idle_gpio_init(void)
+ 581          {
+ 582   1          GPIO_Init(P00F, HIGH_Z | PU_EN);
+ 583   1          GPIO_Init(P01F, HIGH_Z | PU_EN);
+ 584   1          GPIO_Init(P03F, HIGH_Z | PU_EN);
+ 585   1          GPIO_Init(P04F, HIGH_Z | PU_EN);
+ 586   1          // GPIO_Init(P05F, HIGH_Z | PU_EN); // DIO
+ 587   1          // GPIO_Init(P06F, HIGH_Z | PU_EN); // DCK
+ 588   1          // GPIO_Init(P07F, HIGH_Z | PU_EN); // LAT
+ 589   1          // GPIO_Init(P34F, HIGH_Z | PU_EN); // PDM
+ 590   1      
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 11  
+
+ 591   1          GPIO_Init(P20F, HIGH_Z | PU_EN);
+ 592   1          GPIO_Init(P21F, HIGH_Z | PU_EN);
+ 593   1          GPIO_Init(P16F, HIGH_Z | PU_EN);
+ 594   1          GPIO_Init(P17F, HIGH_Z | PU_EN);
+ 595   1          GPIO_Init(P36F, HIGH_Z | PU_EN);
+ 596   1          GPIO_Init(P37F, HIGH_Z | PU_EN);
+ 597   1          GPIO_Init(P32F, OUTPUT);
+ 598   1          GPIO_Init(P33F, HIGH_Z | PU_EN);
+ 599   1      
+ 600   1          GPIO_Init(P10F, INPUT);
+ 601   1      
+ 602   1          GPIO_Init(P11F, INPUT); // TX
+ 603   1          GPIO_Init(P12F, INPUT); // RX
+ 604   1          // GPIO_Init(P30F, HIGH_Z | PU_EN);
+ 605   1          // GPIO_Init(P31F, OUTPUT);
+ 606   1          //¼ì²â¿Ú
+ 607   1          GPIO_Init(P13F, INPUT | PU_EN);
+ 608   1          GPIO_Init(P14F, INPUT | PU_EN);
+ 609   1          GPIO_Init(P15F, INPUT | PD_EN);
+ 610   1          GPIO_Init(P02F, INPUT | PU_EN);
+ 611   1          //´¥Ãþ
+ 612   1          GPIO_Init(P35F, HIGH_Z);
+ 613   1      
+ 614   1          // P16C = 0x50;
+ 615   1      }
+ 616          
+ 617          //=======================================================================
+ 618          void Pwm_Init()
+ 619          {
+ 620   1      //  ÒÔ´ò¿ªPWM3ÎªÀý£¬ÉèÖÃµÄÖØµã£ºÃ¿×éPWMµÄÊ±ÖÓÔ´ÊÇ¹²Í¬ÉèÖÃµÄ£¬Ê±ÖÓÔ´Í¨¹ýPWM0¡¢PWM2¡¢PWM4¶ÔÓ¦µÄ¿ØÖÆ¼Ä´æÆ÷PWM
+             -CONµÄPWMCKSÀ´Ñ¡Ôñ¡£
+ 621   1      #if (1)
+ 622   1          INDEX = PWM_CH2; //ÉèÖÃINDEXÖµ¶ÔÓ¦PWM2
+ 623   1          PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) |
+ 624   1                   CKS_SYS; //ÉèÖÃPWMÊ±ÖÓÔ´ÎªÏµÍ³Ê±ÖÓ
+ 625   1          //  PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) | CKS_IH ;           //ÉèÖÃPWMÊ±ÖÓÔ´ÎªIRCH
+ 626   1          //  PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) | CKS_IL ;           //ÉèÖÃPWMÊ±ÖÓÔ´ÎªIRCL
+ 627   1          //  PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) | CKS_XL ;           //ÉèÖÃPWMÊ±ÖÓÔ´ÎªXOSCL
+ 628   1          //  PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) | CKS_TF ;           //ÉèÖÃPWMÊ±ÖÓÔ´ÎªTFRC
+ 629   1          //  PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) | CKS_PLL;           //ÉèÖÃPWMÊ±ÖÓÔ´ÎªPLL
+ 630   1          INDEX = PWM_CH3;
+ 631   1          PWMCON = TIE(0) | ZIE(0) | PIE(0) | NIE(0) | MS(0) | MOD(0);
+ 632   1          PWMCFG = TOG(0) | 0;
+ 633   1      
+ 634   1          //ÉèÖÃPWMDIV¡¢PWMDUT
+ 635   1          PWMDIVH = (unsigned char)(PWM3DIV_V >> 8);
+ 636   1          PWMDIVL = (unsigned char)(PWM3DIV_V);
+ 637   1          PWMDUTH = (unsigned char)(PWM3DUT_V >> 8);
+ 638   1          PWMDUTL = (unsigned char)(PWM3DUT_V);
+ 639   1      
+ 640   1          P34F = P34_PWM3_SETTING; //ÉèÖÃP3.4ÎªPWMÒý½Å¹¦ÄÜ
+ 641   1      
+ 642   1          PWMUPD |= (1 << PWM_CH3); //PWMDIV¡¢PWMDUT¸üÐÂÊ¹ÄÜ
+ 643   1          while (PWMUPD)
+ 644   1              ;                    //µÈ´ý¸üÐÂÍê³É
+ 645   1          PWMEN |= (1 << PWM_CH3); //PWM1Ê¹ÄÜ
+ 646   1      #endif
+ 647   1      }
+ 648          
+ 649          //=======================================================================
+ 650          void Set_Pwm_Var()
+ 651          {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 12  
+
+ 652   1          INDEX = PWM_CH3;
+ 653   1          PWMDUTH = (pwm_tmp >> 8);
+ 654   1          PWMDUTL = pwm_tmp;
+ 655   1          PWMUPD = (1 << PWM_CH3);
+ 656   1      }
+ 657          
+ 658          /******************************************************************************************************/
+ 659          /*
+ 660          void Recv_BT_Pro()
+ 661          {
+ 662                  if (uart0_rxbuffer_get_count() == 0)
+ 663              {
+ 664                  return;
+ 665              }
+ 666                  u0_recv_data = uart0_rxbuffer_get();
+ 667                  // Uart0_PutChar(u0_cmd_status);
+ 668          
+ 669                  if(u0_cmd_status == 0){
+ 670                          // Uart0_PutChar(u0_recv_data);
+ 671                          if(u0_recv_data == 0xAA){
+ 672                                  uart0_buff[0] = u0_recv_data;
+ 673                                  uart0_recv_cmd_index = 1;
+ 674                                  u0_cmd_status = 1;
+ 675                          }
+ 676                          // else{
+ 677                                  // Uart0_PutChar(u0_recv_data);
+ 678                          // }
+ 679                  }
+ 680                  else if(u0_cmd_status == 1){
+ 681                          uart0_buff[1] = u0_recv_data;
+ 682                          uart0_recv_cmd_index = 2;
+ 683                          if(u0_recv_data > 20){
+ 684                                  // Ð£ÑéºÍ´íÎó
+ 685                                          u0_cmd_status = 0;
+ 686                                          // Uart0_PutChar(0x33);
+ 687                          }
+ 688                          else{
+ 689                                  uart0_recv_len = u0_recv_data;
+ 690                                  u0_cmd_status = 2;
+ 691                          }
+ 692                  }
+ 693                  else if(u0_cmd_status == 2){
+ 694                          uart0_buff[uart0_recv_cmd_index++] = u0_recv_data;
+ 695          
+ 696                          if(uart0_recv_cmd_index >= uart0_recv_len){
+ 697                                  // Èç¹û½ÓÊÕµ½µÄÊý¾Ý°üÒÑ¾­½ÓÊÕÍê±Ï
+ 698                                  // ¼ÆËãÐ£ÑéºÍ
+ 699                                  ram_a = 0;
+ 700                                  for(ram_b=0;ram_b<uart0_recv_len-1;ram_b++){
+ 701                                          ram_a += uart0_buff[ram_b];
+ 702                                          // Uart0_PutChar(uart0_buff[ram_b]);
+ 703                                  }
+ 704                                  if(ram_a != uart0_buff[uart0_recv_len-1]){
+ 705                                          // Ð£ÑéºÍ´íÎó
+ 706                                          u0_cmd_status = 0;
+ 707                                          // Uart0_PutChar(0x33);
+ 708                                  }
+ 709                                  else{
+ 710                                          // Ð£ÑéºÍÕýÈ·
+ 711                                          u0_cmd_status = 3;
+ 712                                          // Uart0_PutChar(0x55);
+ 713                                          goto  Deal_BT_Data_Pro;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 13  
+
+ 714                                  }
+ 715                          }
+ 716                  }
+ 717                  else if(u0_cmd_status == 3){
+ 718                          // ram_a = 0;
+ 719                          // for(ram_b=0;ram_b<uart0_recv_len;ram_b++){
+ 720                          //      Uart0_PutChar(uart0_buff[ram_b]);
+ 721                          // }
+ 722          Deal_BT_Data_Pro:
+ 723                          u0_cmd_status = 0;      // ÖØÐÂ½ÓÊÕÊý¾Ý
+ 724          
+ 725                          switch(uart0_buff[2])
+ 726                          {
+ 727                                  case 0xA6://ÊÖ»úÊ±¼ä
+ 728                                          hour_var = uart0_buff[3];
+ 729                                          min_var = uart0_buff[4];
+ 730                                          sec_var = uart0_buff[5];
+ 731                                          
+ 732                                          send_en = 1;
+ 733                                          send_cmd = SET_TIMIE_TO_MAIN;
+ 734                                          break;
+ 735                                  case 0xA7:
+ 736                                          if(uart0_buff[3] == 0x02){              //À¶ÑÀ×´Ì¬
+ 737                                                  //·µ»ØÀ¶ÑÀ×´Ì¬
+ 738                                                  // Uart0_PutChar(uart0_buff[4]);
+ 739                                                  if(uart0_buff[4] < 6){
+ 740                                                          bt_en = 0;
+ 741                                                          phone_en = 0;
+ 742                                                  }
+ 743                                                  else{
+ 744                                                          bt_en = 1;
+ 745                                                          if((uart0_buff[4] == 8) || (uart0_buff[4] == 9)){
+ 746                                                                  phone_en = 1;
+ 747                                                          }
+ 748                                                          else{
+ 749                                                                  phone_en = 0;
+ 750                                                          }
+ 751                                                  }
+ 752                                                  // Uart0_PutChar(bt_en);
+ 753                                          }
+ 754                                          else if(uart0_buff[3] == 0x04){         //ÒôÀÖÄÜÁ¿Öµ
+ 755                                                  volpow_tmp = (uart0_buff[4]<<8)+uart0_buff[5];
+ 756          
+ 757                                                  Get_Energy_Level(volpow_tmp);
+ 758                                          }
+ 759                                          break;
+ 760                                  case 0xA9://À´µçºÅÂë
+ 761                                          phone_len = uart0_buff[3];
+ 762                                          if(uart0_buff[4] == 0x00){
+ 763                                                  Phone_buff[0] = uart0_buff[5];
+ 764                                                  Phone_buff[1] = uart0_buff[6];
+ 765                                                  Phone_buff[2] = uart0_buff[7];
+ 766                                                  Phone_buff[3] = uart0_buff[8];
+ 767                                                  Phone_buff[4] = uart0_buff[9];
+ 768                                          }
+ 769                                          else if(uart0_buff[4] == 0x05){
+ 770                                                  Phone_buff[5] = uart0_buff[5];
+ 771                                                  Phone_buff[6] = uart0_buff[6];
+ 772                                                  Phone_buff[7] = uart0_buff[7];
+ 773                                                  Phone_buff[8] = uart0_buff[8];
+ 774                                                  Phone_buff[9] = uart0_buff[9];
+ 775                                          }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 14  
+
+ 776                                          else if(uart0_buff[4] == 0x0A){
+ 777                                                  Phone_buff[10] = uart0_buff[5];
+ 778                                                  phone_en = 1;
+ 779                                          }
+ 780          
+ 781                                          // for(ram_a = 5;ram_a < 10;ram_a++){
+ 782                                          //      Phone_buff[phone_len_tmp] = uart0_buff[ram_a];
+ 783                                          //      phone_len_tmp++;
+ 784                                          //      if(phone_len_tmp >= phone_len){
+ 785                                          //              phone_len_tmp = 0;
+ 786                                          //              phone_en = 1;
+ 787                                          //              // Uart0_PutChar(phone_en);
+ 788                                          //              break;
+ 789                                          //      }
+ 790                                          // }
+ 791                                          break;
+ 792                                  case 0xAA://ÖÂµçºÅÂë
+ 793                                          phone_len = uart0_buff[3];
+ 794                                          if(uart0_buff[4] == 0x00){
+ 795                                                  Phone_buff[0] = uart0_buff[5];
+ 796                                                  Phone_buff[1] = uart0_buff[6];
+ 797                                                  Phone_buff[2] = uart0_buff[7];
+ 798                                                  Phone_buff[3] = uart0_buff[8];
+ 799                                                  Phone_buff[4] = uart0_buff[9];
+ 800                                          }
+ 801                                          else if(uart0_buff[4] == 0x05){
+ 802                                                  Phone_buff[5] = uart0_buff[5];
+ 803                                                  Phone_buff[6] = uart0_buff[6];
+ 804                                                  Phone_buff[7] = uart0_buff[7];
+ 805                                                  Phone_buff[8] = uart0_buff[8];
+ 806                                                  Phone_buff[9] = uart0_buff[9];
+ 807                                          }
+ 808                                          else if(uart0_buff[4] == 0x0A){
+ 809                                                  Phone_buff[10] = uart0_buff[5];
+ 810                                                  phone_en = 1;
+ 811                                          }
+ 812          
+ 813                                          // for(ram_a = 5;ram_a < 10;ram_a++){
+ 814                                          //      Phone_buff[phone_len_tmp] = uart0_buff[ram_a];
+ 815                                          //      phone_len_tmp++;
+ 816                                          //      if(phone_len_tmp >= phone_len){
+ 817                                          //              phone_len_tmp = 0;
+ 818                                          //              phone_en = 1;
+ 819                                          //              break;
+ 820                                          //      }
+ 821                                          // }
+ 822                                          break;
+ 823                                  default:
+ 824                                          break;
+ 825                          }
+ 826                  }
+ 827          }
+ 828          */
+ 829          
+ 830          /*
+ 831          void Get_Energy_Level(unsigned int energy)
+ 832          {
+ 833          
+ 834                  if(energy < VOLPOW_LV0_VAL){
+ 835                          volpow_base = 1;
+ 836                  }
+ 837                  else if(energy < VOLPOW_LV1_VAL){
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 15  
+
+ 838                          volpow_base = 2;
+ 839                  }
+ 840                  else if(energy < VOLPOW_LV2_VAL){
+ 841                          volpow_base = 3;
+ 842                  }
+ 843                  else if(energy < VOLPOW_LV3_VAL){
+ 844                          volpow_base = 4;
+ 845                  }
+ 846                  else if(energy < VOLPOW_LV4_VAL){
+ 847                          volpow_base = 5;
+ 848                  }
+ 849                  else if(energy < VOLPOW_LV5_VAL){
+ 850                          volpow_base = 6;
+ 851                  }
+ 852                  else if(energy < VOLPOW_LV6_VAL){
+ 853                          volpow_base = 7;
+ 854                  }
+ 855                  else if(energy < VOLPOW_LV7_VAL){
+ 856                          volpow_base = 8;
+ 857                  }
+ 858                  else if(energy < VOLPOW_LV8_VAL){
+ 859                          volpow_base = 9;
+ 860                  }
+ 861                  else if(energy < VOLPOW_LV9_VAL){
+ 862                          volpow_base = 10;
+ 863                  }
+ 864                  else if(energy < VOLPOW_LV10_VAL){
+ 865                          volpow_base = 11;
+ 866                  }
+ 867                  else{
+ 868                          volpow_base = 12;
+ 869                  }
+ 870          
+ 871                  if((last_level == volpow_base) && (volpow_base > 1)){
+ 872                          ten_percent = base_energy * 1U / 100U;  // »ù×¼µÄ1%
+ 873                          if (ten_percent == 0) ten_percent = 1; // ±ÜÃâ»ù×¼Îª0Ê±³ýÒÔ0
+ 874          
+ 875                          if((energy - base_energy) >= ten_percent){
+ 876                                  if((volpow_base+1)<=4){                //ÏÞÖÆ°Ú·ù£¬ÒÔÃâ¿´ÆðÀ´²»ÕæÊµ
+ 877                                          if(volpow_var < (volpow_base+1)){
+ 878                                                  volpow_var++;
+ 879                                          }
+ 880                                  }
+ 881                                  else{
+ 882                                          if(volpow_var < 12){
+ 883                                                  volpow_var++;
+ 884                                          }
+ 885                                  }
+ 886                          }
+ 887                          else if((base_energy - energy) >= ten_percent){
+ 888                                  if(volpow_var > 1){
+ 889                                          volpow_var--;
+ 890                                  }
+ 891                          }
+ 892                  }
+ 893                  else{// Ç¿½Ú×à-ÄÜÁ¿¼¶±ä»¯£¬¸ù¾ÝÄÜÁ¿¼¶±ä»¯
+ 894                          last_level = volpow_var;
+ 895                          volpow_var = volpow_base;
+ 896                  }
+ 897                  base_energy = energy;
+ 898          }
+ 899          */
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 16  
+
+ 900          
+ 901          /******************************************************************************************************/
+ 902          void Deal_PowUp_Pro()
+ 903          {
+ 904   1          if (powup_en == 0)
+ 905   1              return;
+ 906   1      
+ 907   1          if (!systimer_flag_is_valid(SYSTIME_FLAG_25MS))
+ 908   1              return;
+ 909   1          // if(!systimer_flag_is_valid(SYSTIME_FLAG_1000MS)) return;
+ 910   1          // if(powup_cnt_en == 0) return;
+ 911   1          // powup_cnt_en = 0;
+ 912   1      
+ 913   1          if (chg_en) {
+ 914   2              if (chg_stp == 2) {
+ 915   3                  if (chg_init_en) {
+ 916   4                      chg_init_en = 0;
+ 917   4                      for (act_tmp = 0; act_tmp < AIP3368H_DEV_NUM; act_tmp++) {
+ 918   5                          display_buff[act_tmp] = 0x0000;
+ 919   5                      }
+ 920   4                      act_tmp = 0;
+ 921   4                  }
+ 922   3      
+ 923   3                  display_buff[14] |= (7 << 7); //×ªËÙµ¥Î»Í¼±ê
+ 924   3                  display_buff[12] |= (0x7F << 9);
+ 925   3                  display_buff[11] |= (1 << 0); //×ªËÙÊý×Ö
+ 926   3                  display_buff[12] |= (0x3F << 0);
+ 927   3                  display_buff[13] |= 0xFFF0; //×ªËÙ¿ò
+ 928   3      
+ 929   3                  display_buff[15] |= (1 << 13); //µçÁ¿Í¼±ê
+ 930   3      
+ 931   3                  display_buff[14] &= ~0x007F;
+ 932   3                  display_buff[14] &= ~(1 << 12); //GEAR
+ 933   3                  display_buff[14] |= Chg_Tab[gear_num];
+ 934   3                  if ((gear_num == 1) || (gear_num == 2)) {
+ 935   4                      display_buff[14] |= (1 << 12); //GEAR
+ 936   4                  }
+ 937   3      
+ 938   3                  act_tmp++;
+ 939   3                  if (act_tmp >= 29) {
+ 940   4                      // powup_en = 0;
+ 941   4                  }
+ 942   3                  Rpm_Show_Pro(act_tmp);
+ 943   3              }
+ 944   2              return;
+ 945   2          }
+ 946   1      
+ 947   1          if (powup_stp == 0) {
+ 948   2      
+ 949   2              pwm_var = PWM_100_VAL;
+ 950   2              pwm_tmp = pwm_var;
+ 951   2              // pwm_var = PWM_20_VAL;
+ 952   2              act_tmp++;
+ 953   2              if (act_tmp <= 18) {
+ 954   3                  display_buff[7] >>= 1;
+ 955   3                  if (display_buff[6] & 0x0001) {
+ 956   4                      display_buff[7] |= 0x8000;
+ 957   4                  }
+ 958   3                  display_buff[6] >>= 1;
+ 959   3                  display_buff[6] |= 0x2000;
+ 960   3      
+ 961   3                  display_buff[12] <<= 1;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 17  
+
+ 962   3                  if (display_buff[13] & 0x8000) {
+ 963   4                      display_buff[12] |= 0x0001;
+ 964   4                  }
+ 965   3                  display_buff[13] <<= 1;
+ 966   3                  display_buff[13] |= 0x0010;
+ 967   3              }
+ 968   2      
+ 969   2              display_buff[5] &= ~(1 << 2);
+ 970   2              display_buff[4] &= ~(1 << 3);    //1
+ 971   2              display_buff[5] &= ~(0x7F << 3); //8
+ 972   2              display_buff[5] &= ~(0x3F << 10);
+ 973   2              display_buff[4] &= ~(1 << 0); //8
+ 974   2              if (act_tmp == 1) {
+ 975   3                  display_buff[5] |= (1 << 2);
+ 976   3              } else if (act_tmp == 2) {
+ 977   3                  display_buff[5] |= (1 << 2);
+ 978   3                  display_buff[4] |= (1 << 3);
+ 979   3              } else if (act_tmp == 3) {
+ 980   3                  display_buff[5] |= (1 << 2);
+ 981   3                  display_buff[4] |= (1 << 3);
+ 982   3                  display_buff[5] |= (1 << 6);
+ 983   3              } else if (act_tmp == 4) {
+ 984   3                  display_buff[4] |= (1 << 3);
+ 985   3                  display_buff[5] |= (1 << 6);
+ 986   3                  display_buff[5] |= (1 << 5);
+ 987   3              } else if (act_tmp == 5) {
+ 988   3                  display_buff[5] |= (1 << 6);
+ 989   3                  display_buff[5] |= (1 << 5);
+ 990   3                  display_buff[5] |= (1 << 4);
+ 991   3              } else if (act_tmp == 6) {
+ 992   3                  display_buff[5] |= (1 << 5);
+ 993   3                  display_buff[5] |= (1 << 4);
+ 994   3                  display_buff[5] |= (1 << 3);
+ 995   3              } else if (act_tmp == 7) {
+ 996   3                  display_buff[5] |= (1 << 4);
+ 997   3                  display_buff[5] |= (1 << 3);
+ 998   3                  display_buff[5] |= (1 << 8);
+ 999   3              } else if (act_tmp == 8) {
+1000   3                  display_buff[5] |= (1 << 3);
+1001   3                  display_buff[5] |= (1 << 8);
+1002   3                  display_buff[5] |= (1 << 7);
+1003   3              } else if (act_tmp == 9) {
+1004   3                  display_buff[5] |= (1 << 8);
+1005   3                  display_buff[5] |= (1 << 7);
+1006   3                  display_buff[5] |= (1 << 6);
+1007   3              } else if (act_tmp == 10) {
+1008   3                  display_buff[5] |= (1 << 7);
+1009   3                  display_buff[5] |= (1 << 6);
+1010   3                  display_buff[5] |= (1 << 13);
+1011   3              } else if (act_tmp == 11) {
+1012   3                  display_buff[5] |= (1 << 6);
+1013   3                  display_buff[5] |= (1 << 13);
+1014   3                  display_buff[5] |= (1 << 12);
+1015   3              } else if (act_tmp == 12) {
+1016   3                  display_buff[5] |= (1 << 13);
+1017   3                  display_buff[5] |= (1 << 12);
+1018   3                  display_buff[5] |= (1 << 11);
+1019   3              } else if (act_tmp == 13) {
+1020   3                  display_buff[5] |= (1 << 12);
+1021   3                  display_buff[5] |= (1 << 11);
+1022   3                  display_buff[5] |= (1 << 10);
+1023   3              } else if (act_tmp == 14) {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 18  
+
+1024   3                  display_buff[5] |= (1 << 11);
+1025   3                  display_buff[5] |= (1 << 10);
+1026   3                  display_buff[5] |= (1 << 15);
+1027   3              } else if (act_tmp == 15) {
+1028   3                  display_buff[5] |= (1 << 10);
+1029   3                  display_buff[5] |= (1 << 15);
+1030   3                  display_buff[5] |= (1 << 14);
+1031   3              } else if (act_tmp == 16) {
+1032   3                  display_buff[5] |= (1 << 15);
+1033   3                  display_buff[5] |= (1 << 14);
+1034   3                  display_buff[5] |= (1 << 13);
+1035   3              } else if (act_tmp == 17) {
+1036   3                  display_buff[5] |= (1 << 14);
+1037   3                  display_buff[5] |= (1 << 13);
+1038   3                  display_buff[5] |= (1 << 12);
+1039   3              } else if (act_tmp == 18) {
+1040   3                  display_buff[5] |= (1 << 13);
+1041   3                  display_buff[5] |= (1 << 12);
+1042   3                  display_buff[5] |= (1 << 11);
+1043   3              } else if (act_tmp == 19) {
+1044   3                  display_buff[5] |= (1 << 12);
+1045   3                  display_buff[5] |= (1 << 11);
+1046   3                  display_buff[5] |= (1 << 10);
+1047   3              } else if (act_tmp == 20) {
+1048   3                  display_buff[5] |= (1 << 11);
+1049   3                  display_buff[5] |= (1 << 10);
+1050   3                  display_buff[5] |= (1 << 3);
+1051   3              } else {
+1052   3                  act_tmp = 0;
+1053   3                  powup_stp = 1;
+1054   3      
+1055   3                  display_buff[5] &= ~(1 << 2);
+1056   3                  display_buff[4] &= ~(1 << 3);    //1
+1057   3                  display_buff[5] &= ~(0x7F << 3); //8
+1058   3                  display_buff[5] &= ~(0x3F << 10);
+1059   3                  display_buff[4] &= ~(1 << 0); //8
+1060   3              }
+1061   2          } else if (powup_stp == 1) {
+1062   2              act_tmp++;
+1063   2              if (act_tmp == 1) {
+1064   3                  display_buff[5] |= (1 << 2);
+1065   3                  display_buff[4] |= (1 << 3); //1
+1066   3      
+1067   3                  display_buff[1] |= (1 << 8);
+1068   3                  display_buff[4] |= (1 << 4); //×ó×ª
+1069   3                  display_buff[4] |= (3 << 5); //TOTAL
+1070   3      
+1071   3                  display_buff[4] |= (0x1F << 11);
+1072   3                  display_buff[3] |= 0x0003; //
+1073   3      
+1074   3              } else if (act_tmp == 2) {
+1075   3                  display_buff[5] |= (0x7F << 3); //8
+1076   3      
+1077   3                  display_buff[4] |= (1 << 7); //TRIP
+1078   3      
+1079   3                  display_buff[3] |= (0x7F << 2); //
+1080   3                  display_buff[3] |= (0x7F << 9); //
+1081   3              } else if (act_tmp == 3) {
+1082   3                  display_buff[5] |= (0x3F << 10);
+1083   3                  display_buff[4] |= 0x0001; //8
+1084   3      
+1085   3                  display_buff[2] |= (0x7F << 0); //
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 19  
+
+1086   3                  display_buff[2] |= (0x7F << 7); //
+1087   3              } else if (act_tmp == 4) {
+1088   3                  display_buff[4] |= (1 << 1); //mph
+1089   3                  display_buff[4] |= (1 << 2); //kmh
+1090   3      
+1091   3                  display_buff[2] |= (1 << 14); //Ð¡Êýµã
+1092   3                  display_buff[2] |= (1 << 15);
+1093   3                  display_buff[1] |= 0x003F;   //
+1094   3                  display_buff[1] |= (1 << 6); //mile
+1095   3                  display_buff[1] |= (1 << 7); //km
+1096   3              } else if (act_tmp == 5) {
+1097   3                  display_buff[4] |= (3 << 9); //ÓÒ×ª
+1098   3              } else if (act_tmp == 6) {
+1099   3                  display_buff[9] |= (7 << 3);
+1100   3      
+1101   3                  display_buff[12] |= (1 << 8);
+1102   3              } else if (act_tmp == 7) {
+1103   3                  display_buff[14] |= (1 << 14); //Ô¶¹âµÆ
+1104   3      
+1105   3                  display_buff[12] |= (1 << 7); //ÓÍÁ¿Í¼±ê
+1106   3                  display_buff[12] |= (1 << 6);
+1107   3                  display_buff[9] |= (3 << 6);
+1108   3              } else if (act_tmp == 8) {
+1109   3                  display_buff[14] |= (7 << 7); //×ªËÙµ¥Î»Í¼±ê
+1110   3                  display_buff[14] |= SHOW_NUM[8];
+1111   3              } else if (act_tmp == 9) {
+1112   3                  display_buff[14] |= (1 << 12); //GEAR
+1113   3                  display_buff[14] |= (1 << 10); //Nµµ
+1114   3              } else if (act_tmp == 10) {
+1115   3                  display_buff[15] |= (1 << 14);
+1116   3                  display_buff[11] |= (1 << 2);
+1117   3                  display_buff[11] |= (1 << 3);
+1118   3                  display_buff[15] |= (1 << 13); //µçÁ¿Í¼±ê
+1119   3              } else if (act_tmp == 11) {
+1120   3                  display_buff[11] |= (0x39 << 1);
+1121   3              } else if (act_tmp == 12) {
+1122   3                  display_buff[7] |= (0xFF << 4); //Ê±ËÙÊý×Ö
+1123   3      
+1124   3                  display_buff[12] |= (0x7F << 9);
+1125   3                  display_buff[11] |= (1 << 0); //×ªËÙÊý×Ö
+1126   3              } else if (act_tmp == 13) {
+1127   3                  display_buff[12] |= (0x3F << 0);
+1128   3                  display_buff[13] |= 0xFFF0; //×ªËÙ¿ò
+1129   3      
+1130   3                  display_buff[6] |= (0x3FFF); //
+1131   3                  display_buff[7] |= (0xF000); //Ê±ËÙ¿ò
+1132   3      
+1133   3                  Rpm_Show_Pro(30);
+1134   3                  Speed_Show_Pro(30);
+1135   3              } else {
+1136   3                  act_tmp = 0;
+1137   3                  powup_stp = 2;
+1138   3      
+1139   3                  pwm_var = PWM_20_VAL;
+1140   3                  // fade_en = 1;
+1141   3                  // fade_sta_en = 0;
+1142   3              }
+1143   2          } else if (powup_stp == 2) {
+1144   2              if (pwm_var == pwm_tmp) {
+1145   3                  powup_stp = 3;
+1146   3                  // pwm_var = PWM_100_VAL;
+1147   3              }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 20  
+
+1148   2      
+1149   2              // if(pwm_var < PWM_20_VAL){
+1150   2              //      // pwm_var += 14;
+1151   2              //      pwm_var++;
+1152   2              // }
+1153   2              // else{
+1154   2              //      pwm_var = PWM_20_VAL;
+1155   2              //      // powup_stp = 3;
+1156   2              // }
+1157   2              // Set_Pwm_Var();
+1158   2          }
+1159   1          // else if(powup_stp == 4){
+1160   1          //  if(pwm_var == pwm_tmp){
+1161   1          //          powup_stp = 4;
+1162   1          //  }
+1163   1          // }
+1164   1          else if (powup_stp == 3) {
+1165   2              display_buff[14] &= ~0x007F;
+1166   2              display_buff[14] |= SHOW_NUM[0];
+1167   2      
+1168   2              display_buff[9] &= ~(0x1F << 3);
+1169   2              display_buff[11] &= ~(0x1F << 2);
+1170   2      
+1171   2              // display_buff[12] &= ~(0x3F<<0);
+1172   2              // display_buff[13] &= ~0xFFF0;         //×ªËÙ¿ò
+1173   2              display_buff[11] &= ~(0x1FF << 7);
+1174   2              display_buff[10] &= ~(0xFFFF);
+1175   2              display_buff[9] &= ~(7 << 0); //×ªËÙÏÔÊ¾
+1176   2      
+1177   2              // display_buff[6] &= ~(0x3FFF);        //
+1178   2              // display_buff[7] &= ~(0xF000);        //Ê±ËÙ¿ò
+1179   2              display_buff[9] &= ~(0xFF << 8);
+1180   2              display_buff[8] &= ~0xFFFF;
+1181   2              display_buff[7] &= ~(0x0F); //Ê±ËÙÏÔÊ¾
+1182   2      
+1183   2              display_buff[5] &= ~(1 << 2);
+1184   2              display_buff[4] &= ~(1 << 3);    //1
+1185   2              display_buff[5] &= ~(0x7F << 3); //8
+1186   2              display_buff[5] &= ~(0x3F << 10);
+1187   2              display_buff[4] &= ~(1 << 0); //8
+1188   2              Set_Show_MPH_KMH(100);
+1189   2      
+1190   2              display_buff[4] &= ~(0x1F << 11);
+1191   2              display_buff[3] &= ~0x0003;      //
+1192   2              display_buff[3] &= ~(0x7F << 2); //
+1193   2              display_buff[3] &= ~(0x7F << 9); //
+1194   2              display_buff[2] &= ~(0x7F << 0); //
+1195   2              display_buff[2] &= ~(0x7F << 7); //
+1196   2              display_buff[2] &= ~(1 << 14);   //Ð¡Êýµã
+1197   2              display_buff[2] &= ~(1 << 15);
+1198   2              display_buff[1] &= ~0x003F; //
+1199   2      
+1200   2              display_buff[2] |= (1 << 14); //Ð¡Êýµã
+1201   2      
+1202   2              km_mile_tmp = 0;
+1203   2              show_tmp = km_mile_tmp % 10;
+1204   2              u8_tmp = SHOW_NUM[show_tmp];
+1205   2              if (u8_tmp & SEG_A) {
+1206   3                  display_buff[2] |= (1 << 15);
+1207   3              }
+1208   2              display_buff[1] |= SHOW_NUM[show_tmp] >> 1;
+1209   2              km_mile_tmp /= 10;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 21  
+
+1210   2              show_tmp = km_mile_tmp % 10;
+1211   2              display_buff[2] |= SHOW_NUM[show_tmp] << 7;
+1212   2              km_mile_tmp /= 10;
+1213   2              show_tmp = km_mile_tmp % 10;
+1214   2              display_buff[2] |= SHOW_NUM[show_tmp];
+1215   2              km_mile_tmp /= 10;
+1216   2              show_tmp = km_mile_tmp % 10;
+1217   2              display_buff[3] |= SHOW_NUM[show_tmp] << 9;
+1218   2              km_mile_tmp /= 10;
+1219   2              show_tmp = km_mile_tmp % 10;
+1220   2              display_buff[3] |= SHOW_NUM[show_tmp] << 2;
+1221   2              km_mile_tmp /= 10;
+1222   2              show_tmp = km_mile_tmp % 10;
+1223   2              display_buff[4] |= SHOW_NUM[show_tmp] << 11;
+1224   2              u8_tmp = SHOW_NUM[show_tmp];
+1225   2              if (u8_tmp & SEG_F) {
+1226   3                  display_buff[3] |= (1 << 0);
+1227   3              }
+1228   2              if (u8_tmp & SEG_G) {
+1229   3                  display_buff[3] |= (1 << 1);
+1230   3              }
+1231   2      
+1232   2              powup_stp = 4;
+1233   2              pwm_var = PWM_100_VAL;
+1234   2          } else if (powup_stp == 4) {
+1235   2              if (pwm_var == pwm_tmp) {
+1236   3                  powup_stp = 5;
+1237   3                  act_tmp = 0;
+1238   3                  u8_tmp = 0;
+1239   3                  ram_a = 0;
+1240   3                  ram_b = 0;
+1241   3                  ram_c = 0;
+1242   3                  ram_d = 0;
+1243   3              }
+1244   2      
+1245   2              // if(pwm_var > PWM_0_VAL){
+1246   2              //      pwm_var -= 14;
+1247   2              // }
+1248   2              // else{
+1249   2              //      pwm_var = pwm_set;
+1250   2              //      powup_stp = 5;
+1251   2              //      act_tmp = 0;
+1252   2              //      u8_tmp = 0;
+1253   2      
+1254   2              //      display_buff[9] |= (1<<7);
+1255   2              //      display_buff[11] |= (1<<2);
+1256   2              // }
+1257   2              // Set_Pwm_Var();
+1258   2          } else if (powup_stp == 5) {
+1259   2              act_tmp++;
+1260   2      
+1261   2              // if((act_tmp%2) == 0){
+1262   2              ram_d++;
+1263   2              Speed_Show_Pro(ram_d);
+1264   2              Rpm_Show_Pro(ram_d);
+1265   2              // Uart0_PutChar(ram_d);
+1266   2      
+1267   2              if ((ram_d % 4) == 0) {
+1268   3                  if (ram_c < 6)
+1269   3                      ram_c++;
+1270   3                  display_buff[14] &= ~0x007F;
+1271   3                  display_buff[14] |= SHOW_NUM[ram_c];
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 22  
+
+1272   3              }
+1273   2              // }
+1274   2              if ((act_tmp % 6) == 0) {
+1275   3                  display_buff[5] &= ~(1 << 2);
+1276   3                  display_buff[4] &= ~(1 << 3);    //1
+1277   3                  display_buff[5] &= ~(0x7F << 3); //8
+1278   3                  display_buff[5] &= ~(0x3F << 10);
+1279   3                  display_buff[4] &= ~(1 << 0); //8
+1280   3      
+1281   3                  display_buff[4] &= ~(0x1F << 11);
+1282   3                  display_buff[3] &= ~0x0003;      //
+1283   3                  display_buff[3] &= ~(0x7F << 2); //
+1284   3                  display_buff[3] &= ~(0x7F << 9); //
+1285   3                  display_buff[2] &= ~(0x7F << 0); //
+1286   3                  display_buff[2] &= ~(0x7F << 7); //
+1287   3                  display_buff[2] &= ~(1 << 14);   //Ð¡Êýµã
+1288   3                  display_buff[2] &= ~(1 << 15);
+1289   3                  display_buff[1] &= ~0x003F; //
+1290   3      
+1291   3                  display_buff[2] |= (1 << 14); //Ð¡Êýµã
+1292   3      
+1293   3                  ram_a++;
+1294   3                  if (ram_a == 1) {
+1295   4                      Set_Show_MPH_KMH(111);
+1296   4                      km_mile_tmp = 111111;
+1297   4                      Set_Show_Km_Mile();
+1298   4                  } else if (ram_a == 2) {
+1299   4                      Set_Show_MPH_KMH(122);
+1300   4                      km_mile_tmp = 222222;
+1301   4                      Set_Show_Km_Mile();
+1302   4                  } else if (ram_a == 3) {
+1303   4                      Set_Show_MPH_KMH(133);
+1304   4                      km_mile_tmp = 333333;
+1305   4                      Set_Show_Km_Mile();
+1306   4                  } else if (ram_a == 4) {
+1307   4                      Set_Show_MPH_KMH(144);
+1308   4                      km_mile_tmp = 444444;
+1309   4                      Set_Show_Km_Mile();
+1310   4                  } else if (ram_a == 5) {
+1311   4                      Set_Show_MPH_KMH(155);
+1312   4                      km_mile_tmp = 555555;
+1313   4                      Set_Show_Km_Mile();
+1314   4                  } else if (ram_a == 6) {
+1315   4                      Set_Show_MPH_KMH(166);
+1316   4                      km_mile_tmp = 666666;
+1317   4                      Set_Show_Km_Mile();
+1318   4                  } else if (ram_a == 7) {
+1319   4                      Set_Show_MPH_KMH(177);
+1320   4                      km_mile_tmp = 777777;
+1321   4                      Set_Show_Km_Mile();
+1322   4                  } else if (ram_a == 8) {
+1323   4                      Set_Show_MPH_KMH(188);
+1324   4                      km_mile_tmp = 888888;
+1325   4                      Set_Show_Km_Mile();
+1326   4                  }
+1327   3                  // else if(ram_a == 9){
+1328   3                  else {
+1329   4                      Set_Show_MPH_KMH(199);
+1330   4                      km_mile_tmp = 999999;
+1331   4                      Set_Show_Km_Mile();
+1332   4                  }
+1333   3              }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 23  
+
+1334   2              if ((act_tmp % 12) == 0) {
+1335   3                  ram_b++;
+1336   3                  if (ram_b == 1) {
+1337   4                      display_buff[9] |= (1 << 6);
+1338   4                      display_buff[11] |= (1 << 3);
+1339   4                  } else if (ram_b == 2) {
+1340   4                      display_buff[9] |= (1 << 5);
+1341   4                      display_buff[11] |= (1 << 4);
+1342   4                  } else if (ram_b == 3) {
+1343   4                      display_buff[9] |= (1 << 4);
+1344   4                      display_buff[11] |= (1 << 5);
+1345   4                  }
+1346   3                  // else if(ram_b == 4){
+1347   3                  else {
+1348   4                      display_buff[9] |= (1 << 3);
+1349   4                      display_buff[11] |= (1 << 6);
+1350   4                  }
+1351   3              }
+1352   2      
+1353   2              if (ram_d > 60) {
+1354   3                  powup_stp = 6;
+1355   3                  act_tmp = 0;
+1356   3              }
+1357   2          } else if (powup_stp == 6) {
+1358   2              for (ram_a = 0; ram_a <= 16; ram_a++) {
+1359   3                  display_buff[ram_a] = 0x0000;
+1360   3              }
+1361   2      
+1362   2              display_buff[7] |= (0xFF << 4); //Ê±ËÙÊý×Ö
+1363   2              display_buff[6] |= (0x3FFF);    //
+1364   2              display_buff[7] |= (0xF000);    //Ê±ËÙ¿ò
+1365   2      
+1366   2              display_buff[14] |= (7 << 7); //×ªËÙµ¥Î»Í¼±ê
+1367   2              display_buff[12] |= (0x7F << 9);
+1368   2              display_buff[11] |= (1 << 0); //×ªËÙÊý×Ö
+1369   2              display_buff[12] |= (0x3F << 0);
+1370   2              display_buff[13] |= 0xFFF0; //×ªËÙ¿ò
+1371   2      
+1372   2              display_buff[14] |= (1 << 12); //GEAR
+1373   2      
+1374   2              display_buff[12] |= (1 << 6);
+1375   2              display_buff[12] |= (1 << 8);
+1376   2              display_buff[12] |= (1 << 7); //ÓÍÁ¿Í¼±ê
+1377   2      
+1378   2              display_buff[15] |= (1 << 14);
+1379   2              display_buff[11] |= (1 << 1);
+1380   2              display_buff[15] |= (1 << 13); //µçÁ¿Í¼±ê
+1381   2      
+1382   2              act_tmp++;
+1383   2              if (act_tmp > 10) {
+1384   3                  act_tmp = 0;
+1385   3      
+1386   3                  powup_en = 0;
+1387   3              }
+1388   2          }
+1389   1      }
+1390          
+1391          /******************************************************************************************************/
+1392          void Deal_ShowDat_Pro()
+1393          {
+1394   1          if (powup_en)
+1395   1              return;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 24  
+
+1396   1      
+1397   1          if (deal_showdat_en == 0)
+1398   1              return;
+1399   1          deal_showdat_en = 0;
+1400   1          //50ms
+1401   1      
+1402   1          shake_cnt++;
+1403   1          if (shake_cnt < 10) {
+1404   2              shake_show_en = 1;
+1405   2          } else if (shake_cnt < 20) {
+1406   2              shake_show_en = 0;
+1407   2          } else {
+1408   2              shake_cnt = 0;
+1409   2          }
+1410   1      
+1411   1          chg_shake_cnt++;
+1412   1          if (chg_shake_cnt < 10) {
+1413   2              chg_shake_show_en = 1;
+1414   2          } else if (chg_shake_cnt < 20) {
+1415   2              chg_shake_show_en = 0;
+1416   2          } else {
+1417   2              chg_shake_cnt = 0;
+1418   2          }
+1419   1          //------------------------
+1420   1          // fe_en = 1;
+1421   1          // if(fe_en){
+1422   1          //  display_buff[12] |= 0x0140;
+1423   1          // }
+1424   1      
+1425   1          if (instrument_info.left_turn_status) {
+1426   2              display_buff[1] |= (1 << 8);
+1427   2              display_buff[4] |= (1 << 4); //×ó×ª
+1428   2          } else {
+1429   2              display_buff[1] &= ~(1 << 8);
+1430   2              display_buff[4] &= ~(1 << 4);
+1431   2          }
+1432   1          if (instrument_info.high_beam_status) {
+1433   2              display_buff[14] |= (1 << 14); //Ô¶¹âµÆ
+1434   2          } else {
+1435   2              display_buff[14] &= ~(1 << 14);
+1436   2          }
+1437   1          if (instrument_info.right_turn_status) {
+1438   2              display_buff[4] |= (3 << 9); //ÓÒ×ª
+1439   2          } else {
+1440   2              display_buff[4] &= ~(3 << 9);
+1441   2          }
+1442   1          //---------------------------------
+1443   1          //ÓÍÁ¿ÏÔÊ¾
+1444   1          display_buff[9] &= ~(0x1F << 3);
+1445   1          display_buff[12] &= ~(1 << 7); //ÓÍÁ¿Í¼±ê
+1446   1      
+1447   1          display_buff[12] |= (1 << 6);
+1448   1          display_buff[12] |= (1 << 8);
+1449   1      
+1450   1          if (instrument_info.oil_percent == 0xFF) {
+1451   2              show_gas_cnt = 0;
+1452   2              show_gas_tmp = 0;
+1453   2              show_gas_var = 0;
+1454   2              if (shake_show_en) {
+1455   3                  display_buff[12] |= (1 << 7); //ÓÍÁ¿Í¼±ê
+1456   3      
+1457   3                  display_buff[9] |= (1 << 7);
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 25  
+
+1458   3              }
+1459   2          } else {
+1460   2              if (instrument_info.oil_percent > 100)
+1461   2                  instrument_info.oil_percent = 100;
+1462   2              display_buff[12] |= (1 << 7);
+1463   2      
+1464   2              show_gas_cnt++;
+1465   2              if (show_gas_cnt >= 60) {
+1466   3                  show_gas_cnt = 0;
+1467   3      
+1468   3                  if (instrument_info.oil_percent < 10) {
+1469   4                      show_gas_tmp = 0;
+1470   4                  } else if (instrument_info.oil_percent < 30) {
+1471   4                      show_gas_tmp = 1;
+1472   4                  } else if (instrument_info.oil_percent < 60) {
+1473   4                      show_gas_tmp = 2;
+1474   4                  } else if (instrument_info.oil_percent < 90) {
+1475   4                      show_gas_tmp = 3;
+1476   4                  } else {
+1477   4                      show_gas_tmp = 4;
+1478   4                  }
+1479   3      
+1480   3                  if (show_gas_var != show_gas_tmp) {
+1481   4                      if (show_gas_var < show_gas_tmp) {
+1482   5                          show_gas_var++;
+1483   5                      } else {
+1484   5                          show_gas_var--;
+1485   5                      }
+1486   4                  }
+1487   3              }
+1488   2              switch (show_gas_var) {
+1489   3              default:
+1490   3              case 4:
+1491   3                  display_buff[9] |= (1 << 3);
+1492   3              case 3:
+1493   3                  display_buff[9] |= (1 << 4);
+1494   3              case 2:
+1495   3                  display_buff[9] |= (1 << 5);
+1496   3              case 1:
+1497   3                  display_buff[9] |= (1 << 6);
+1498   3              case 0:
+1499   3                  display_buff[9] |= (1 << 7);
+1500   3                  break;
+1501   3              }
+1502   2          }
+1503   1          //---------------------------------
+1504   1          //µçÁ¿ÏÔÊ¾
+1505   1          display_buff[15] |= (1 << 14);
+1506   1          display_buff[11] |= (1 << 1);
+1507   1          display_buff[11] &= ~(0x1F << 2);
+1508   1      
+1509   1          display_buff[15] &= ~(1 << 13); //µçÁ¿Í¼±ê
+1510   1      
+1511   1          if (warm_battery_en) {
+1512   2              display_buff[15] |= (1 << 13); //µçÁ¿Í¼±ê
+1513   2          }
+1514   1      
+1515   1          battery_tmp = instrument_info.battery_percent / 10;
+1516   1          switch (battery_tmp) {
+1517   2          case 10:
+1518   2          case 9:
+1519   2              display_buff[11] |= (1 << 6);
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 26  
+
+1520   2          case 8:
+1521   2          case 7:
+1522   2              display_buff[11] |= (1 << 5);
+1523   2          case 6:
+1524   2          case 5:
+1525   2              display_buff[11] |= (1 << 4);
+1526   2          case 4:
+1527   2          case 3:
+1528   2              display_buff[11] |= (1 << 3);
+1529   2          case 2:
+1530   2          case 1:
+1531   2          case 0:
+1532   2              display_buff[11] |= (1 << 2);
+1533   2          default:
+1534   2              break;
+1535   2          }
+1536   1          //*********************************************
+1537   1          //µµÎ»ÏÔÊ¾
+1538   1          display_buff[14] |= (1 << 12); //GEAR
+1539   1      
+1540   1          display_buff[14] &= ~(1 << 10); //Nµµ
+1541   1          display_buff[14] &= ~0x007F;
+1542   1      
+1543   1          if (instrument_info.gear_status == 0xFF) {
+1544   2      
+1545   2          } else if (instrument_info.gear_status == 0) {
+1546   2              display_buff[14] |= (1 << 10);
+1547   2          } else {
+1548   2              if (instrument_info.gear_status > 6)
+1549   2                  instrument_info.gear_status = 6;
+1550   2              display_buff[14] |= SHOW_NUM[instrument_info.gear_status];
+1551   2          }
+1552   1          //*********************************************
+1553   1          //×ªËÙÏÔÊ¾
+1554   1          display_buff[14] |= (7 << 7); //×ªËÙµ¥Î»Í¼±ê
+1555   1          display_buff[12] |= (0x7F << 9);
+1556   1          display_buff[11] |= (1 << 0); //×ªËÙÊý×Ö
+1557   1      
+1558   1          if (chg_en) {
+1559   2              if (shake_en) {
+1560   3                  enter_chg_cnt++;
+1561   3                  if ((enter_chg_cnt & 0x04) == 0) {
+1562   4                      display_buff[12] &= ~(0x3F << 0);
+1563   4                      display_buff[13] &= ~0xFFF0; //×ªËÙ¿ò
+1564   4                  } else {
+1565   4                      display_buff[12] |= (0x3F << 0);
+1566   4                      display_buff[13] |= 0xFFF0; //×ªËÙ¿ò
+1567   4                  }
+1568   3                  if (shake_deb) {
+1569   4                      shake_deb--;
+1570   4                      if (shake_deb == 0) {
+1571   5                          shake_en = 0;
+1572   5                          chg_stp = 0;
+1573   5                          chg_deb = 100; //10sÍË³öµ÷ÕûÄ£Ê½
+1574   5                      }
+1575   4                  }
+1576   3              } else {
+1577   3                  display_buff[12] &= ~(0x3F << 0);
+1578   3                  display_buff[13] &= ~0xFFF0; //×ªËÙ¿ò
+1579   3              }
+1580   2          } else {
+1581   2              display_buff[12] |= (0x3F << 0);
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 27  
+
+1582   2              display_buff[13] |= 0xFFF0; //×ªËÙ¿ò
+1583   2          }
+1584   1      
+1585   1          // if(instrument_info.engine_speed == 0){
+1586   1          //  display_buff[11] &= ~(0x01FF<<7);
+1587   1          //  display_buff[10] &= ~0xFFFF;
+1588   1          //  display_buff[9] &= ~(0x07<<0);
+1589   1          // }
+1590   1          // else{
+1591   1          speed_tmp = instrument_info.engine_speed / 500;
+1592   1          if ((instrument_info.engine_speed % 500) > 450) {
+1593   2              speed_tmp++;
+1594   2          }
+1595   1          if (speed_tmp != show_speed_var) {
+1596   2              if (speed_tmp > show_speed_var) {
+1597   3                  show_speed_var++;
+1598   3              } else {
+1599   3                  show_speed_var--;
+1600   3              }
+1601   2          } else if (instrument_info.engine_speed == 0) {
+1602   2              display_buff[11] &= ~(0x01FF << 7);
+1603   2              display_buff[10] &= ~0xFFFF;
+1604   2              display_buff[9] &= ~(0x07 << 0);
+1605   2              goto Show_RPM_End;
+1606   2          }
+1607   1          Rpm_Show_Pro(show_speed_var);
+1608   1      Show_RPM_End:
+1609   1          // }
+1610   1          //*********************************************
+1611   1          //Ê±ËÙ
+1612   1          display_buff[7] |= (0xFF << 4); //Ê±ËÙÊý×Ö
+1613   1          display_buff[6] |= (0x3FFF);    //
+1614   1          display_buff[7] |= (0xF000);    //Ê±ËÙ¿ò
+1615   1      
+1616   1          display_buff[4] &= ~(1 << 1); //mph
+1617   1          display_buff[4] &= ~(1 << 2); //kmh
+1618   1      
+1619   1          display_buff[5] &= ~(1 << 2);
+1620   1          display_buff[4] &= ~(1 << 3);    //1
+1621   1          display_buff[5] &= ~(0x7F << 3); //8
+1622   1          display_buff[5] &= ~(0x3F << 10);
+1623   1          display_buff[4] &= ~(1 << 0); //8
+1624   1      
+1625   1          if ((chg_en) && (chg_stp == 1)) {
+1626   2              if (chg_shake_show_en) {
+1627   3                  if (km_en == 0) {
+1628   4                      display_buff[4] |= (1 << 1); //mph
+1629   4                  } else {
+1630   4                      display_buff[4] |= (1 << 2); //kmh
+1631   4                  }
+1632   3              }
+1633   2          } else if (km_en == 0) {
+1634   2              display_buff[4] |= (1 << 1); //mph
+1635   2          } else {
+1636   2              display_buff[4] |= (1 << 2); //kmh
+1637   2          }
+1638   1      
+1639   1          if (km_en == 0) {
+1640   2              // display_buff[4] |= (1<<1);   //mph
+1641   2              Show_MPH_Pro();
+1642   2              Set_Show_MPH_KMH(mph_tmp);
+1643   2          } else {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 28  
+
+1644   2              // display_buff[4] |= (1<<2);   //kmh
+1645   2              Show_KMH_Pro();
+1646   2              Set_Show_MPH_KMH(kmh_tmp);
+1647   2          }
+1648   1          if (km_en == 0) {
+1649   2              if (mph_tmp) {
+1650   3                  u8_tmp = mph_tmp / 5;
+1651   3                  if (u8_tmp == 0) {
+1652   4                      u8_tmp = 1;
+1653   4                  } else {
+1654   4                      u8_tmp += 1;
+1655   4                  }
+1656   3              } else {
+1657   3                  u8_tmp = 0;
+1658   3              }
+1659   2              Speed_Show_Pro(u8_tmp);
+1660   2          } else {
+1661   2              if (kmh_tmp) {
+1662   3                  u8_tmp = kmh_tmp / 5;
+1663   3                  if (u8_tmp == 0) {
+1664   4                      u8_tmp = 1;
+1665   4                  } else {
+1666   4                      u8_tmp += 1;
+1667   4                  }
+1668   3              } else {
+1669   3                  u8_tmp = 0;
+1670   3              }
+1671   2              Speed_Show_Pro(u8_tmp);
+1672   2          }
+1673   1          //*********************************************
+1674   1          //Àï³Ì
+1675   1          display_buff[4] &= ~(3 << 5); //TOTAL
+1676   1          display_buff[4] &= ~(1 << 7); //TRIP
+1677   1      
+1678   1          display_buff[1] &= ~(1 << 6); //mile
+1679   1          display_buff[1] &= ~(1 << 7); //km
+1680   1      
+1681   1          display_buff[4] &= ~(0x1F << 11);
+1682   1          display_buff[3] &= ~0x0003;      //
+1683   1          display_buff[3] &= ~(0x7F << 2); //
+1684   1          display_buff[3] &= ~(0x7F << 9); //
+1685   1          display_buff[2] &= ~(0x7F << 0); //
+1686   1          display_buff[2] &= ~(0x7F << 7); //
+1687   1          display_buff[2] &= ~(1 << 14);   //Ð¡Êýµã
+1688   1          display_buff[2] &= ~(1 << 15);
+1689   1          display_buff[1] &= ~0x003F; //
+1690   1      
+1691   1          if ((chg_en) && (chg_stp == 1)) {
+1692   2              if (chg_shake_show_en) {
+1693   3                  if (km_en == 0) {
+1694   4                      display_buff[1] |= (1 << 6); //mile
+1695   4                  } else {
+1696   4                      display_buff[1] |= (1 << 7); //km
+1697   4                  }
+1698   3              }
+1699   2          } else if (km_en == 0) {
+1700   2              display_buff[1] |= (1 << 6); //mile
+1701   2          } else {
+1702   2              display_buff[1] |= (1 << 7); //km
+1703   2          }
+1704   1      
+1705   1          if (km_en == 0) {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 29  
+
+1706   2              // display_buff[1] |= (1<<6);   //mile
+1707   2              if (odo_en) {
+1708   3                  display_buff[4] |= (3 << 5); //TOTAL
+1709   3                  // display_buff[2] |= (1<<14);      //Ð¡Êýµã
+1710   3                  km_mile_tmp = instrument_info.total_mileage_with_mile;
+1711   3              } else {
+1712   3                  display_buff[4] |= (1 << 7);  //TRIP
+1713   3                  display_buff[2] |= (1 << 14); //Ð¡Êýµã
+1714   3                  km_mile_tmp = instrument_info.subtotal_mileage_with_mile;
+1715   3              }
+1716   2          } else {
+1717   2              // display_buff[1] |= (1<<7);   //km
+1718   2              if (odo_en) {
+1719   3                  display_buff[4] |= (3 << 5); //TOTAL
+1720   3                  // display_buff[2] |= (1<<14);      //Ð¡Êýµã
+1721   3                  km_mile_tmp = instrument_info.total_mileage_with_km;
+1722   3              } else {
+1723   3                  display_buff[4] |= (1 << 7);  //TRIP
+1724   3                  display_buff[2] |= (1 << 14); //Ð¡Êýµã
+1725   3                  km_mile_tmp = instrument_info.subtotal_mileage_with_km;
+1726   3              }
+1727   2          }
+1728   1      
+1729   1      #if 0
+                      km_mile_tmp = 123456;
+              #endif
+1732   1      
+1733   1          Set_Show_Km_Mile();
+1734   1      
+1735   1          // show_tmp = km_mile_tmp%10;
+1736   1          // u8_tmp = SHOW_NUM[show_tmp];
+1737   1          // if(u8_tmp&SEG_A){
+1738   1          //  display_buff[2] |= (1<<15);
+1739   1          // }
+1740   1          // display_buff[1] |= SHOW_NUM[show_tmp]>>1;
+1741   1          // km_mile_tmp /= 10;
+1742   1          // show_tmp = km_mile_tmp%10;
+1743   1          // display_buff[2] |= SHOW_NUM[show_tmp]<<7;
+1744   1      
+1745   1          // km_mile_tmp /= 10;
+1746   1          // if(km_mile_tmp){
+1747   1          //  show_tmp = km_mile_tmp%10;
+1748   1          //  display_buff[2] |= SHOW_NUM[show_tmp];
+1749   1          // }
+1750   1          // km_mile_tmp /= 10;
+1751   1          // if(km_mile_tmp){
+1752   1          //  show_tmp = km_mile_tmp%10;
+1753   1          //  display_buff[3] |= SHOW_NUM[show_tmp]<<9;
+1754   1          // }
+1755   1          // km_mile_tmp /= 10;
+1756   1          // if(km_mile_tmp){
+1757   1          //  show_tmp = km_mile_tmp%10;
+1758   1          //  display_buff[3] |= SHOW_NUM[show_tmp]<<2;
+1759   1          // }
+1760   1          // km_mile_tmp /= 10;
+1761   1          // if(km_mile_tmp){
+1762   1          //  show_tmp = km_mile_tmp%10;
+1763   1          //  display_buff[4] |= SHOW_NUM[show_tmp]<<11;
+1764   1          //  u8_tmp = SHOW_NUM[show_tmp];
+1765   1          //  if(u8_tmp&SEG_F){
+1766   1          //          display_buff[3] |= (1<<0);
+1767   1          //  }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 30  
+
+1768   1          //  if(u8_tmp&SEG_G){
+1769   1          //          display_buff[3] |= (1<<1);
+1770   1          //  }
+1771   1          // }
+1772   1      
+1773   1          /*
+1774   1              // if(keyled_en){
+1775   1                      display_buff[0] |= 0x0F00;
+1776   1              // }
+1777   1              // if(felh_en){
+1778   1                      display_buff[10] |= (1<<3);//L
+1779   1                      display_buff[8] |= (1<<3);//H
+1780   1                      display_buff[6] |= (1<<7);//F
+1781   1                      display_buff[7] |= (1<<10);//E
+1782   1              // }
+1783   1              // if(gear_en){
+1784   1                      display_buff[1] |= (3<<8);
+1785   1              // }
+1786   1              // if(x1000r_min_en){
+1787   1                      display_buff[8] |= 0x0F80;
+1788   1              // }
+1789   1              // if(frame_speed_en){//×ªËÙ¿ò+×ªËÙÊý×Ö
+1790   1                      display_buff[5] = 0xFFFF;
+1791   1                      display_buff[4] |= 0x00FF;
+1792   1                      display_buff[0] |= 0x0007;
+1793   1                      display_buff[1] |= 0xF000;
+1794   1              // }
+1795   1              //------------------------
+1796   1              if(instrument_info.left_turn_status){           //×ó×ª
+1797   1                      display_buff[7] |= (3<<5);
+1798   1              }
+1799   1              else{
+1800   1                      display_buff[7] &= ~(3<<5);
+1801   1              }
+1802   1              if(wd_en){              //ÎíµÆ
+1803   1                      display_buff[7] |= (3<<3);
+1804   1                      // Uart0_PutChar(key_val1&0x40);
+1805   1              }
+1806   1              else{
+1807   1                      display_buff[7] &= ~(3<<3);
+1808   1              }
+1809   1              if(xd_en){              //Ð¡µÆ
+1810   1                      display_buff[7] |= (3<<1);
+1811   1              }
+1812   1              else{
+1813   1                      display_buff[7] &= ~(3<<1);
+1814   1              }
+1815   1              if(instrument_info.high_beam_status){           //Ô¶¹âµÆ
+1816   1                      display_buff[8] |= (1<<15);
+1817   1                      display_buff[7] |= (1<<0);
+1818   1              }
+1819   1              else{
+1820   1                      display_buff[8] &= ~(1<<15);
+1821   1                      display_buff[7] &= ~(1<<0);
+1822   1              }
+1823   1              if(top_en){
+1824   1                      display_buff[8] |= (7<<12);
+1825   1              }
+1826   1              else{
+1827   1                      display_buff[8] &= ~(7<<12);
+1828   1              }
+1829   1              if(instrument_info.right_turn_status){          //ÓÒ×ª
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 31  
+
+1830   1                      display_buff[8] |= (3<<5);
+1831   1              }
+1832   1              else{
+1833   1                      display_buff[8] &= ~(3<<5);
+1834   1              }
+1835   1              //------------------------
+1836   1              if(fix_en){
+1837   1                      display_buff[7] |= (1<<7);
+1838   1              }
+1839   1              else{
+1840   1                      display_buff[7] &= ~(1<<7);
+1841   1              }
+1842   1              if(warm_water_temperature_en){
+1843   1                      display_buff[7] |= (1<<9);
+1844   1              }
+1845   1              else{
+1846   1                      display_buff[7] &= ~(1<<9);
+1847   1              }
+1848   1              if(warm_oil_temperature_en){
+1849   1                      display_buff[10] |= (3<<9);
+1850   1              }
+1851   1              else{
+1852   1                      display_buff[10] &= ~(3<<9);
+1853   1              }
+1854   1              if(warm_battery_en){
+1855   1                      display_buff[10] |= (3<<11);
+1856   1              }
+1857   1              else{
+1858   1                      display_buff[10] &= ~(3<<11);
+1859   1              }
+1860   1              if(pd_en){              //·¢¶¯»ú
+1861   1                      display_buff[10] |= (3<<13);
+1862   1              }
+1863   1              else{
+1864   1                      display_buff[10] &= ~(3<<13);
+1865   1              }
+1866   1              if(instrument_info.brake_status){               //É²³µ
+1867   1                      display_buff[0] |= (1<<3);
+1868   1              }
+1869   1              else{
+1870   1                      display_buff[0] &= ~(1<<3);
+1871   1              }
+1872   1              //---------------------------------
+1873   1              //²¥·ÅÉùÒô
+1874   1              if(bt_en){
+1875   1                      display_buff[1] |= (1<<11);
+1876   1              }
+1877   1              else{
+1878   1                      display_buff[1] &= ~(1<<11);
+1879   1              }
+1880   1              if(mp3_en){
+1881   1                      display_buff[12] |= (3<<14);
+1882   1              }
+1883   1              else{
+1884   1                      display_buff[12] &= ~(3<<14);
+1885   1              }
+1886   1              //---------------------------------
+1887   1              //Íâ¿òÏÔÊ¾,ÎÞÒôÁ¿Ê±È«ÏÔ,ÓÐÒôÁ¿Ê±,¸úËæÄÜÁ¿ÂÉ¶¯
+1888   1              display_buff[6] &= ~0xFF60;
+1889   1              display_buff[7] &= ~0x1800;
+1890   1              display_buff[8] &= ~0x0017;
+1891   1              display_buff[9] &= ~0xFC03;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 32  
+
+1892   1      
+1893   1              if(volpow_tmp == 0){
+1894   1                      VolPow_Show_Pro(11);
+1895   1              }
+1896   1              else{
+1897   1                      VolPow_Show_Pro(volpow_var-1);
+1898   1              }
+1899   1              //---------------------------------
+1900   1              //ÓÍÁ¿ÏÔÊ¾
+1901   1              display_buff[7] &= ~(3<<13);//
+1902   1              display_buff[7] &= ~(1<<15);
+1903   1              display_buff[6] &= ~(1<<0);//
+1904   1              display_buff[6] &= ~(3<<1);//
+1905   1              display_buff[6] &= ~(3<<3);//
+1906   1      
+1907   1              display_buff[7] &= ~(1<<8);
+1908   1      
+1909   1              // Uart0_PutChar(show_gas_var);
+1910   1              if(instrument_info.oil_percent == 0xFF){
+1911   1                      show_gas_cnt = 0;
+1912   1                      show_gas_tmp = 0;
+1913   1                      show_gas_var = 0;
+1914   1                      if(shake_show_en){
+1915   1                              display_buff[7] |= (1<<8);
+1916   1      
+1917   1                              display_buff[7] |= (3<<13);//
+1918   1                      }
+1919   1              }
+1920   1              else{
+1921   1                      if(instrument_info.oil_percent > 100) instrument_info.oil_percent = 100;
+1922   1                      display_buff[7] |= (1<<8);
+1923   1      
+1924   1                      show_gas_cnt++;
+1925   1                      if(show_gas_cnt >= 60){
+1926   1                              show_gas_cnt = 0;
+1927   1                              //3s±ä»¯Ò»´Î
+1928   1      
+1929   1                              if(instrument_info.oil_percent < 10){
+1930   1                                      show_gas_tmp = 0;
+1931   1                              }
+1932   1                              else if(instrument_info.oil_percent < 30){
+1933   1                                      show_gas_tmp = 1;
+1934   1                              }
+1935   1                              else if(instrument_info.oil_percent < 60){
+1936   1                                      show_gas_tmp = 2;
+1937   1                              }
+1938   1                              else if(instrument_info.oil_percent < 90){
+1939   1                                      show_gas_tmp = 3;
+1940   1                              }
+1941   1                              else{
+1942   1                                      show_gas_tmp = 4;
+1943   1                              }
+1944   1      
+1945   1                              if(show_gas_var != show_gas_tmp){
+1946   1                                      if(show_gas_var < show_gas_tmp){
+1947   1                                              show_gas_var++;
+1948   1                                      }
+1949   1                                      else{
+1950   1                                              show_gas_var--;
+1951   1                                      }
+1952   1                              }
+1953   1                      }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 33  
+
+1954   1                      switch(show_gas_var)
+1955   1                      {
+1956   1                              default:
+1957   1                              case 3:
+1958   1                                      display_buff[6] |= (3<<3);//
+1959   1                              case 2:
+1960   1                                      display_buff[6] |= (3<<1);//
+1961   1                              case 1:
+1962   1                                      display_buff[7] |= (1<<15);
+1963   1                                      display_buff[6] |= (1<<0);//
+1964   1                              case 0:
+1965   1                                      display_buff[7] |= (3<<13);//
+1966   1                                      break;
+1967   1                      }
+1968   1              }
+1969   1              //---------------------------------
+1970   1              //µçÁ¿ÏÔÊ¾
+1971   1              display_buff[9] &= ~(0xFF<<2);//
+1972   1              
+1973   1              battery_tmp = instrument_info.battery_percent/10;
+1974   1      
+1975   1              switch(battery_tmp)
+1976   1              {
+1977   1                      case 10:
+1978   1                      case 9:
+1979   1                              display_buff[9] |= (3<<8);
+1980   1                      case 8:
+1981   1                      case 7:
+1982   1                      case 6:
+1983   1                              display_buff[9] |= (3<<6);
+1984   1                      case 5:
+1985   1                      case 4:
+1986   1                              display_buff[9] |= (3<<4);
+1987   1                      case 3:
+1988   1                      case 2:
+1989   1                      case 1:
+1990   1                              display_buff[9] |= (3<<2);
+1991   1                      default:
+1992   1                              break;
+1993   1              }
+1994   1              
+1995   1              //---------------------------------
+1996   1              //µµÎ»ÏÔÊ¾
+1997   1              display_buff[0] &= ~(1<<15);
+1998   1              display_buff[1] &= ~(1<<7);
+1999   1              display_buff[1] &= ~0x007F;
+2000   1              
+2001   1              if(instrument_info.gear_status == 0xFF){
+2002   1      
+2003   1              }
+2004   1              else if(instrument_info.gear_status == 0){
+2005   1                      display_buff[0] |= (1<<15);
+2006   1                      display_buff[1] |= (1<<7);
+2007   1                      display_buff[1] &= ~(0x007F);
+2008   1              }
+2009   1              else{
+2010   1                      if(instrument_info.gear_status > 6) instrument_info.gear_status = 6;
+2011   1                      display_buff[1] |= SHOW_NUM[instrument_info.gear_status];
+2012   1              }
+2013   1              //*********************************************
+2014   1              //×ªËÙÏÔÊ¾
+2015   1              display_buff[3] = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 34  
+
+2016   1              display_buff[4] &= 0x00FF;
+2017   1      
+2018   1              if((instrument_info.engine_speed == 0) && (volpow_tmp != 0)){
+2019   1                      show_speed_var = 0;
+2020   1                      if(volpow_tmp == 0){
+2021   1                              goto    Show_Speed_Pro;
+2022   1                      }
+2023   1                      else{
+2024   1                              switch(volpow_var-1){
+2025   1                                      case 11:
+2026   1                                      case 10:
+2027   1                                              display_buff[3] |= (1<<3);
+2028   1                                              display_buff[3] |= (1<<4);
+2029   1                                      case 9:
+2030   1                                              display_buff[3] |= (1<<2);
+2031   1                                              display_buff[3] |= (1<<5);
+2032   1                                      case 8:
+2033   1                                              display_buff[3] |= (1<<1);
+2034   1                                              display_buff[3] |= (1<<6);
+2035   1                                      case 7:
+2036   1                                              display_buff[3] |= (1<<0);
+2037   1                                              display_buff[3] |= (1<<7);
+2038   1                                      case 6:
+2039   1                                              display_buff[4] |= (1<<15);
+2040   1                                              display_buff[3] |= (1<<8);
+2041   1                                      case 5:
+2042   1                                              display_buff[4] |= (1<<14);
+2043   1                                              display_buff[3] |= (1<<9);
+2044   1                                      case 4:
+2045   1                                              display_buff[4] |= (1<<13);
+2046   1                                              display_buff[3] |= (1<<10);
+2047   1                                      case 3:
+2048   1                                              display_buff[4] |= (1<<12);
+2049   1                                              display_buff[3] |= (1<<11);
+2050   1                                      case 2:
+2051   1                                              display_buff[4] |= (1<<11);
+2052   1                                              display_buff[3] |= (1<<12);
+2053   1                                      case 1:
+2054   1                                              display_buff[4] |= (1<<10);
+2055   1                                              display_buff[3] |= (1<<13);
+2056   1                                      case 0:
+2057   1                                              display_buff[4] |= (1<<8);
+2058   1                                              display_buff[4] |= (1<<9);
+2059   1                                              display_buff[3] |= (1<<14);
+2060   1                                              display_buff[3] |= (1<<15);
+2061   1                                              break;
+2062   1                                      default:
+2063   1                                              break;
+2064   1                              }
+2065   1                      }
+2066   1              }
+2067   1              else{
+2068   1      Show_Speed_Pro:
+2069   1                      speed_tmp = instrument_info.engine_speed/500;
+2070   1                      if((instrument_info.engine_speed%500) > 450){
+2071   1                              speed_tmp++;
+2072   1                      }
+2073   1                      // speed_tmp = speed_tmp/5;
+2074   1                      // Uart0_PutChar(instrument_info.engine_speed>>8);
+2075   1                      // Uart0_PutChar(instrument_info.engine_speed);
+2076   1      
+2077   1                      if(speed_tmp != show_speed_var){
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 35  
+
+2078   1                              if(speed_tmp > show_speed_var){
+2079   1                                      show_speed_var++;
+2080   1                              }
+2081   1                              else{
+2082   1                                      show_speed_var--;
+2083   1                              }
+2084   1                      }
+2085   1                      // Uart0_PutChar(show_speed_var);
+2086   1                      Speed_Show_Pro(show_speed_var);
+2087   1              }
+2088   1      
+2089   1              
+2090   1              display_buff[1] &= ~(1<<10);    //ÊÖ»úÍ¼±êÏÔÊ¾Çå³ý
+2091   1              
+2092   1              display_buff[15] &= ~0xFFFF;
+2093   1              display_buff[14] &= ~0x3FFF;    //Ê±ÖÓÏÔÊ¾Çå³ý
+2094   1              
+2095   1              display_buff[2] &= ~(1<<14);
+2096   1              display_buff[0] &= ~(1<<6);     //mph
+2097   1              display_buff[2] &= ~(1<<15);
+2098   1              display_buff[0] &= ~(1<<7);     //km/h
+2099   1              display_buff[11] &= ~(3<<14);   //miles
+2100   1              display_buff[10] &= ~(1<<8);            //km
+2101   1      
+2102   1              display_buff[0] &= ~(3<<4);
+2103   1              display_buff[2] &= ~0x3FFF;             //Ê±ËÙÏÔÊ¾Çå³ý
+2104   1      
+2105   1              display_buff[14] &= ~0xC000;
+2106   1              display_buff[13] &= ~0xFFFF;
+2107   1              display_buff[12] &= ~0x3FFF;
+2108   1              display_buff[11] &= ~0x3FFF;
+2109   1              display_buff[10] &= ~0x00FF;    //Àï³ÌÏÔÊ¾Çå³ý
+2110   1      
+2111   1              if(phone_en){
+2112   1                      display_buff[1] |= (1<<10);
+2113   1      
+2114   1                      switch(phone_len-1)
+2115   1                      {
+2116   1                              case 10:
+2117   1                              {
+2118   1                                      if(Phone_buff[10] >= 10){
+2119   1                                              display_buff[10] |= SHOW_NUM[10];
+2120   1                                      }
+2121   1                                      else{
+2122   1                                              display_buff[10] |= SHOW_NUM[Phone_buff[10]];
+2123   1                                      }
+2124   1                              }
+2125   1                              case 9:
+2126   1                              {
+2127   1                                      if(Phone_buff[9] >= 10){
+2128   1                                              display_buff[11] |= SHOW_NUM[10]<<7;
+2129   1                                      }
+2130   1                                      else{
+2131   1                                              display_buff[11] |= SHOW_NUM[Phone_buff[9]]<<7;
+2132   1                                      }
+2133   1                              }
+2134   1                              case 8:
+2135   1                              {
+2136   1                                      if(Phone_buff[8] >= 10){
+2137   1                                              display_buff[11] |= SHOW_NUM[10];
+2138   1                                      }
+2139   1                                      else{
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 36  
+
+2140   1                                              display_buff[11] |= SHOW_NUM[Phone_buff[8]];
+2141   1                                      }
+2142   1                              }
+2143   1                              case 7:
+2144   1                              {
+2145   1                                      if(Phone_buff[7] >= 10){
+2146   1                                              display_buff[12] |= SHOW_NUM[10]<<7;
+2147   1                                      }
+2148   1                                      else{
+2149   1                                              display_buff[12] |= SHOW_NUM[Phone_buff[7]]<<7;
+2150   1                                      }
+2151   1                              }
+2152   1                              case 6:
+2153   1                              {
+2154   1                                      if(Phone_buff[6] >= 10){
+2155   1                                              display_buff[12] |= SHOW_NUM[10];
+2156   1                                      }
+2157   1                                      else{
+2158   1                                              display_buff[12] |= SHOW_NUM[Phone_buff[6]];
+2159   1                                      }
+2160   1                              }
+2161   1                              case 5:
+2162   1                              {
+2163   1                                      if(Phone_buff[5] >= 10){
+2164   1                                              display_buff[13] |= SHOW_NUM[10]<<7;
+2165   1                                      }
+2166   1                                      else{
+2167   1                                              display_buff[13] |= SHOW_NUM[Phone_buff[5]]<<7;
+2168   1                                      }
+2169   1                              }
+2170   1                              case 4:
+2171   1                              {
+2172   1                                      if(Phone_buff[4] >= 10){
+2173   1                                              display_buff[13] |= SHOW_NUM[10];
+2174   1                                      }
+2175   1                                      else{
+2176   1                                              display_buff[13] |= SHOW_NUM[Phone_buff[4]];
+2177   1                                      }
+2178   1                              }
+2179   1                              case 3:
+2180   1                              {
+2181   1                                      if(Phone_buff[3] >= 10){
+2182   1                                              display_buff[14] |= SHOW_NUM[10]<<7;
+2183   1                                      }
+2184   1                                      else{
+2185   1                                              display_buff[14] |= SHOW_NUM[Phone_buff[3]]<<7;
+2186   1                                      }
+2187   1                              }
+2188   1                              case 2:
+2189   1                              {
+2190   1                                      if(Phone_buff[2] >= 10){
+2191   1                                              display_buff[14] |= SHOW_NUM[10];
+2192   1                                      }
+2193   1                                      else{
+2194   1                                              display_buff[14] |= SHOW_NUM[Phone_buff[2]];
+2195   1                                      }
+2196   1                              }
+2197   1                              case 1:
+2198   1                              {
+2199   1                                      if(Phone_buff[1] >= 10){
+2200   1                                              display_buff[15] |= SHOW_NUM[10]<<7;
+2201   1                                      }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 37  
+
+2202   1                                      else{
+2203   1                                              display_buff[15] |= SHOW_NUM[Phone_buff[1]]<<7;
+2204   1                                      }
+2205   1                              }
+2206   1                              case 0:
+2207   1                              {
+2208   1                                      if(Phone_buff[0] >= 10){
+2209   1                                              display_buff[15] |= SHOW_NUM[10];
+2210   1                                      }
+2211   1                                      else{
+2212   1                                              display_buff[15] |= SHOW_NUM[Phone_buff[0]];
+2213   1                                      }
+2214   1                              }
+2215   1                              default:
+2216   1                              break;
+2217   1                      }
+2218   1      
+2219   1                      //Ê±ËÙÏÔÊ¾
+2220   1                      if(km_en){
+2221   1                              Show_KMH_Pro();
+2222   1                      }
+2223   1                      else{
+2224   1                              Show_MPH_Pro();
+2225   1                      }
+2226   1                      return;
+2227   1              }
+2228   1              
+2229   1              //*********************************************
+2230   1              //Ê±ÖÓÏÔÊ¾
+2231   1              // display_buff[15] &= ~0xFFFF;
+2232   1              // display_buff[14] &= ~0x3FFF;
+2233   1              
+2234   1              display_buff[15] |= (1<<15);
+2235   1              if(chg_time_en){
+2236   1                      if(shake_show_en){
+2237   1                              display_buff[15] |= (1<<14);            //Ã°ºÅ
+2238   1                      }
+2239   1                      if(chg_hour_en){
+2240   1                              if(chg_shake_show_en){
+2241   1                                      show_tmp = hour_var/10;
+2242   1                                      if(show_tmp == 0){
+2243   1                                              display_buff[15] |= SHOW_NUM[0];                //0
+2244   1                                      }
+2245   1                                      else if(show_tmp == 1){
+2246   1                                              display_buff[15] |= SHOW_NUM[1];                //1
+2247   1                                      }
+2248   1                                      else{
+2249   1                                              display_buff[15] |= SHOW_NUM[2];                //2
+2250   1                                      }
+2251   1                                      show_tmp = hour_var%10;
+2252   1                                      display_buff[15] |= SHOW_NUM[show_tmp]<<7;
+2253   1                              }
+2254   1                              show_tmp = min_var/10;
+2255   1                              display_buff[14] |= SHOW_NUM[show_tmp];
+2256   1                              show_tmp = min_var%10;
+2257   1                              display_buff[14] |= SHOW_NUM[show_tmp]<<7;
+2258   1                      }
+2259   1                      else{
+2260   1                              if(chg_shake_show_en){
+2261   1                                      show_tmp = min_var/10;
+2262   1                                      display_buff[14] |= SHOW_NUM[show_tmp];
+2263   1                                      show_tmp = min_var%10;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 38  
+
+2264   1                                      display_buff[14] |= SHOW_NUM[show_tmp]<<7;
+2265   1                              }
+2266   1                              show_tmp = hour_var/10;
+2267   1                              if(show_tmp == 0){
+2268   1                                      display_buff[15] |= SHOW_NUM[0];                //0
+2269   1                              }
+2270   1                              else if(show_tmp == 1){
+2271   1                                      display_buff[15] |= SHOW_NUM[1];                //1
+2272   1                              }
+2273   1                              else{
+2274   1                                      display_buff[15] |= SHOW_NUM[2];                //2
+2275   1                              }
+2276   1                              show_tmp = hour_var%10;
+2277   1                              display_buff[15] |= SHOW_NUM[show_tmp]<<7;
+2278   1                      }
+2279   1              }
+2280   1              else{
+2281   1                      show_tmp = hour_var/10;
+2282   1                      if(show_tmp == 0){
+2283   1                              display_buff[15] |= SHOW_NUM[0];                //0
+2284   1                      }
+2285   1                      else if(show_tmp == 1){
+2286   1                              display_buff[15] |= SHOW_NUM[1];                //1
+2287   1                      }
+2288   1                      else{
+2289   1                              display_buff[15] |= SHOW_NUM[2];                //2
+2290   1                      }
+2291   1                      show_tmp = hour_var%10;
+2292   1                      display_buff[15] |= SHOW_NUM[show_tmp]<<7;
+2293   1                      
+2294   1                      show_tmp = min_var/10;
+2295   1                      display_buff[14] |= SHOW_NUM[show_tmp];
+2296   1                      show_tmp = min_var%10;
+2297   1                      display_buff[14] |= SHOW_NUM[show_tmp]<<7;
+2298   1                      
+2299   1                      if(shake_show_en){              //Ã°ºÅ
+2300   1                              display_buff[15] |= (1<<14);
+2301   1                      }
+2302   1                      else{
+2303   1                              display_buff[15] &= ~(1<<14);
+2304   1                      }
+2305   1              }
+2306   1      
+2307   1              //*********************************************
+2308   1              //¹«ÀïÊý
+2309   1              // display_buff[2] &= ~(1<<14);
+2310   1              // display_buff[0] &= ~(1<<6);  //mph
+2311   1              // display_buff[2] &= ~(1<<15);
+2312   1              // display_buff[0] &= ~(1<<7);  //km/h
+2313   1              // display_buff[11] &= ~(3<<14);        //miles
+2314   1              // display_buff[10] &= ~(1<<8);         //km
+2315   1      
+2316   1              // display_buff[0] &= ~(3<<4);
+2317   1              // display_buff[2] &= ~0x3FFF;
+2318   1      
+2319   1              // display_buff[14] &= ~0xC000;
+2320   1              // display_buff[13] &= ~0xFFFF;
+2321   1              // display_buff[12] &= ~0x3FFF;
+2322   1              // display_buff[11] &= ~0x3FFF;
+2323   1              // display_buff[10] &= ~0x00FF;
+2324   1      
+2325   1              if(chg_show_en){
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 39  
+
+2326   1                      if(chg_shake_show_en){
+2327   1                              if(km_en){
+2328   1                                      display_buff[2] &= ~(1<<14);
+2329   1                                      display_buff[0] &= ~(1<<6);             //mph
+2330   1                                      display_buff[2] |= (1<<15);
+2331   1                                      display_buff[0] |= (1<<7);              //km/h
+2332   1                                      display_buff[11] &= ~(3<<14);   //miles
+2333   1                                      display_buff[10] |= (1<<8);             //km
+2334   1                              }
+2335   1                              else{
+2336   1                                      display_buff[2] |= (1<<14);
+2337   1                                      display_buff[0] |= (1<<6);              //mph
+2338   1                                      display_buff[2] &= ~(1<<15);
+2339   1                                      display_buff[0] &= ~(1<<7);             //km/h
+2340   1                                      display_buff[11] |= (3<<14);    //miles
+2341   1                                      display_buff[10] &= ~(1<<8);    //km
+2342   1                              }
+2343   1                      }
+2344   1                      // return;
+2345   1              }
+2346   1              else if(km_en){
+2347   1                      display_buff[2] |= (1<<15);
+2348   1                      display_buff[0] |= (1<<7);              //km/h
+2349   1                      display_buff[10] |= (1<<8);             //km
+2350   1              }
+2351   1              else{
+2352   1                      display_buff[2] |= (1<<14);
+2353   1                      display_buff[0] |= (1<<6);      //mph
+2354   1                      display_buff[11] |= (3<<14);    //miles
+2355   1              }
+2356   1      
+2357   1              
+2358   1              if(km_en){                                              //¹«ÀïÃ¿Ð¡Ê±/¹«ÀïÊýÏÔÊ¾
+2359   1                      // display_buff[2] |= (1<<15);
+2360   1                      // display_buff[0] |= (1<<7);           //km/h
+2361   1                      // display_buff[10] |= (1<<8);          //km
+2362   1                      
+2363   1                      // //¹«ÀïÃ¿Ð¡Ê±ÏÔÊ¾
+2364   1                      // if(instrument_info.speed_with_km != kmh_tmp){
+2365   1                      //      if(instrument_info.speed_with_km > kmh_tmp){
+2366   1                      //              kmh_tmp++;
+2367   1                      //      }
+2368   1                      //      else{
+2369   1                      //              kmh_tmp--;
+2370   1                      //      }
+2371   1                      // }
+2372   1                      
+2373   1                      // u8_tmp = kmh_tmp;
+2374   1                      // show_tmp = u8_tmp%10;
+2375   1                      // display_buff[2] |= SHOW_NUM[show_tmp]<<7;
+2376   1                      // u8_tmp /= 10;
+2377   1                      // show_tmp = u8_tmp%10;
+2378   1                      // display_buff[2] |= SHOW_NUM[show_tmp];
+2379   1                      // u8_tmp /= 10;
+2380   1                      // if(u8_tmp){
+2381   1                      //      display_buff[0] &= ~(3<<4);
+2382   1                      // }
+2383   1                      // else if((display_buff[2]&0x007F) == SHOW_0){
+2384   1                      //      display_buff[2] &= 0xFF80;
+2385   1                      // }
+2386   1                      Show_KMH_Pro();
+2387   1                      
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 40  
+
+2388   1                      //¹«ÀïÏÔÊ¾
+2389   1                      if(odo_en){                     //ODOÏÔÊ¾,×ÜÀï³Ì
+2390   1                              display_buff[13] |= (3<<14);            //ODO
+2391   1      
+2392   1                              km_mile_tmp = instrument_info.total_mileage_with_km;
+2393   1                      }
+2394   1                      else{                   //TRIPÏÔÊ¾,Ð¡¼ÆÀï³Ì
+2395   1                              display_buff[14] |= (3<<14);            //TRLP
+2396   1                              display_buff[10] |= (1<<7);             //Ð¡Êýµã
+2397   1      
+2398   1                              km_mile_tmp = instrument_info.subtotal_mileage_with_km;
+2399   1                      }
+2400   1              }
+2401   1              else{                                                   //Ó¢ÀïÃ¿Ð¡Ê±/Ó¢ÀïÊýÏÔÊ¾
+2402   1                      // display_buff[2] |= (1<<14);
+2403   1                      // display_buff[0] |= (1<<6);   //mph
+2404   1                      // display_buff[11] |= (3<<14); //miles
+2405   1                      
+2406   1                      // //Ó¢ÀïÃ¿Ð¡Ê±ÏÔÊ¾
+2407   1                      // if(instrument_info.speed_with_mile != mph_tmp){
+2408   1                      //      if(instrument_info.speed_with_mile > mph_tmp){
+2409   1                      //              mph_tmp++;
+2410   1                      //      }
+2411   1                      //      else{
+2412   1                      //              mph_tmp--;
+2413   1                      //      }
+2414   1                      // }
+2415   1                      
+2416   1                      // u8_tmp = kmh_tmp;
+2417   1                      // show_tmp = u8_tmp%10;
+2418   1                      // display_buff[2] |= SHOW_NUM[show_tmp]<<7;
+2419   1                      // u8_tmp /= 10;
+2420   1                      // show_tmp = u8_tmp%10;
+2421   1                      // display_buff[2] |= SHOW_NUM[show_tmp];
+2422   1                      // u8_tmp /= 10;
+2423   1                      // if(u8_tmp){
+2424   1                      //      display_buff[0] &= ~(3<<4);
+2425   1                      // }
+2426   1                      // else if((display_buff[2]&0x007F) == SHOW_0){
+2427   1                      //      display_buff[2] &= 0xFF80;
+2428   1                      // }
+2429   1                      
+2430   1                      Show_MPH_Pro();
+2431   1                      
+2432   1                      //Ó¢ÀïÏÔÊ¾
+2433   1                      if(odo_en){                     //ODOÏÔÊ¾,×ÜÀï³Ì
+2434   1                              display_buff[13] |= (3<<14);            //ODO
+2435   1                              
+2436   1                              km_mile_tmp = instrument_info.total_mileage_with_mile;
+2437   1              //         Uart0_PutChar(instrument_info.total_mileage_with_mile >> 24);
+2438   1          //         Uart0_PutChar(instrument_info.total_mileage_with_mile >> 16);
+2439   1          //         Uart0_PutChar(instrument_info.total_mileage_with_mile >> 8);
+2440   1          //         Uart0_PutChar(instrument_info.total_mileage_with_mile);
+2441   1              // Uart0_PutChar(km_mile_tmp >> 24);
+2442   1          // Uart0_PutChar(km_mile_tmp >> 16);
+2443   1          // Uart0_PutChar(km_mile_tmp >> 8);
+2444   1          // Uart0_PutChar(km_mile_tmp);
+2445   1                      }
+2446   1                      else{                   //TRIPÏÔÊ¾,Ð¡¼ÆÀï³Ì
+2447   1                              display_buff[14] |= (3<<14);            //TRLP
+2448   1                              display_buff[10] |= (1<<7);             //Ð¡Êýµã
+2449   1                              
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 41  
+
+2450   1                              km_mile_tmp = instrument_info.subtotal_mileage_with_mile;
+2451   1                      }
+2452   1              }
+2453   1              // km_mile_tmp = 12345678;
+2454   1              //         Uart0_PutChar(instrument_info.total_mileage_with_km >> 24);
+2455   1          //         Uart0_PutChar(instrument_info.total_mileage_with_km >> 16);
+2456   1          //         Uart0_PutChar(instrument_info.total_mileage_with_km >> 8);
+2457   1          //         Uart0_PutChar(instrument_info.total_mileage_with_km);
+2458   1              // Uart0_PutChar(km_mile_tmp >> 24);
+2459   1          // Uart0_PutChar(km_mile_tmp >> 16);
+2460   1          // Uart0_PutChar(km_mile_tmp >> 8);
+2461   1          // Uart0_PutChar(km_mile_tmp);
+2462   1      
+2463   1              show_tmp = km_mile_tmp%10;
+2464   1              display_buff[10] |= SHOW_NUM[show_tmp];
+2465   1              km_mile_tmp /= 10;
+2466   1              show_tmp = km_mile_tmp%10;
+2467   1              display_buff[11] |= SHOW_NUM[show_tmp]<<7;
+2468   1              km_mile_tmp /= 10;
+2469   1              show_tmp = km_mile_tmp%10;
+2470   1              display_buff[11] |= SHOW_NUM[show_tmp];
+2471   1              km_mile_tmp /= 10;
+2472   1              show_tmp = km_mile_tmp%10;
+2473   1              display_buff[12] |= SHOW_NUM[show_tmp]<<7;
+2474   1              km_mile_tmp /= 10;
+2475   1              show_tmp = km_mile_tmp%10;
+2476   1              display_buff[12] |= SHOW_NUM[show_tmp];
+2477   1              km_mile_tmp /= 10;
+2478   1              show_tmp = km_mile_tmp%10;
+2479   1              display_buff[13] |= SHOW_NUM[show_tmp]<<7;
+2480   1              km_mile_tmp /= 10;
+2481   1              show_tmp = km_mile_tmp%10;
+2482   1              display_buff[13] |= SHOW_NUM[show_tmp];
+2483   1      
+2484   1              if((display_buff[13]&0x007F) == SHOW_0){
+2485   1                      display_buff[13] &= ~0x007F;
+2486   1      
+2487   1                      show_tmp = display_buff[13]>>7;
+2488   1                      if((show_tmp&0x007F) == SHOW_0){
+2489   1                              display_buff[13] &= ~0x3F80;
+2490   1      
+2491   1                              if((display_buff[12]&0x007F) == SHOW_0){
+2492   1                                      display_buff[12] &= ~0x007F;
+2493   1      
+2494   1                                      show_tmp = display_buff[12]>>7;
+2495   1                                      if((show_tmp&0x007F) == SHOW_0){
+2496   1                                              display_buff[12] &= ~0x3F80;
+2497   1      
+2498   1                                              if((display_buff[11]&0x007F) == SHOW_0){
+2499   1                                                      display_buff[11] &= ~0x007F;
+2500   1      
+2501   1                                                      if(odo_en){
+2502   1                                                              show_tmp = display_buff[11]>>7;
+2503   1                                                              if((show_tmp&0x007F) == SHOW_0){
+2504   1                                                                      display_buff[11] &= ~0x3F80;
+2505   1                                                              }
+2506   1                                                      }
+2507   1                                              }
+2508   1                                      }
+2509   1                              }
+2510   1                      }
+2511   1              }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 42  
+
+2512   1              */
+2513   1      }
+2514          
+2515          //******************************************
+2516          #if 0
+              void Set_Show_Num(unsigned char tmp)
+              {
+                      // if(tmp >= 2){
+                              tmp -= 2;
+                      // }
+                      // else{
+                      //      tmp = 0;
+                      // }
+                      
+                      if(tmp >= 9) tmp = 9;
+                      display_buff[0] |= (3<<4);
+                      display_buff[2] |= SHOW_NUM[tmp];
+                      display_buff[2] |= SHOW_NUM[tmp]<<7;
+              
+                      display_buff[1] |= SHOW_NUM[tmp];
+              
+                      display_buff[15] |= SHOW_NUM[tmp];
+                      display_buff[15] |= SHOW_NUM[tmp]<<7;
+                      display_buff[14] |= SHOW_NUM[tmp];
+                      display_buff[14] |= SHOW_NUM[tmp]<<7;
+                      display_buff[13] |= SHOW_NUM[tmp];
+                      display_buff[13] |= SHOW_NUM[tmp]<<7;
+                      display_buff[12] |= SHOW_NUM[tmp];
+                      display_buff[12] |= SHOW_NUM[tmp]<<7;
+                      display_buff[11] |= SHOW_NUM[tmp];
+                      display_buff[11] |= SHOW_NUM[tmp]<<7;
+                      display_buff[10] |= SHOW_NUM[tmp];
+                      
+                      switch(tmp)
+                      {
+                              default:
+                              case 3:
+                                      display_buff[6] |= (3<<3);
+                                      display_buff[9] |= (3<<8);
+                              case 2:
+                                      display_buff[6] |= (3<<1);
+                                      display_buff[9] |= (3<<6);
+                              case 1:
+                                      display_buff[6] |= (1<<0);
+                                      display_buff[7] |= (1<<15);
+                                      display_buff[9] |= (3<<4);
+                              case 0:
+                                      display_buff[7] |= (3<<13);
+                                      display_buff[9] |= (3<<2);
+                              break;
+                      }
+              }
+              #endif
+2565          
+2566          //******************************************
+2567          void Rpm_Show_Pro(unsigned char tmp)
+2568          {
+2569   1          display_buff[11] &= ~(0x01FF << 7);
+2570   1          display_buff[10] &= ~0xFFFF;
+2571   1          display_buff[9] &= ~(0x07 << 0);
+2572   1          switch (tmp) {
+2573   2          default:
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 43  
+
+2574   2          case 28:
+2575   2          case 27:
+2576   2              display_buff[11] |= (1 << 7);
+2577   2          case 26:
+2578   2              display_buff[11] |= (1 << 8);
+2579   2          case 25:
+2580   2              display_buff[11] |= (1 << 9);
+2581   2          case 24:
+2582   2              display_buff[11] |= (1 << 10);
+2583   2          case 23:
+2584   2              display_buff[11] |= (1 << 11);
+2585   2          case 22:
+2586   2              display_buff[11] |= (1 << 12);
+2587   2          case 21:
+2588   2              display_buff[11] |= (1 << 13);
+2589   2          case 20:
+2590   2              display_buff[11] |= (1 << 14);
+2591   2          case 19:
+2592   2              display_buff[11] |= (1 << 15);
+2593   2          case 18:
+2594   2              display_buff[10] |= (1 << 0);
+2595   2          case 17:
+2596   2              display_buff[10] |= (1 << 1);
+2597   2          case 16:
+2598   2              display_buff[10] |= (1 << 2);
+2599   2          case 15:
+2600   2              display_buff[10] |= (1 << 3);
+2601   2          case 14:
+2602   2              display_buff[10] |= (1 << 4);
+2603   2          case 13:
+2604   2              display_buff[10] |= (1 << 5);
+2605   2          case 12:
+2606   2              display_buff[10] |= (1 << 6);
+2607   2          case 11:
+2608   2              display_buff[10] |= (1 << 7);
+2609   2          case 10:
+2610   2              display_buff[10] |= (1 << 8);
+2611   2          case 9:
+2612   2              display_buff[10] |= (1 << 9);
+2613   2          case 8:
+2614   2              display_buff[10] |= (1 << 10);
+2615   2          case 7:
+2616   2              display_buff[10] |= (1 << 11);
+2617   2          case 6:
+2618   2              display_buff[10] |= (1 << 12);
+2619   2          case 5:
+2620   2              display_buff[10] |= (1 << 13);
+2621   2          case 4:
+2622   2              display_buff[10] |= (1 << 14);
+2623   2          case 3:
+2624   2              display_buff[10] |= (1 << 15);
+2625   2          case 2:
+2626   2              display_buff[9] |= (1 << 0);
+2627   2          case 1:
+2628   2              display_buff[9] |= (1 << 1);
+2629   2          case 0:
+2630   2              display_buff[9] |= (1 << 2);
+2631   2              break;
+2632   2          }
+2633   1      }
+2634          
+2635          //******************************************
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 44  
+
+2636          void Speed_Show_Pro(unsigned char tmp)
+2637          {
+2638   1          display_buff[9] &= ~(0xFF << 8);
+2639   1          display_buff[8] &= ~0xFFFF;
+2640   1          display_buff[7] &= ~(0x0F); //Ê±ËÙÏÔÊ¾
+2641   1          switch (tmp) {
+2642   2          default:
+2643   2          case 28:
+2644   2              display_buff[9] |= (1 << 8);
+2645   2          case 27:
+2646   2              display_buff[9] |= (1 << 9);
+2647   2          case 26:
+2648   2              display_buff[9] |= (1 << 10);
+2649   2          case 25:
+2650   2              display_buff[9] |= (1 << 11);
+2651   2          case 24:
+2652   2              display_buff[9] |= (1 << 12);
+2653   2          case 23:
+2654   2              display_buff[9] |= (1 << 13);
+2655   2          case 22:
+2656   2              display_buff[9] |= (1 << 14);
+2657   2          case 21:
+2658   2              display_buff[9] |= (1 << 15);
+2659   2          case 20:
+2660   2              display_buff[8] |= (1 << 0);
+2661   2          case 19:
+2662   2              display_buff[8] |= (1 << 1);
+2663   2          case 18:
+2664   2              display_buff[8] |= (1 << 2);
+2665   2          case 17:
+2666   2              display_buff[8] |= (1 << 3);
+2667   2          case 16:
+2668   2              display_buff[8] |= (1 << 4);
+2669   2          case 15:
+2670   2              display_buff[8] |= (1 << 5);
+2671   2          case 14:
+2672   2              display_buff[8] |= (1 << 6);
+2673   2          case 13:
+2674   2              display_buff[8] |= (1 << 7);
+2675   2          case 12:
+2676   2              display_buff[8] |= (1 << 8);
+2677   2          case 11:
+2678   2              display_buff[8] |= (1 << 9);
+2679   2          case 10:
+2680   2              display_buff[8] |= (1 << 10);
+2681   2          case 9:
+2682   2              display_buff[8] |= (1 << 11);
+2683   2          case 8:
+2684   2              display_buff[8] |= (1 << 12);
+2685   2          case 7:
+2686   2              display_buff[8] |= (1 << 13);
+2687   2          case 6:
+2688   2              display_buff[8] |= (1 << 14);
+2689   2          case 5:
+2690   2              display_buff[8] |= (1 << 15);
+2691   2          case 4:
+2692   2              display_buff[7] |= (1 << 0);
+2693   2          case 3:
+2694   2              display_buff[7] |= (1 << 1);
+2695   2          case 2:
+2696   2              display_buff[7] |= (1 << 2);
+2697   2          case 1:
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 45  
+
+2698   2              display_buff[7] |= (1 << 3);
+2699   2          case 0:
+2700   2              break;
+2701   2          }
+2702   1      }
+2703          
+2704          // void VolPow_Show_Pro(unsigned char tmp)
+2705          // {
+2706          //              switch(tmp){
+2707          //                      case 11:
+2708          //                              display_buff[6] |= (1<<5);
+2709          //                              display_buff[9] |= (1<<10);
+2710          //                      case 10:
+2711          //                              display_buff[6] |= (1<<6);
+2712          //                              display_buff[8] |= (1<<4);
+2713          //                      case 9:
+2714          //                              display_buff[6] |= (1<<8);
+2715          //                              display_buff[8] |= (1<<2);
+2716          //                      case 8:
+2717          //                              display_buff[6] |= (1<<9);
+2718          //                              display_buff[8] |= (1<<1);
+2719          //                      case 7:
+2720          //                              display_buff[6] |= (1<<10);
+2721          //                              display_buff[8] |= (1<<0);
+2722          //                      case 6:
+2723          //                              display_buff[6] |= (1<<11);
+2724          //                              display_buff[9] |= (1<<15);
+2725          //                      case 5:
+2726          //                              display_buff[6] |= (1<<12);
+2727          //                              display_buff[9] |= (1<<14);
+2728          //                      case 4:
+2729          //                              display_buff[6] |= (1<<13);
+2730          //                              display_buff[9] |= (1<<13);
+2731          //                      case 3:
+2732          //                              display_buff[6] |= (1<<14);
+2733          //                              display_buff[9] |= (1<<12);
+2734          //                      case 2:
+2735          //                              display_buff[6] |= (1<<15);
+2736          //                              display_buff[9] |= (1<<11);
+2737          //                      case 1:
+2738          //                              display_buff[7] |= (1<<12);
+2739          //                              display_buff[9] |= (1<<1);
+2740          //                      case 0:
+2741          //                              display_buff[7] |= (1<<11);
+2742          //                              display_buff[9] |= (1<<0);
+2743          //                              break;
+2744          //                      default:
+2745          //                              break;
+2746          //              }
+2747          // }
+2748          
+2749          void Show_KMH_Pro()
+2750          {
+2751   1          // Uart0_PutChar(instrument_info.speed_with_km>>8);
+2752   1          // Uart0_PutChar(instrument_info.speed_with_km);
+2753   1      
+2754   1          //¹«ÀïÃ¿Ð¡Ê±ÏÔÊ¾
+2755   1          if (instrument_info.speed_with_km == 0) {
+2756   2              if (kmh_tmp) {
+2757   3                  kmh_tmp--;
+2758   3              }
+2759   2          } else {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 46  
+
+2760   2              // tmp_c = instrument_info.speed_with_km*100+instrument_info.speed_with_km*5;
+2761   2      
+2762   2              if (instrument_info.speed_with_km <= 250) {
+2763   3                  tmp_c = instrument_info.speed_with_km * 1.07;
+2764   3              } else {
+2765   3                  tmp_c = instrument_info.speed_with_km;
+2766   3              }
+2767   2      
+2768   2              if (tmp_c != kmh_tmp) {
+2769   3                  if (slow_en == 0) {
+2770   4                      if (tmp_c > kmh_tmp) {
+2771   5                          kmh_tmp++;
+2772   5                      } else {
+2773   5                          kmh_tmp--;
+2774   5                      }
+2775   4                  } else {
+2776   4                      if (tmp_c > kmh_tmp) {
+2777   5                          tmp_a = tmp_c - kmh_tmp;
+2778   5                      } else {
+2779   5                          tmp_a = kmh_tmp - tmp_c;
+2780   5                      }
+2781   4      
+2782   4                      tmp_b++;
+2783   4                      if (tmp_a > 5) {
+2784   5                          slow_en = 0;
+2785   5                          tmp_b = 0;
+2786   5                      } else if (tmp_a > 2) {
+2787   5                          if (tmp_b > 60) {
+2788   6                              tmp_b = 0;
+2789   6                              if (tmp_c > kmh_tmp) {
+2790   7                                  kmh_tmp++;
+2791   7                              } else if (tmp_c < kmh_tmp) {
+2792   7                                  kmh_tmp--;
+2793   7                              }
+2794   6                          }
+2795   5                      } else {
+2796   5                          if (tmp_b > 100) {
+2797   6                              tmp_b = 0;
+2798   6                              if (tmp_c > kmh_tmp) {
+2799   7                                  kmh_tmp++;
+2800   7                              } else if (tmp_c < kmh_tmp) {
+2801   7                                  kmh_tmp--;
+2802   7                              }
+2803   6                          }
+2804   5                      }
+2805   4                  }
+2806   3              } else {
+2807   3                  slow_en = 1;
+2808   3                  tmp_b = 0;
+2809   3              }
+2810   2          }
+2811   1      
+2812   1      #if 0
+                              kmh_tmp = 123;
+              #endif
+2815   1      
+2816   1          // u8_tmp = kmh_tmp;
+2817   1          // show_tmp = u8_tmp%10;
+2818   1          // display_buff[5] |= SHOW_NUM[show_tmp]<<10;
+2819   1          // u16_tmp = SHOW_NUM[show_tmp]<<9;
+2820   1          // if(u16_tmp&0x8000){
+2821   1          //  display_buff[4] |= 0x0001;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 47  
+
+2822   1          // }
+2823   1          // u8_tmp /= 10;
+2824   1          // show_tmp = u8_tmp%10;
+2825   1          // // display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2826   1          // u8_tmp /= 10;
+2827   1          // if(u8_tmp){
+2828   1          //  display_buff[5] |= (1<<2);
+2829   1          //  display_buff[4] |= (1<<3);
+2830   1          //  display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2831   1          // }
+2832   1          // else if(show_tmp){
+2833   1          //  display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2834   1          // }
+2835   1      }
+2836          
+2837          void Show_MPH_Pro()
+2838          {
+2839   1          //Ó¢ÀïÃ¿Ð¡Ê±ÏÔÊ¾
+2840   1          if (instrument_info.speed_with_mile == 0) {
+2841   2              if (mph_tmp) {
+2842   3                  mph_tmp--;
+2843   3              }
+2844   2          } else {
+2845   2              // tmp_c = instrument_info.speed_with_mile;
+2846   2              if (instrument_info.speed_with_mile <= 250) {
+2847   3                  tmp_c = instrument_info.speed_with_mile * 1.07;
+2848   3              } else {
+2849   3                  tmp_c = instrument_info.speed_with_mile;
+2850   3              }
+2851   2      
+2852   2              if (tmp_c != mph_tmp) {
+2853   3                  if (slow_en == 0) {
+2854   4                      if (tmp_c > mph_tmp) {
+2855   5                          mph_tmp++;
+2856   5                      } else {
+2857   5                          mph_tmp--;
+2858   5                      }
+2859   4                  } else {
+2860   4                      if (tmp_c > mph_tmp) {
+2861   5                          tmp_a = tmp_c - mph_tmp;
+2862   5                      } else {
+2863   5                          tmp_a = mph_tmp - tmp_c;
+2864   5                      }
+2865   4      
+2866   4                      tmp_b++;
+2867   4                      if (tmp_a > 5) {
+2868   5                          slow_en = 0;
+2869   5                          tmp_b = 0;
+2870   5                      } else if (tmp_a > 2) {
+2871   5                          if (tmp_b > 60) {
+2872   6                              tmp_b = 0;
+2873   6                              if (tmp_c > mph_tmp) {
+2874   7                                  mph_tmp++;
+2875   7                              } else if (tmp_c < mph_tmp) {
+2876   7                                  mph_tmp--;
+2877   7                              }
+2878   6                          }
+2879   5                      } else {
+2880   5                          if (tmp_b > 100) {
+2881   6                              tmp_b = 0;
+2882   6                              if (tmp_c > mph_tmp) {
+2883   7                                  mph_tmp++;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 48  
+
+2884   7                              } else if (tmp_c < mph_tmp) {
+2885   7                                  mph_tmp--;
+2886   7                              }
+2887   6                          }
+2888   5                      }
+2889   4                  }
+2890   3              } else {
+2891   3                  slow_en = 1;
+2892   3                  tmp_b = 0;
+2893   3              }
+2894   2          }
+2895   1      
+2896   1      #if 0
+                              mph_tmp = 123;
+              #endif
+2899   1      
+2900   1          // u8_tmp = mph_tmp;
+2901   1          // show_tmp = u8_tmp%10;
+2902   1          // display_buff[5] |= SHOW_NUM[show_tmp]<<10;
+2903   1          // u16_tmp = SHOW_NUM[show_tmp]<<9;
+2904   1          // if(u16_tmp&0x8000){
+2905   1          //  display_buff[4] |= 0x0001;
+2906   1          // }
+2907   1          // u8_tmp /= 10;
+2908   1          // show_tmp = u8_tmp%10;
+2909   1          // // display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2910   1          // u8_tmp /= 10;
+2911   1          // if(u8_tmp){
+2912   1          //  display_buff[5] |= (1<<2);
+2913   1          //  display_buff[4] |= (1<<3);
+2914   1          //  display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2915   1          // }
+2916   1          // else if(show_tmp){
+2917   1          //  display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2918   1          // }
+2919   1      }
+2920          
+2921          ///////////////////////////////////////////////////////////////////////
+2922          void Set_Show_MPH_KMH(unsigned char data_tmp)
+2923          {
+2924   1          u8_tmp = data_tmp;
+2925   1          show_tmp = u8_tmp % 10;
+2926   1          display_buff[5] |= SHOW_NUM[show_tmp] << 10;
+2927   1          u16_tmp = SHOW_NUM[show_tmp] << 9;
+2928   1          if (u16_tmp & 0x8000) {
+2929   2              display_buff[4] |= 0x0001;
+2930   2          }
+2931   1          u8_tmp /= 10;
+2932   1          show_tmp = u8_tmp % 10;
+2933   1          // display_buff[5] |= SHOW_NUM[show_tmp]<<3;
+2934   1          u8_tmp /= 10;
+2935   1          if (u8_tmp) {
+2936   2              display_buff[5] |= (1 << 2);
+2937   2              display_buff[4] |= (1 << 3);
+2938   2              display_buff[5] |= SHOW_NUM[show_tmp] << 3;
+2939   2          } else if (show_tmp) {
+2940   2              display_buff[5] |= SHOW_NUM[show_tmp] << 3;
+2941   2          }
+2942   1      }
+2943          
+2944          ///////////////////////////////////////////////////////////////////////
+2945          void Set_Show_Km_Mile()
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 49  
+
+2946          {
+2947   1          show_tmp = km_mile_tmp % 10;
+2948   1          u8_tmp = SHOW_NUM[show_tmp];
+2949   1          if (u8_tmp & SEG_A) {
+2950   2              display_buff[2] |= (1 << 15);
+2951   2          }
+2952   1          display_buff[1] |= SHOW_NUM[show_tmp] >> 1;
+2953   1      
+2954   1          km_mile_tmp /= 10;
+2955   1          if (display_buff[2] & (1 << 14)) {
+2956   2              show_tmp = km_mile_tmp % 10;
+2957   2              display_buff[2] |= SHOW_NUM[show_tmp] << 7;
+2958   2          } else if (km_mile_tmp) {
+2959   2              show_tmp = km_mile_tmp % 10;
+2960   2              display_buff[2] |= SHOW_NUM[show_tmp] << 7;
+2961   2          }
+2962   1      
+2963   1          km_mile_tmp /= 10;
+2964   1          if (km_mile_tmp) {
+2965   2              show_tmp = km_mile_tmp % 10;
+2966   2              display_buff[2] |= SHOW_NUM[show_tmp];
+2967   2          }
+2968   1          km_mile_tmp /= 10;
+2969   1          if (km_mile_tmp) {
+2970   2              show_tmp = km_mile_tmp % 10;
+2971   2              display_buff[3] |= SHOW_NUM[show_tmp] << 9;
+2972   2          }
+2973   1          km_mile_tmp /= 10;
+2974   1          if (km_mile_tmp) {
+2975   2              show_tmp = km_mile_tmp % 10;
+2976   2              display_buff[3] |= SHOW_NUM[show_tmp] << 2;
+2977   2          }
+2978   1          km_mile_tmp /= 10;
+2979   1          if (km_mile_tmp) {
+2980   2              show_tmp = km_mile_tmp % 10;
+2981   2              display_buff[4] |= SHOW_NUM[show_tmp] << 11;
+2982   2              u8_tmp = SHOW_NUM[show_tmp];
+2983   2              if (u8_tmp & SEG_F) {
+2984   3                  display_buff[3] |= (1 << 0);
+2985   3              }
+2986   2              if (u8_tmp & SEG_G) {
+2987   3                  display_buff[3] |= (1 << 1);
+2988   3              }
+2989   2          }
+2990   1      }
+2991          
+2992          ///////////////////////////////////////////////////////////////////////
+2993          void Scan_Key()
+2994          {
+2995   1          // if(com_jg_chk){
+2996   1          //  key_tmp |= 0x80;
+2997   1          // }
+2998   1          // else{
+2999   1          //  key_tmp &= ~0x80;
+3000   1          // }
+3001   1          if (com_wd_chk) {
+3002   2              key_tmp |= 0x40;
+3003   2              // Uart0_PutChar(0x40);
+3004   2          } else {
+3005   2              key_tmp &= ~0x40;
+3006   2              // Uart0_PutChar(0x04);
+3007   2          }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 50  
+
+3008   1          if (com_xd_chk) {
+3009   2              key_tmp |= 0x20;
+3010   2          } else {
+3011   2              key_tmp &= ~0x20;
+3012   2          }
+3013   1          if (com_pd_chk) {
+3014   2              key_tmp |= 0x10;
+3015   2              // Uart1_PutChar(0x33);
+3016   2          } else {
+3017   2              key_tmp &= ~0x10;
+3018   2              // Uart1_PutChar(0x44);
+3019   2          }
+3020   1      
+3021   1          if (key_buf == key_tmp) {
+3022   2              if (key_buf == key_flag) {
+3023   3                  key_deb = 0;
+3024   3                  return;
+3025   3              }
+3026   2              // if(!systimer_flag_is_valid(SYSTIME_FLAG_10MS)) return;
+3027   2              if (key_deb_en == 0)
+3028   2                  return;
+3029   2              key_deb_en = 0;
+3030   2              //5ms
+3031   2              key_deb++;
+3032   2              if (key_deb < 6)
+3033   2                  return;
+3034   2              key_deb = 0;
+3035   2      
+3036   2              key_tmp = key_buf ^ key_flag;
+3037   2              key_val1 = key_tmp & key_buf;
+3038   2              key_val2 = key_tmp & key_flag;
+3039   2              key_flag = key_buf;
+3040   2      
+3041   2              // if(key_val1){
+3042   2              //      Uart1_PutChar(0x11);
+3043   2              // }
+3044   2              // if(key_val2){
+3045   2              //      Uart1_PutChar(0x22);
+3046   2              // }
+3047   2      
+3048   2              // tk_dly_cnt = 0;
+3049   2              //--------------------
+3050   2              if (key_val1 & 0x80) {
+3051   3                  jg_en = 0;
+3052   3                  // Uart0_PutChar(key_val1&0x80);
+3053   3              }
+3054   2              if (key_val1 & 0x40) {
+3055   3                  wd_en = 1;
+3056   3              }
+3057   2              if (key_val1 & 0x20) {
+3058   3                  xd_en = 0;
+3059   3                  // Uart0_PutChar(key_val1&0x20);
+3060   3              }
+3061   2              if (key_val1 & 0x10) {
+3062   3                  pd_en = 0;
+3063   3                  // Uart1_PutChar(0x33);
+3064   3              }
+3065   2              if (key_val2 & 0x80) {
+3066   3                  jg_en = 1;
+3067   3                  // Uart0_PutChar(key_val2&0x80);
+3068   3              }
+3069   2              if (key_val2 & 0x40) {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 51  
+
+3070   3                  wd_en = 0;
+3071   3              }
+3072   2              if (key_val2 & 0x20) {
+3073   3                  xd_en = 1;
+3074   3                  // Uart0_PutChar(key_val2&0x20);
+3075   3              }
+3076   2              if (key_val2 & 0x10) {
+3077   3                  pd_en = 1;
+3078   3                  // Uart1_PutChar(0x44);
+3079   3              }
+3080   2      
+3081   2              //°´ÏÂ
+3082   2              if (key_val1 & 0x01) {
+3083   3                  longpress_en = 1;
+3084   3                  longpress_cnt = 0;
+3085   3              }
+3086   2              // else if(key_val1 & 0x02){
+3087   2              //      longpress_en = 1;
+3088   2              //      longpress_cnt = 0;
+3089   2              // }
+3090   2              // else if(key_val1 & 0x04){
+3091   2              //      longpress_en = 1;
+3092   2              //      longpress_cnt = 0;
+3093   2              // }
+3094   2              // else if(key_val1 & 0x08){
+3095   2              //      longpress_en = 1;
+3096   2              //      longpress_cnt = 0;
+3097   2              // }
+3098   2      
+3099   2              //------------------------
+3100   2              //ËÉÊÖ
+3101   2              if (key_val2 & 0x01) {
+3102   3                  if (longpress_en) {
+3103   4                      longpress_en = 0;
+3104   4                      //¶Ì°´ËÉÊÖ
+3105   4                      if (chg_en) {
+3106   5                          if (shake_en) {
+3107   6                              shake_en = 0;
+3108   6                              chg_en = 0;
+3109   6                          } else if (chg_stp == 0) {
+3110   6                              odo_en = ~odo_en;
+3111   6                              chg_deb = 100; //10sÍË³öµ÷ÕûÄ£Ê½
+3112   6                          } else if (chg_stp == 1) {
+3113   6                              km_en = ~km_en;
+3114   6                              chg_shake_cnt = 0;
+3115   6                              chg_shake_show_en = 1;
+3116   6                              chg_deb = 100; //10sÍË³öµ÷ÕûÄ£Ê½
+3117   6                          } else if (chg_stp == 2) {
+3118   6                              gear_num++;
+3119   6                              if (gear_num >= 5)
+3120   6                                  gear_num = 0;
+3121   6                              chg_deb = 100; //10sÍË³öµ÷ÕûÄ£Ê½
+3122   6                          }
+3123   5                      }
+3124   4                  } else {
+3125   4                      //³¤°´ËÉÊÖ
+3126   4                      if (chg_en) {
+3127   5                          if (shake_en) {
+3128   6                              shake_deb = 32; //50ms¼ÆÊ±µ¥Î»
+3129   6                          }
+3130   5                      }
+3131   4                  }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 52  
+
+3132   3              }
+3133   2          } else {
+3134   2              key_buf = key_tmp;
+3135   2              key_deb = 0;
+3136   2          }
+3137   1      }
+3138          
+3139          //======================================================================
+3140          void Chk_LongPress_Pro()
+3141          {
+3142   1          if (longpress_en == 0)
+3143   1              return;
+3144   1      
+3145   1          if (!systimer_flag_is_valid(SYSTIME_FLAG_25MS))
+3146   1              return;
+3147   1      
+3148   1          longpress_cnt++;
+3149   1          if (longpress_cnt < 40)
+3150   1              return;
+3151   1          longpress_cnt = 0;
+3152   1          longpress_en = 0;
+3153   1      
+3154   1          if (key_val1 & 0x01) {
+3155   2              if (chg_en == 0) {
+3156   3                  chg_en = 1;
+3157   3                  shake_en = 1;
+3158   3                  shake_deb = 0;
+3159   3                  chg_stp = 0;
+3160   3              } else if (chg_stp == 0) {
+3161   3                  if (odo_en) {
+3162   4                      chg_stp = 1;
+3163   4                  } else {
+3164   4                      //ÇåÐ¡¼ÆÀï³Ì
+3165   4                      instrument_info.subtotal_mileage_with_km = 0;
+3166   4                      instrument_info.subtotal_mileage_with_mile = 0;
+3167   4                      send_en = 1;
+3168   4                      send_cmd = 0x99;
+3169   4                  }
+3170   3              } else if (chg_stp == 1) {
+3171   3                  chg_stp = 2;
+3172   3                  powup_en = 1;
+3173   3                  act_tmp = 0;
+3174   3                  chg_init_en = 1;
+3175   3              } else {
+3176   3                  chg_en = 0; //ÍË³öµ÷ÕûÄ£Ê½
+3177   3                  powup_en = 0;
+3178   3                  save_en = 1;
+3179   3              }
+3180   2          }
+3181   1      
+3182   1          // if(key_val1&0x08){
+3183   1          //  // Uart0_PutChar(0xA5);
+3184   1          //  // Uart0_PutChar(0x01);
+3185   1          //  // Uart0_PutChar(0x48);
+3186   1          //  // tmp_a = ~(0xA5+0x01+0x48);
+3187   1          //  // Uart0_PutChar(tmp_a);
+3188   1      
+3189   1          //  if(odo_en == 0){
+3190   1          //          longpress_en = 0;
+3191   1          //          //ÇåÐ¡¼ÆÀï³Ì
+3192   1          //          instrument_info.subtotal_mileage_with_km = 0;
+3193   1          //          instrument_info.subtotal_mileage_with_mile = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 53  
+
+3194   1          //          send_en = 1;
+3195   1          //          send_cmd = 0x99;
+3196   1          //          return;
+3197   1          //  }
+3198   1      
+3199   1          //  if(chg_en == 0){
+3200   1          //          longpress_en = 0;
+3201   1          //          chg_deb = CHG_EXIT_TIME_VAL;
+3202   1          //          // chg_show_deb = 0;
+3203   1          //          chg_en = 1;
+3204   1          //          chg_cnt = 0;
+3205   1          //          chg_show_en = 1;
+3206   1          //          chg_time_en = 0;
+3207   1          //  }
+3208   1          //  else{
+3209   1          //          chg_deb = CHG_EXIT_TIME_VAL;
+3210   1          //          // chg_show_deb = 0;
+3211   1          //          chg_cnt++;
+3212   1          //          if(chg_cnt == 2){
+3213   1          //                  longpress_en = 0;
+3214   1          //                  chg_show_en = 0;
+3215   1          //                  chg_time_en = 1;
+3216   1          //                  chg_hour_en = 0;
+3217   1          //          }
+3218   1          //          else if(chg_cnt == 4){
+3219   1          //                  longpress_en = 0;
+3220   1          //                  chg_show_en = 0;
+3221   1          //                  chg_time_en = 1;
+3222   1          //                  chg_hour_en = 1;
+3223   1          //          }
+3224   1          //          else if(chg_cnt == 6){
+3225   1          //                  longpress_en = 0;
+3226   1          //                  chg_en = 0;
+3227   1          //                  chg_deb = 0;
+3228   1          //                  // chg_show_deb = 0;
+3229   1          //                  chg_show_en = 0;
+3230   1          //                  chg_time_en = 0;
+3231   1      
+3232   1          //                  send_en = 1;
+3233   1          //                  send_cmd = SET_TIMIE_TO_MAIN;
+3234   1          //          }
+3235   1          //  }
+3236   1          //  return;
+3237   1          // }
+3238   1          // longpress_en = 0;
+3239   1      }
+3240          
+3241          //******************************************************
+3242          //ÁÁ¶ÈÔ½´ó,ADÖµÔ½Ð¡
+3243          void Deal_AD_Pro()
+3244          {
+3245   1          if (powup_en)
+3246   1              return;
+3247   1      
+3248   1          if (chk_ad_en == 0)
+3249   1              return;
+3250   1          chk_ad_en = 0;
+3251   1          //5ms
+3252   1          ADCON |= AST(1); //Æô¶¯ADC×ª»»
+3253   1          while (!(ADCON & ADIF))
+3254   1              ;          //µÈ´ýADC×ª»»Íê³É
+3255   1          ADCON |= ADIF; //Çå³ýADCÖÐ¶Ï±êÖ¾
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 54  
+
+3256   1          // AD_Value = ADCDH*256 + ADCDL;                                            //¶ÁÈ¡ADÖµ
+3257   1          // AD_Value >>= 4;
+3258   1      
+3259   1          ad_data_tmp = ADCDH;
+3260   1      
+3261   1          ad_cnt++;
+3262   1          if (ad_cnt < 16) {
+3263   2              ad_sum += ad_data_tmp;
+3264   2              return;
+3265   2          }
+3266   1          ad_cnt = 0;
+3267   1          ad_sum += ad_data_tmp;
+3268   1          ad_sum >>= 4;
+3269   1      
+3270   1          ad_tmp = ad_sum;
+3271   1          if (ad_tmp > 230) {
+3272   2              pwm_var = PWM_20_VAL;
+3273   2          } else if (ad_tmp > 200) {
+3274   2              pwm_var = PWM_30_VAL;
+3275   2          } else if (ad_tmp > 170) {
+3276   2              pwm_var = PWM_40_VAL;
+3277   2          } else if (ad_tmp > 140) {
+3278   2              pwm_var = PWM_50_VAL;
+3279   2          } else if (ad_tmp > 110) {
+3280   2              pwm_var = PWM_60_VAL;
+3281   2          } else if (ad_tmp > 80) {
+3282   2              pwm_var = PWM_70_VAL;
+3283   2          } else if (ad_tmp > 50) {
+3284   2              pwm_var = PWM_80_VAL;
+3285   2          } else if (ad_tmp > 20) {
+3286   2              pwm_var = PWM_90_VAL;
+3287   2          } else {
+3288   2              pwm_var = PWM_100_VAL;
+3289   2          }
+3290   1          ad_sum = 0;
+3291   1      }
+3292          
+3293          //******************************************************
+3294          #if 1
+3295          void Send_Cmd_Pro()
+3296          {
+3297   1          if (send_en == 0)
+3298   1              return;
+3299   1          send_en = 0;
+3300   1      
+3301   1          // if(send_cmd == SET_TIMIE_TO_MAIN){               //Ð£ÕýÖ÷»úÊ±¼ä
+3302   1          // show_hour_var = hour_var;
+3303   1          // show_min_var = min_var;
+3304   1      
+3305   1          // Uart1_PutChar(0xA5);
+3306   1          // Uart1_PutChar(0x0B);
+3307   1          // Uart1_PutChar(SET_TIMIE_TO_MAIN);
+3308   1          // Uart1_PutChar(0x07);
+3309   1          // Uart1_PutChar(0xD0);
+3310   1          // Uart1_PutChar(0x01);
+3311   1          // Uart1_PutChar(0x01);
+3312   1          // Uart1_PutChar(hour_var);
+3313   1          // Uart1_PutChar(min_var);
+3314   1          // Uart1_PutChar(sec_var);
+3315   1          // tmp_a = 0xA5+0x0B+SET_TIMIE_TO_MAIN+0x07+0xD0+0x01+0x01 + hour_var + min_var + sec_var;
+3316   1          // Uart1_PutChar(tmp_a);
+3317   1          // }
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 55  
+
+3318   1          // else if(send_cmd == 0x35){       //Ñ¯ÎÊÖ÷»ú,»ñÈ¡Ê±¼ä
+3319   1          // Uart1_PutChar(0xA5);
+3320   1          // Uart1_PutChar(0x04);
+3321   1          // Uart1_PutChar(0x8F);
+3322   1          // Uart1_PutChar(0x38);
+3323   1          // }
+3324   1          // else if(send_cmd == 0x8B){       //Ñ¯ÎÊÖ÷»ú,»ñÈ¡´ó¼ÆÀï³Ì
+3325   1          //  Uart1_PutChar(0xA5);
+3326   1          //  Uart1_PutChar(0x04);
+3327   1          //  Uart1_PutChar(0x8B);
+3328   1          //  Uart1_PutChar(0x34);
+3329   1          // }
+3330   1          // else if(send_cmd == 0x8C){       //Ñ¯ÎÊÖ÷»ú,»ñÈ¡Ð¡¼ÆÀï³Ì
+3331   1          //  Uart1_PutChar(0xA5);
+3332   1          //  Uart1_PutChar(0x04);
+3333   1          //  Uart1_PutChar(0x8C);
+3334   1          //  Uart1_PutChar(0x35);
+3335   1          // }
+3336   1          // else if(send_cmd == 0x99){       //Ñ¯ÎÊÖ÷»ú,Çå³ýÐ¡¼ÆÀï³Ì
+3337   1          if (send_cmd == 0x99) { //Ñ¯ÎÊÖ÷»ú,Çå³ýÐ¡¼ÆÀï³Ì
+3338   2              Uart1_PutChar(0xA5);
+3339   2              Uart1_PutChar(0x04);
+3340   2              Uart1_PutChar(0x99);
+3341   2              Uart1_PutChar(0x42);
+3342   2          }
+3343   1      }
+3344          #endif
+3345          
+3346          //******************************************************
+3347          void Save_Pro()
+3348          {
+3349   1          if (save_en == 0)
+3350   1              return;
+3351   1          save_en = 0;
+3352   1      
+3353   1          //»®·ÖFLASH×îºó256×Ö½ÚÎªÊý¾Ý¿Õ¼ä£¬×¢Òâ£º²»Í¬ÐÍºÅÐ¾Æ¬FLASHÈÝÁ¿²»Í¬£¬¶¨ÒåµÄFLASH_SIZEÒ²²»Í¬£¬Ó¦ÓÃÊ±Òª¸ù¾
+             -ÝÊµ¼ÊFLASHÈÝÁ¿¶¨Òå
+3354   1          PADRD = FLASH_SIZE * 4 - 1;
+3355   1      
+3356   1          Data_Area_Mass_Read(0, BuffTemp,
+3357   1                              2); //¶ÁÉÈÇø0 16Î»ID£¬16Î»IDÓÃÒÔÊ¶±ðÊÇ·ñ³õ´ÎÉÏµç
+3358   1          if (BuffTemp[0] != 0xAA || BuffTemp[1] != 0x55) //ÈôID²»Ïà·û£¬±íÊ¾ÊÇ³õ´ÎÉÏµç
+3359   1          {
+3360   2              Data_Area_Mass_Read(128, BuffTemp,
+3361   2                                  2); //¶ÁÈ¡16Î»ID£¬16Î»IDÓÃÒÔÊ¶±ðÊÇ·ñ³õ´ÎÉÏµç
+3362   2              if (BuffTemp[0] == 0xAA &&
+3363   2                  BuffTemp[1] == 0x55) //ÈôÉÈÇø0 ID²»Ïà·û£¬ÔòÅÐ¶ÏÉÈÇø1 ID
+3364   2              {
+3365   3                  goto READ_SECOND_SECTOR_PARA; //ÈôÏà·û£¬Ìø×ª¶ÁÈ¡ÉÈÇø1Êý¾Ý
+3366   3              }
+3367   2      
+3368   2              //ÈôÉÈÇø0¡¢1 ID¶¼²»Ïà·û£¬ ±íÊ¾ÊÇ³õ´ÎÉÏµç
+3369   2          FIRST_POWER_ON:
+3370   2              //³õ´ÎÉÏµç£¬³õÊ¼»¯ÓÃ»§Êý¾ÝÎª 0 ~ 9
+3371   2              UserDataBuff[0] = 0x00;
+3372   2              UserDataBuff[1] = 0x00;
+3373   2              UserDataBuff[2] = 0x02;
+3374   2              UserDataBuff[3] = 0x03;
+3375   2              UserDataBuff[4] = 0x04;
+3376   2              UserDataBuff[5] = 0x05;
+3377   2              UserDataBuff[6] = 0x06;
+3378   2              UserDataBuff[7] = 0x07;
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 56  
+
+3379   2              UserDataBuff[8] = 0x08;
+3380   2              UserDataBuff[9] = 0x09;
+3381   2      
+3382   2              BuffTemp[0] = 0xAA; //ÉèÖÃIDÎª0xAA55
+3383   2              BuffTemp[1] = 0x55;
+3384   2              BuffTemp[12] = 0;
+3385   2      
+3386   2              // Uart0_PutChar(0x33);
+3387   2      
+3388   2              for (i = 0; i < 10; i++) {
+3389   3                  BuffTemp[i + 2] = UserDataBuff[i];
+3390   3                  BuffTemp[12] += UserDataBuff[i]; //¼ÆËãÐ£ÑéÂë
+3391   3              }
+3392   2      
+3393   2              //ÔÚ²Á³ýÉÈÇø»òÐ´ÈëÊý¾ÝÊ±£¬Èç¹û³öÏÖÐ¾Æ¬µôµç»ò¸´Î»£¬»áµ¼ÖÂÓÃ»§Êý¾Ý¶ªÊ§£¬ÒÔÏÂ²ÉÓÃË«ÉÈÇø´æ´¢µÄ·½Ê½£¬¿É
+             -±ÜÃâÊý¾Ý¶ªÊ§¡£
+3394   2              Data_Area_Sector_Erase(0); //²Á³ýÊý¾ÝÉÈÇø
+3395   2              Data_Area_Mass_Write(0, BuffTemp,
+3396   2                                   13); //ÓÃ»§Êý¾Ý¡¢ID¡¢Ð£ÑéÂëÐ´ÈëÊý¾Ý¿Õ¼ä
+3397   2      
+3398   2              Data_Area_Sector_Erase(1); //²Á³ýÊý¾ÝÉÈÇø
+3399   2              Data_Area_Mass_Write(128, BuffTemp,
+3400   2                                   13); //ÓÃ»§Êý¾Ý¡¢ID¡¢Ð£ÑéÂëÐ´ÈëÊý¾Ý¿Õ¼ä
+3401   2          } else {
+3402   2              unsigned char CheckSum;
+3403   2              Data_Area_Mass_Read(0, BuffTemp, 13); //¶ÁÈ¡ÓÃ»§Êý¾Ý¡¢ID¡¢Ð£ÑéÂë
+3404   2              CheckSum = 0;
+3405   2              for (i = 0; i < 10; i++) {
+3406   3                  CheckSum += BuffTemp[2 + i]; //¼ÆËãÐ£ÑéÂë
+3407   3              }
+3408   2              if (CheckSum != BuffTemp[12]) //ÅÐ¶Ï¼ìÑéÂëÊÇ·ñÏà·û
+3409   2              {
+3410   3              READ_SECOND_SECTOR_PARA:
+3411   3                  //Èç¹ûÐ£ÑéÂë²»Ïà·û£¬Ôò¶ÁÈ¡µÚ¶þÉÈÇøÊý¾Ý¡£
+3412   3                  Data_Area_Mass_Read(128, BuffTemp, 13); //¶ÁÈ¡ÓÃ»§Êý¾Ý¡¢ID¡¢Ð£ÑéÂë
+3413   3                  CheckSum = 0;
+3414   3                  for (i = 0; i < 10; i++) {
+3415   4                      CheckSum += BuffTemp[2 + i]; //¼ÆËãÐ£ÑéÂë
+3416   4                  }
+3417   3                  if (CheckSum != BuffTemp[12]) //ÅÐ¶Ï¼ìÑéÂëÊÇ·ñÏà·û
+3418   3                  {
+3419   4                      goto FIRST_POWER_ON;
+3420   4                  }
+3421   3              }
+3422   2      
+3423   2              for (i = 0; i < 10; i++) {
+3424   3                  UserDataBuff[i] = BuffTemp[i + 2]; //¶Á³öµÄÊý¾Ý×°ÔØµ½ÓÃ»§Êý¾ÝÊý×é
+3425   3              }
+3426   2      
+3427   2              if (init_en) {
+3428   3                  init_en = 0;
+3429   3                  odo_en = UserDataBuff[0] & 0x01;
+3430   3                  km_en = UserDataBuff[0] & 0x02;
+3431   3                  gear_num = UserDataBuff[1];
+3432   3                  // Uart0_PutChar(UserDataBuff[0]);
+3433   3              } else {
+3434   3                  if (odo_en) {
+3435   4                      UserDataBuff[0] |= 1;
+3436   4                  } else {
+3437   4                      UserDataBuff[0] &= ~0x01;
+3438   4                  }
+3439   3                  if (km_en) {
+C51 COMPILER V9.60.7.0   MAIN                                                              08/19/2026 19:04:41 PAGE 57  
+
+3440   4                      UserDataBuff[0] |= 2;
+3441   4                  } else {
+3442   4                      UserDataBuff[0] &= ~0x02;
+3443   4                  }
+3444   3                  UserDataBuff[1] = gear_num;
+3445   3                  // Uart0_PutChar(UserDataBuff[0]);
+3446   3              }
+3447   2      
+3448   2              // for(i = 0; i < 10; i++)
+3449   2              // {
+3450   2              //      UserDataBuff[i]++;                                                      //ÓÃ»§Êý¾ÝÀÛ¼Ó
+3451   2              // }
+3452   2      
+3453   2              BuffTemp[0] = 0xAA;
+3454   2              BuffTemp[1] = 0x55;
+3455   2              BuffTemp[12] = 0;
+3456   2              for (i = 0; i < 10; i++) {
+3457   3                  BuffTemp[i + 2] = UserDataBuff[i];
+3458   3                  BuffTemp[12] += UserDataBuff[i];
+3459   3              }
+3460   2      
+3461   2              Data_Area_Sector_Erase(0); //²Á³ýÊý¾ÝÉÈÇø
+3462   2              Data_Area_Mass_Write(0, BuffTemp,
+3463   2                                   13); //ÓÃ»§Êý¾Ý¡¢ID¡¢Ð£ÑéÂëÐ´ÈëÊý¾Ý¿Õ¼ä
+3464   2      
+3465   2              Data_Area_Sector_Erase(1); //²Á³ýÊý¾ÝÉÈÇø
+3466   2              Data_Area_Mass_Write(128, BuffTemp,
+3467   2                                   13); //ÓÃ»§Êý¾Ý¡¢ID¡¢Ð£ÑéÂëÐ´ÈëÊý¾Ý¿Õ¼ä
+3468   2          }
+3469   1      }
+3470          
+3471          // #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5930    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      5    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     40       1
+   IDATA SIZE       =     70    ----
+   BIT SIZE         =     45    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

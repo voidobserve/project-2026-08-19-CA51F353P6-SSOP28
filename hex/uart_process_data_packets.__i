@@ -1,0 +1,1 @@
+"user_code\uart_process_data_packets.c" OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\uart_process_data_packets.lst) OBJECT(.\hex\uart_process_data_packets.obj)

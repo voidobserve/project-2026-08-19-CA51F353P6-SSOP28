@@ -1,0 +1,20 @@
+".\hex\main.obj",
+".\hex\delay.obj",
+".\hex\system_clock.obj",
+".\hex\uart.obj",
+".\hex\interrupt.obj",
+".\hex\flash.obj",
+".\hex\ca51f3xsfr.obj",
+".\hex\debug.obj",
+".\hex\ts_api.obj",
+".\TS_Lib\Sources\ts_service.LIB",
+".\hex\STARTUP.obj",
+".\hex\aip3368h_app.obj",
+".\hex\aip3368h_module.obj",
+".\hex\ticks_module.obj",
+".\hex\uart_process_data_packets.obj" 
+TO ".\hex\project" 
+
+PRINT(".\lst\project.map") REMOVEUNUSED 
+CLASSES (XDATA (X:0x0-X:0x7FF), HDATA (X:0x0-X:0x7FF), CODE (C:0x0-C:0x7FFF), CONST (C:0x0-C:0x7FFF), 
+ECODE (C:0x0-C:0x7FFF), HCONST (C:0x0-C:0x7FFF)) 

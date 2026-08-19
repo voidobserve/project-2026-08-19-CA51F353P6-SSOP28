@@ -1,0 +1,221 @@
+#include "user_config.h"
+#include "uart_process_data_packets.h"
+#include "Library\includes\uart.h"
+
+volatile u8 buff[20];
+
+static volatile u8 cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
+static volatile u8 cur_recv_cmd_index = 0;
+static volatile u8 dest_recv_cmd_len = 0; // 记录当前要接收的数据指令长度
+
+// volatile
+
+// 定义存放 仪表数据 的变量
+instrument_info_t xdata instrument_info;
+
+// 处理串口接收到的数据包
+void uart_process_data_packets(void)
+{
+    volatile u8 recv_data = 0;
+    volatile u8 i; // 循环计数值
+    volatile u8 check_sum;
+
+    if (uart1_rxbuffer_get_count() == 0) {
+        return;
+    }
+
+    recv_data = uart1_rxbuffer_get();
+
+    if (CUR_RECV_CMD_STATUS_NONE == cur_recv_cmd_status) {
+        if (FORMAT_HEAD_FLAG == recv_data) {
+            // 如果收到的是格式头
+            buff[0] = recv_data;
+
+            // 初始化接下来要使用的变量
+            cur_recv_cmd_index = 1;
+
+            cur_recv_cmd_status = CUR_RECV_CMD_STATUS_FORMATHEAD;
+        }
+    } else if (CUR_RECV_CMD_STATUS_FORMATHEAD == cur_recv_cmd_status) {
+        buff[cur_recv_cmd_index++] = recv_data;
+        if (recv_data > 20) {
+            cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
+            Uart1_PutChar(0x44);
+        } else {
+            dest_recv_cmd_len = recv_data;
+            cur_recv_cmd_status = CUR_RECV_CMD_STATUS_LENGTH;
+        }
+    } else if (CUR_RECV_CMD_STATUS_LENGTH == cur_recv_cmd_status) {
+        buff[cur_recv_cmd_index++] = recv_data;
+
+        if (cur_recv_cmd_index >= dest_recv_cmd_len) {
+            // 如果接收到的数据包已经接收完毕
+            // cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
+
+            // 处理数据包
+            // printf("recv data packet\n");
+
+            // 计算校验和
+            check_sum = 0;
+            for (i = 0; i < dest_recv_cmd_len - 1; i++) {
+                check_sum += buff[i];
+            }
+
+            if (check_sum != buff[dest_recv_cmd_len - 1]) {
+                // 校验和错误
+                // printf("\r\n ===================================== \r\n");
+                // printf("check sum error\n");
+
+                // for (i = 0; i < dest_recv_cmd_len; i++)
+                // {
+                //     printf("%bu ", buff[i]);
+                // }
+
+                // printf("\r\n ===================================== \r\n");
+
+                cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE; // 重新接收数据
+            } else {
+                // 校验和正确
+                // printf("check sum ok\n");
+
+                cur_recv_cmd_status = CUR_RECV_CMD_STATUS_END;
+                goto Deal_Main_Data_Pro;
+            }
+        }
+    } else if (CUR_RECV_CMD_STATUS_END == cur_recv_cmd_status) {
+        // 接收完数据
+    Deal_Main_Data_Pro:
+        switch (buff[2]) {
+        case SEND_GEAR: {
+            instrument_info.gear_status = buff[3];
+
+            // if(instrument_info.gear_status != 0xFF){
+            //     Uart0_PutChar(instrument_info.gear_status);
+            // }
+
+            // printf("gear status: %bu\n", instrument_info.gear_status);
+        } break;
+
+        case SEND_BATTERY: {
+            instrument_info.battery_percent = buff[3];
+
+            // printf("battery percent: %bu\n", instrument_info.battery_percent);
+        } break;
+
+        case SEND_BRAKE: {
+            instrument_info.brake_status = buff[3];
+
+            // printf("brake status: %bu\n", instrument_info.brake_status);
+        } break;
+
+        case SEND_LEFT_TURN: {
+            instrument_info.left_turn_status = buff[3];
+
+            // printf("left turn status: %bu\n", instrument_info.left_turn_status);
+        } break;
+
+        case SEND_RIGHT_TURN: {
+            instrument_info.right_turn_status = buff[3];
+
+            // printf("right turn status: %bu\n", instrument_info.right_turn_status);
+        } break;
+
+        case SEND_HIGH_BEAM: {
+            instrument_info.high_beam_status = buff[3];
+
+            // printf("high beam status: %bu\n", instrument_info.high_beam_status);
+        } break;
+
+        case SEND_ENGINE_SPEED: {
+            instrument_info.engine_speed = ((u16)buff[3] << 8) | buff[4];
+
+            // Uart0_PutChar(buff[3]);
+            // Uart0_PutChar(buff[4]);
+
+            // printf("engine speed: %u\n", instrument_info.engine_speed);
+        } break;
+
+        case SEND_SPEED: {
+            instrument_info.speed_with_km = buff[3];
+
+            // printf("speed with km: %bu\n", instrument_info.speed_with_km);
+        } break;
+
+        case SEND_FUEL: {
+            instrument_info.oil_percent = buff[3];
+            // Uart0_PutChar(buff[3]);
+            // printf("oil percent: %bu\n", instrument_info.oil_percent);
+        } break;
+
+        case SEND_WATER_TEMP: {
+
+        } break;
+
+        case SEND_TOTAL_MILEAGE_TENTH_OF_KM: {
+            instrument_info.total_mileage_with_km =
+                ((u32)buff[3] << 24) | ((u32)buff[4] << 16) |
+                ((u32)buff[5] << 8) | buff[6];
+            instrument_info.total_mileage_with_mile =
+                instrument_info.total_mileage_with_km * 0.621;
+        } break;
+
+        case SEND_TOTAL_MILEAGE_TENTH_OF_MILE: {
+            // instrument_info.total_mileage_with_mile = ((u32)buff[3]<<24) | ((u32)buff[4]<<16) | ((u32)buff[5]<<8) | buff[6];
+        } break;
+
+            // case SEND_TIME:
+            // {
+            //     instrument_info.year = ((u16)buff[3] << 8) | buff[4];
+            //     instrument_info.month = buff[5];
+            //     instrument_info.day = buff[6];
+            //     instrument_info.hour = buff[7];
+            //     instrument_info.minute = buff[8];
+            //     instrument_info.second = buff[9];
+            //     hour_var = instrument_info.hour;
+            //     min_var = instrument_info.minute;
+            //     sec_var = instrument_info.second;
+            // }
+            // break;
+
+            // case SEND_HMS:
+            // {
+            //     instrument_info.hour = buff[3];
+            //     instrument_info.minute = buff[4];
+            //     instrument_info.second = buff[5];
+            //     hour_var = instrument_info.hour;
+            //     min_var = instrument_info.minute;
+            //     sec_var = instrument_info.second;
+            // }
+            // break;
+
+        case SEND_VOLTAGE_OF_BATTERY: {
+            instrument_info.battery_voltage = ((u16)buff[3] << 8) | buff[4];
+
+            // printf("battery voltage: %u\n", instrument_info.battery_voltage);
+        } break;
+
+        case SEND_SUBTOTAL_MILEAGE_TENTH_OF_KM: {
+            instrument_info.subtotal_mileage_with_km =
+                ((u32)buff[3] << 24) | ((u32)buff[4] << 16) |
+                ((u32)buff[5] << 8) | buff[6];
+            instrument_info.subtotal_mileage_with_mile =
+                instrument_info.subtotal_mileage_with_km * 0.621;
+        } break;
+
+        case SEND_SUBTOTAL_MILEAGE_TENTH_OF_MILE: {
+            // instrument_info.subtotal_mileage_with_mile = ((u32)buff[3]<<24) | ((u32)buff[4]<<16) | ((u32)buff[5]<<8) | buff[6];
+        } break;
+
+        case SEND_SPEED_WITH_MILE: {
+            instrument_info.speed_with_mile = buff[3];
+            // Uart0_PutChar(buff[3]);
+            // printf("speed with mile: %bu\n", instrument_info.speed_with_mile);
+        } break;
+
+        default: {
+        } break;
+        }
+
+        cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE; // 重新接收数据
+    }
+}

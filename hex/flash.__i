@@ -1,0 +1,1 @@
+"Library\Sources\flash.c" OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\flash.lst) OBJECT(.\hex\flash.obj)

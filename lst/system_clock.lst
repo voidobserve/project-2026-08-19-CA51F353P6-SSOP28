@@ -1,0 +1,130 @@
+C51 COMPILER V9.60.7.0   SYSTEM_CLOCK                                                      08/19/2026 19:04:41 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SYSTEM_CLOCK
+OBJECT MODULE PLACED IN .\hex\system_clock.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Library\Sources\system_clock.c OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.\use
+                    -r_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\system_clock.lst) OBJECT(.\hex\system_clock.obj)
+
+line level    source
+
+   1          #ifndef _SYSTEM_CLOCK_C_
+   2          #define _SYSTEM_CLOCK_C_
+   3          /*********************************************************************************************************
+             -************/
+   4          #include "ca51f_config.h"
+   5          #include "includes\ca51f3sfr.h"
+   6          #include "includes\ca51f3xsfr.h"
+   7          #include "includes\gpiodef_f3.h"
+   8          
+   9          #include "includes\system.h"
+  10          #include "Library\includes\system_clock.h"
+  11          #include <intrins.h>
+  12          /*********************************************************************************************************
+             -************/
+  13          void Delay_ms(unsigned int n);
+  14          /***********************************************************************************
+  15          函数名  ：              Sys_Clk_Set_IRCH                                                                                        
+  16          功能描述：              设置系统时钟为IRCH
+  17          输入参数：              无
+  18          返回值  ：              无
+  19          ***********************************************************************************/
+  20          void Sys_Clk_Set_IRCH(void)
+  21          {
+  22   1              CKCON |= IHCKE;                                                                                 //IRCH时钟使能
+  23   1              CKSEL = (CKSEL&0xF8) | CKSEL_IRCH;      //系统时钟切换到IRCH
+  24   1      }
+  25          /***********************************************************************************/
+  26          
+  27          
+  28          
+  29          /***********************************************************************************
+  30          函数名  ：              Sys_Clk_Set_IRCL                                                                                        
+  31          功能描述：              设置系统时钟为IRCL
+  32          输入参数：              无
+  33          返回值  ：              无
+  34          ***********************************************************************************/
+  35          void Sys_Clk_Set_IRCL(void)
+  36          {
+  37   1              CKCON |= ILCKE;                                                                                 //IRCL时钟使能
+  38   1              Delay_ms(1); //延时 1ms，等待 IRCL 时钟稳定
+  39   1              CKSEL = (CKSEL&0xF8) | CKSEL_IRCL;      //系统时钟切换到IRCL    
+  40   1      }
+  41          /***********************************************************************************/
+  42          
+  43          
+  44          
+  45          /***********************************************************************************
+  46          函数名  ：              Sys_Clk_Set_XOSCL                                                                                       
+  47          功能描述：              设置系统时钟为XOSCL
+  48          输入参数：              无
+  49          返回值  ：              无
+  50          ***********************************************************************************/
+  51          void Sys_Clk_Set_XOSCL(void)
+  52          {
+C51 COMPILER V9.60.7.0   SYSTEM_CLOCK                                                      08/19/2026 19:04:41 PAGE 2   
+
+  53   1              P32F = P32_XOSC_IN_SETTING;                                     //设置P32为晶振引脚
+  54   1              P33F = P33_XOSC_OUT_SETTING;                            //设置P33为晶振引脚
+  55   1      
+  56   1              CKCON |= XLCKE;                                                                                 //使能XOSCL时钟
+  57   1              while(!(CKCON & XLSTA));                                                //等待XOSCL时钟稳定
+  58   1              CKSEL = (CKSEL&0xF8) | CKSEL_XOSCL;     //切换系统时钟到XOSCL   
+  59   1      }
+  60          /***********************************************************************************/
+  61          
+  62          
+  63          
+  64          /***********************************************************************************
+  65          函数名  ：              Sys_Clk_Set_PLL                                                                                 
+  66          功能描述：              设置系统时钟为PLL
+  67          输入参数：              Multiple   倍频倍数
+  68          返回值  ：              无
+  69          ***********************************************************************************/
+  70          void Sys_Clk_Set_PLL(unsigned char Multiple)    
+  71          {
+  72   1              if(Multiple < 2 || Multiple > 8) return;                //倍频倍数范围为 2~8，超出此范围返回
+  73   1      
+  74   1              PLLCON = PLLON(1) | MULFT(Multiple-2);                  //设置倍频倍数并使能PLL
+  75   1              while(!(PLLCON & PLSTA));                                                                               //等待PLL时钟稳定
+  76   1              CKSEL = (CKSEL&0xF8) | CKSEL_PLL;                                               //切换系统时钟到PLL
+  77   1      }
+  78          /***********************************************************************************/
+  79          
+  80          
+  81          
+  82          /***********************************************************************************
+  83          函数名  ：              Sys_Clk_Set_TFRC                                                                                        
+  84          功能描述：              设置系统时钟为TFRC
+  85          输入参数：              无
+  86          返回值  ：              无
+  87          ***********************************************************************************/
+  88          void Sys_Clk_Set_TFRC(void)
+  89          {
+  90   1              CKCON |= TFCKE;                                                                                                 //使能TFRC时钟
+  91   1              CKSEL = (CKSEL&0xF8) | CKSEL_TFRC;                      //切换系统时钟到TFRC
+  92   1      }
+  93          /***********************************************************************************/
+  94          
+  95          
+  96          /*********************************************************************************************************
+             -************/
+  97          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    103    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

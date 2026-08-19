@@ -1,0 +1,1 @@
+"main.c" OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\main.lst) OBJECT(.\hex\main.obj)
