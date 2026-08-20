@@ -1,10 +1,11 @@
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 1   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TS_API
 OBJECT MODULE PLACED IN .\hex\ts_api.obj
 COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE TS_Lib\Sources\ts_api.c OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.\user_aip33
-                    -68h;.\user_code;.\user_config) DEBUG PRINT(.\lst\ts_api.lst) OBJECT(.\hex\ts_api.obj)
+                    -68h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28) DEBUG PRINT(.\lst\ts_api.lst) OBJECT(.\he
+                    -x\ts_api.obj)
 
 line level    source
 
@@ -20,7 +21,7 @@ line level    source
    9          
   10          #include "Library\Includes\rtc.h"
   11          #include "Library\Includes\system_clock.h"
-  12          #include "Library\includes\uart.h"
+  12          #include "uart.h"
   13          #include "includes\system.h"
   14          #include "Library\includes\adc.h"
   15          #include "Library\includes\delay.h"
@@ -61,9 +62,9 @@ line level    source
               #endif
   49          #if (KEY_CH_COUNT > 4)
                   0x000010,
-              #endif
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 2   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 2   
 
+              #endif
   52          #if (KEY_CH_COUNT > 5)
                   0x000020,
               #endif
@@ -125,9 +126,9 @@ line level    source
  110   1          static unsigned char xdata ms_cnt = 0;
  111   1          unsigned char i;
  112   1      
- 113   1          ms_cnt++;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 3   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 3   
 
+ 113   1          ms_cnt++;
  114   1          if (ms_cnt >= 4) {
  115   2              ms_cnt = 0;
  116   2              for (i = 0; i < TS_Cnt; i++) {
@@ -189,9 +190,9 @@ line level    source
  172   1      }
  173          void TS_ISR(void)
  174          {
- 175   1          unsigned char index_copy, i;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 4   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 4   
 
+ 175   1          unsigned char index_copy, i;
  176   1          WORD_UNION TS_Data[6];
  177   1          if (TLFLG & (TLERR | TLKOV | TLLOV)) {
  178   2              TLFLG |= TLERR | TLKOV | TLLOV;
@@ -253,9 +254,9 @@ line level    source
  234   2      #if (FILTER_COUNT == 1)
                       TS_PostData[i] = TS_RawData[i];
               #else
- 237   2              TS_FilterPosIdx[i]++;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 5   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 5   
 
+ 237   2              TS_FilterPosIdx[i]++;
  238   2              if (TS_FilterPosIdx[i] >= FILTER_COUNT) {
  239   3                  TS_FilterPosIdx[i] = 0;
  240   3              }
@@ -317,9 +318,9 @@ line level    source
                           RefChDataBufIdx = 0;
                       }
                       RefChDataBuf[RefChDataBufIdx] = TS_PostData[OPENED_TS_COUNT];
-                  }
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 6   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 6   
 
+                  }
               }
               #endif
  302          #endif
@@ -381,9 +382,9 @@ line level    source
                               TS_AreaConfirmTimer[0] = 40;
                           } else if (TS_Init_Step_Sub == 1) {
                               if (!TS_AreaConfirmTimer[0]) {
-                                  int delta;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 7   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 7   
 
+                                  int delta;
                                   for (i = 0; i < TS_Cnt; i++) {
                                       delta = (int)TS_PostData[i] - (int)TS_RawData[i];
               #if (SUPPORT_KEY && SUPPORT_WHEEL_SLIDER)
@@ -445,9 +446,9 @@ line level    source
                                   TS_AreaConfirmTimer[i] = WHEEL_SLIDER_BASELINE_UPDATE_TIME;
                               }
               #elif SUPPORT_KEY
- 423   4                      TSKey_FingerThd[i] = TS_KEY_CH_INFO_SEQ[i][1];
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 8   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 8   
 
+ 423   4                      TSKey_FingerThd[i] = TS_KEY_CH_INFO_SEQ[i][1];
  424   4                      TS_AreaConfirmTimerSet(i, AREA_PNOISE);
  425   4      #elif SUPPORT_WHEEL_SLIDER
                               TS_AreaConfirmTimer[i] = WHEEL_SLIDER_BASELINE_UPDATE_TIME;
@@ -509,9 +510,9 @@ line level    source
                   unsigned long int CalcTemp1;
                   unsigned int CalcTemp2, CalcTemp3;
                   int Delta;
-              
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 9   
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 9   
 
+              
                   CalcTemp1 = (unsigned long int)touchData * (unsigned long int)baseRef;
                   CalcTemp2 = (unsigned int)(CalcTemp1 / touchBase);
                   CalcTemp3 = touchData + baseRef - CalcTemp2;
@@ -573,9 +574,9 @@ line level    source
                       if ((NowArea == AREA_PNOISE_PLUS) || (NowArea == AREA_FINGER_TOUCH)) {
                           PanalToggleCount++;
                       }
-              #endif
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 10  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 10  
 
+              #endif
  548   2              if (TouchArea == AREA_FINGER_TOUCH) {
  549   3                  if (NowArea == AREA_FINGER_TOUCH) {
  550   4                      if (!(PreKeysFlagSN & MASK_TAB[i])) {
@@ -637,9 +638,9 @@ line level    source
  606   5      #endif
  607   5                          TS_AreaConfirmTimerSet(i, NowArea);
  608   5                      }
- 609   4                  }
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 11  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 11  
 
+ 609   4                  }
  610   3                  continue;
  611   3              } else {
  612   3                  if (NowArea == AREA_FINGER_TOUCH) {
@@ -701,9 +702,9 @@ line level    source
                               FINGER_LONG_TOUCH_TIME_LIMIT;
               #endif
                           TS_AreaConfirmTimer[PressedKeyIndex] =
-                              FINGER_TOUCH_RELEASE_CONFIRM_TIME;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 12  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 12  
 
+                              FINGER_TOUCH_RELEASE_CONFIRM_TIME;
                           KeyPressedFlag = 1;
                       }
                   }
@@ -765,9 +766,9 @@ line level    source
  730   1      
  731   1      #endif
  732   1          if (KeysFlagSN != 0) {
- 733   2              ActiveTouchType = 1;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 13  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 13  
 
+ 733   2              ActiveTouchType = 1;
  734   2          } else {
  735   2              ActiveTouchType = 0;
  736   2          }
@@ -829,9 +830,9 @@ line level    source
                                       if (!TS_AreaConfirmTimer[i]) {
                                           TS_FirstAreaData[i] = TS_PostData[i];
                                           TS_BaseLineData[i] = TS_PostData[i];
-                                          TS_AreaConfirmTimer[i] =
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 14  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 14  
 
+                                          TS_AreaConfirmTimer[i] =
                                               WHEEL_SLIDER_BASELINE_UPDATE_TIME;
                                       }
                                   } else {
@@ -893,9 +894,9 @@ line level    source
                           }
                       }
                   }
-                  if (WheelSliderState == WHEEL_SLIDER_TOUCH) {
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 15  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 15  
 
+                  if (WheelSliderState == WHEEL_SLIDER_TOUCH) {
                       if (Position != -1) {
                           WheelSliderPosition = Position;
                       }
@@ -957,9 +958,9 @@ line level    source
                           TS_CH[ch_idx++] = TS_WHEEL_SLIDER_CH_SEQ[i - KEY_CH_COUNT];
                       }
               #elif SUPPORT_KEY
- 919   2              TS_CH[ch_idx++] = TS_KEY_CH_INFO_SEQ[i][0];
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 16  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 16  
 
+ 919   2              TS_CH[ch_idx++] = TS_KEY_CH_INFO_SEQ[i][0];
  920   2              TSKey_NoiseThreshold[i] =
  921   2                  (int)(((unsigned long int)TS_KEY_CH_INFO_SEQ[i][1] *
  922   2                         TK_NOISE_THD_RATE) /
@@ -1021,9 +1022,9 @@ line level    source
                   WheelSliderPosition = -1;
                   WheelSliderCapRateFilter = 0;
               #endif
- 981   1          TS_State = TS_INIT;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 17  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 17  
 
+ 981   1          TS_State = TS_INIT;
  982   1          TS_Init_Step = 0;
  983   1      #if SUPPORT_KEY
  984   1      #if ANTI_SPEAKER_EN
@@ -1085,9 +1086,9 @@ line level    source
                               TK_Debug_UartPutChar('e');
                               TK_Debug_UartPutChar('p');
                               TK_Debug_UartPutChar('\r');
-                              TK_Debug_UartPutChar('\n');
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 18  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 18  
 
+                              TK_Debug_UartPutChar('\n');
                               Delay_ms(1);
               #endif
                               TS_EnterSleepMode();
@@ -1149,9 +1150,9 @@ line level    source
               #ifdef PRINT_EN
                           uart_printf("TS_CH%d = %3d   ", (int)TS_CH[ch], (val - nval));
               #endif
-                      }
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 19  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 19  
 
+                      }
                   } else {
               #ifdef PRINT_EN
                       uart_printf("TS_CH%d = %3d   ", (int)TS_CH[ch], (int)(0));
@@ -1213,9 +1214,9 @@ line level    source
                   MECON |= BIT6;
                   PWCON = (PWCON & 0xF0) | 0x07;
               #endif
-              
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 20  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 20  
 
+              
                   TS_Index = 0;
                   TS_SleepScanStart();
                   WDFLG = 0xA5;
@@ -1277,9 +1278,9 @@ line level    source
                                       if ((TS_Data.wVal <= WakeUp_PThdVal[TS_Index + i]) ||
                                           (TS_Data.wVal >= WakeUp_NThdVal[TS_Index + i])) {
                                           goto SLEEP_EXIT;
-                                      }
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 21  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 21  
 
+                                      }
                                   }
                               }
                           }
@@ -1341,9 +1342,9 @@ line level    source
              -************/
 1287          #if SUPPORT_KEY
 1288          #if GENERATE_TS_KEY_EN
-              #if GENERATE_DOUBLE_KEY_EN
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 22  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 22  
 
+              #if GENERATE_DOUBLE_KEY_EN
               typedef struct
               {
                   unsigned char TogKeyNum;
@@ -1405,9 +1406,9 @@ line level    source
                   TS_Key = 0;
                   if (TK_State == TK_STATE_RELEASE) {
               #if GENERATE_DOUBLE_KEY_EN
-                      if (KeyInfo.TogKeyNum != 0) {
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 23  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 23  
 
+                      if (KeyInfo.TogKeyNum != 0) {
                           if (KeyInfo.TogKeyNum == 1) {
                               KeyBak = (unsigned int)KeyInfo.TogKeyList[0];
                               TK_State = TK_STATE_SINGLE_KEY_PRESS;
@@ -1469,9 +1470,9 @@ line level    source
                           } else {
                               TS_Key = KeyBak | KEY_LONG_BREAK;
                           }
-                          TK_State = TK_STATE_RELEASE;
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 24  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 24  
 
+                          TK_State = TK_STATE_RELEASE;
                       }
               #else
                       if (KeysFlagSN & MASK_TAB[KeyidxBak]) {
@@ -1533,9 +1534,9 @@ line level    source
                           } else {
                               TK_Debug_UartPutChar('s');
                               TK_Debug_UartPutChar('i');
-                              TK_Debug_UartPutChar('n');
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 25  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 25  
 
+                              TK_Debug_UartPutChar('n');
                               TK_Debug_UartPutChar('g');
                               TK_Debug_UartPutChar('l');
                               TK_Debug_UartPutChar('e');
@@ -1597,9 +1598,9 @@ line level    source
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =   1559    ----
    CONSTANT SIZE    =     11    ----
-   XDATA SIZE       =     60    ----
-C51 COMPILER V9.60.7.0   TS_API                                                            08/19/2026 19:04:42 PAGE 26  
+C51 COMPILER V9.60.7.0   TS_API                                                            08/20/2026 14:52:48 PAGE 26  
 
+   XDATA SIZE       =     60    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =      9      26
    IDATA SIZE       =      4    ----

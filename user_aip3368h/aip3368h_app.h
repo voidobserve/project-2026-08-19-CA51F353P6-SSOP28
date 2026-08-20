@@ -1,6 +1,7 @@
 #ifndef AIP3368H_APP_H
 #define AIP3368H_APP_H
 
+#if 0
 // display_buff:缓存, aip3368h依靠移位锁存填充点灯寄存器，所以最后发送的2个字节(u16)才是第一个芯片的16个LED控制，并且高位->低位 == OUT0->OUT15
 
 // 速度SP ------------------------------------------------
@@ -41,5 +42,6 @@
 void ledseg_clear_speed_level(void);
 void ledseg_show_speed_level(u8 level);
 void ledseg_show_test(void);
+#endif
 
 #endif

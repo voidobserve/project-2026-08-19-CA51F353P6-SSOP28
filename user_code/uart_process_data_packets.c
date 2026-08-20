@@ -1,6 +1,6 @@
 #include "user_config.h"
 #include "uart_process_data_packets.h"
-#include "Library\includes\uart.h"
+#include "uart.h"
 
 volatile u8 buff[20];
 
@@ -24,7 +24,7 @@ void uart_process_data_packets(void)
         return;
     }
 
-    recv_data = uart1_rxbuffer_get();
+    recv_data = uart1_rxbuffer_get_byte();
 
     if (CUR_RECV_CMD_STATUS_NONE == cur_recv_cmd_status) {
         if (FORMAT_HEAD_FLAG == recv_data) {
@@ -40,7 +40,7 @@ void uart_process_data_packets(void)
         buff[cur_recv_cmd_index++] = recv_data;
         if (recv_data > 20) {
             cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
-            Uart1_PutChar(0x44);
+            uart1_send_byte(0x44);
         } else {
             dest_recv_cmd_len = recv_data;
             cur_recv_cmd_status = CUR_RECV_CMD_STATUS_LENGTH;

@@ -28,7 +28,7 @@
 
 #include "Library\includes\delay.h"
 #include "Library\includes\flash.h"
-#include "Library\includes\uart.h"
+
 #include "Library\includes\system_clock.h"
 #include "Library\Includes\rtc.h"
 #include "Library\Includes\pwm.h"
@@ -36,15 +36,19 @@
 #include "Library\includes\adc.h"
 #include "Library\includes\wdt.h"
 /*********************************************************************************************************************/
-#include "TS_Lib\Includes\ts_configuration.h"
-#include "TS_Lib\Includes\ts_def.h"
-#include "TS_Lib\Includes\ts_api.h"
-#include "TS_Lib\Includes\ts_service.h"
-/*********************************************************************************************************************/
 #include "ticks_module.h"
 #include "aip3368h_module.h"
 #include "aip3368h_app.h"
 #include "uart_process_data_packets.h"
+
+#include <stdio.h>
+#include "uart.h"
+#include "timer0.h"
+
+#include "user_config.h"
+
+#include "aip3368.h"
+
 /********************************************************************************************************
 说明：
 ------------------------------------------------------------------------------------------------------------
@@ -326,10 +330,10 @@ void Pwm_Init();
 /******************************************************************************************************/
 void Mcu_FeedDog(void)
 {
-    if (Feed_Wdt_Flag == 0xA5) {
-        WDFLG = 0xA5;
-        Feed_Wdt_Flag = 0x00;
-    }
+    // if (Feed_Wdt_Flag == 0xA5) {
+    //     WDFLG = 0xA5;
+    //     Feed_Wdt_Flag = 0x00;
+    // }
 }
 
 unsigned char read_inner_trim(void)
@@ -350,14 +354,9 @@ void SystemInit(void)
 #ifdef LVD_RST_ENABLE
     LVDCON = 0xE1; //设置LVD复位电压为2V
 #endif
+
 #if (SYSCLK_SRC == PLL)
     Sys_Clk_Set_PLL(PLL_Multiple);
-#endif
-#ifdef UART0_EN
-    Uart0_Initial(UART0_BAUTRATE);
-#endif
-#ifdef UART1_EN
-    Uart1_Initial(UART1_BAUTRATE);
 #endif
 
 //备注：需默认开启看门狗功能，并将其设置为复位模式
@@ -372,11 +371,13 @@ void SystemInit(void)
     WDCON = WDTS(WDTS_XOSCL) |
             WDRE(WDRE_reset); //设置看门狗时钟源为XOSCL，模式为复位模式
 #endif
+
     WDVTHH = 0;  //看门狗复位阈值高八位设置 当前值为5s
     WDVTHL = 75; //看门狗复位阈值低八位设置
     WDFLG = 0xA5;
 
-    ADCFGH = (ADCFGH & 0xC0) | VTRIM(read_inner_trim()); //加载ADC内部基准校准值
+    ADCFGH =
+        (ADCFGH & 0xC0) | VTRIM(read_inner_trim()); // 加载ADC内部基准校准值
 }
 
 //***************************************************************
@@ -494,85 +495,41 @@ void my_loop(void)
     Save_Pro();
 }
 
-//***************************************************************
 void main(void)
-{
+{ 
+
     SystemInit();
     // idle_gpio_init(); // 将所有未使用的GPIO设置为高阻状态+内部上拉，减少功耗
     EA = 1;
 
-    // Uart0_PutChar(0x5C);
+    uart1_init();
+    timer0_init();
 
-#if 0
-    TS_init();
-#endif
 
-    tick_timer_config();
-    Uart1_Initial(UART1_BAUTRATE); // 初始化UART1
+    // tick_timer_config();
 
-    tick_timer_config(); //定时器1初始化
+    // tick_timer_config(); //定时器1初始化
     aip3368h_module_init();
-    aip3368h_module_display();
-    // pwm_var = PWM_0_VAL;
-    // pwm_tmp = pwm_var;
-    // Set_Pwm_Var();
+    // aip3368h_module_display();
 
 #if 0
 	AD_Init();
 #endif
 
-    powup_en = 1;
-    powup_stp = 0;
-    act_tmp = 0;
+    // powup_en = 1;
+    // powup_stp = 0;
+    // act_tmp = 0;
 
-    save_en = 1;
-    init_en = 1;
-    // pwm_var = PWM_20_VAL;
-    // pwm_tmp = pwm_var;
-    // instrument_info.oil_percent = 0xFF;
+    // save_en = 1;
+    // init_en = 1;
 
     while (1) {
-        Mcu_FeedDog(); //喂狗
-
-#if 0
-		TS_Action();
-#endif
-#if SUPPORT_WHEEL_SLIDER
-        if (WheelSliderPosition != -1) {
-            //当WheelSliderPosition不等于-1时， 表示滑条或圆环有触摸事件发生。WheelSliderPosition的值表示滑条或圆环的位置。
-        }
-#endif
-#if SUPPORT_KEY
-        /*************************************************************************************************
-变量KeysFlagSN是触摸库对外的数据接口，KeysFlagSN的每一位对应一个触摸键的状态，为1表示触摸键触发。可多键同时触发。
-*************************************************************************************************/
-        key_tmp = 0;
-        if (KeysFlagSN != 0) {
-            switch (KeysFlagSN) {
-            case 0x0001:
-                // key_tmp |= 0x01;
-                // Uart0_PutChar(0x01);
-                break;
-            case 0x0002:
-                // key_tmp |= 0x02;
-                // Uart0_PutChar(0x02);
-                break;
-            case 0x0004:
-                // key_tmp |= 0x04;
-                // Uart0_PutChar(0x04);
-                break;
-            case 0x0008:
-                // key_tmp |= 0x08;
-                // Uart0_PutChar(0x08);
-                break;
-            //......
-            default:
-                break;
-            }
-        }
-#endif
+        // Mcu_FeedDog(); //喂狗
+        WDFLG = 0xA5; // 喂狗
 
         // my_loop();
+
+        aip3368h_module_display();
     }
 }
 
@@ -3335,10 +3292,10 @@ void Send_Cmd_Pro()
     // }
     // else if(send_cmd == 0x99){	//询问主机,清除小计里程
     if (send_cmd == 0x99) { //询问主机,清除小计里程
-        Uart1_PutChar(0xA5);
-        Uart1_PutChar(0x04);
-        Uart1_PutChar(0x99);
-        Uart1_PutChar(0x42);
+        uart1_send_byte(0xA5);
+        uart1_send_byte(0x04);
+        uart1_send_byte(0x99);
+        uart1_send_byte(0x42);
     }
 }
 #endif

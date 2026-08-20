@@ -19,12 +19,10 @@ void Delay_ms(unsigned int n);
 ***********************************************************************************/
 void Sys_Clk_Set_IRCH(void)
 {
-	CKCON |= IHCKE;											//IRCH时钟使能
-	CKSEL = (CKSEL&0xF8) | CKSEL_IRCH;	//系统时钟切换到IRCH
+    CKCON |= IHCKE;                      //IRCH时钟使能
+    CKSEL = (CKSEL & 0xF8) | CKSEL_IRCH; //系统时钟切换到IRCH
 }
 /***********************************************************************************/
-
-
 
 /***********************************************************************************
 函数名  ：		Sys_Clk_Set_IRCL										 	
@@ -34,13 +32,11 @@ void Sys_Clk_Set_IRCH(void)
 ***********************************************************************************/
 void Sys_Clk_Set_IRCL(void)
 {
-	CKCON |= ILCKE;											//IRCL时钟使能
- 	Delay_ms(1); //延时 1ms，等待 IRCL 时钟稳定
-	CKSEL = (CKSEL&0xF8) | CKSEL_IRCL;	//系统时钟切换到IRCL	
+    CKCON |= ILCKE;                      //IRCL时钟使能
+    Delay_ms(1);                         //延时 1ms，等待 IRCL 时钟稳定
+    CKSEL = (CKSEL & 0xF8) | CKSEL_IRCL; //系统时钟切换到IRCL
 }
 /***********************************************************************************/
-
-
 
 /***********************************************************************************
 函数名  ：		Sys_Clk_Set_XOSCL										 	
@@ -50,16 +46,15 @@ void Sys_Clk_Set_IRCL(void)
 ***********************************************************************************/
 void Sys_Clk_Set_XOSCL(void)
 {
-	P32F = P32_XOSC_IN_SETTING;					//设置P32为晶振引脚
-	P33F = P33_XOSC_OUT_SETTING;				//设置P33为晶振引脚
+    P32F = P32_XOSC_IN_SETTING;  //设置P32为晶振引脚
+    P33F = P33_XOSC_OUT_SETTING; //设置P33为晶振引脚
 
-	CKCON |= XLCKE;											//使能XOSCL时钟
-	while(!(CKCON & XLSTA));						//等待XOSCL时钟稳定
-	CKSEL = (CKSEL&0xF8) | CKSEL_XOSCL;	//切换系统时钟到XOSCL	
+    CKCON |= XLCKE; //使能XOSCL时钟
+    while (!(CKCON & XLSTA))
+        ;                                 //等待XOSCL时钟稳定
+    CKSEL = (CKSEL & 0xF8) | CKSEL_XOSCL; //切换系统时钟到XOSCL
 }
 /***********************************************************************************/
-
-
 
 /***********************************************************************************
 函数名  ：		Sys_Clk_Set_PLL										 	
@@ -67,17 +62,17 @@ void Sys_Clk_Set_XOSCL(void)
 输入参数：		Multiple   倍频倍数
 返回值  ：		无
 ***********************************************************************************/
-void Sys_Clk_Set_PLL(unsigned char Multiple)	
+void Sys_Clk_Set_PLL(unsigned char Multiple)
 {
-	if(Multiple < 2 || Multiple > 8) return;		//倍频倍数范围为 2~8，超出此范围返回
+    if (Multiple < 2 || Multiple > 8)
+        return; //倍频倍数范围为 2~8，超出此范围返回
 
-	PLLCON = PLLON(1) | MULFT(Multiple-2);			//设置倍频倍数并使能PLL
-	while(!(PLLCON & PLSTA));										//等待PLL时钟稳定
-	CKSEL = (CKSEL&0xF8) | CKSEL_PLL;						//切换系统时钟到PLL
+    PLLCON = PLLON(1) | MULFT(Multiple - 2); // 设置倍频倍数并使能PLL
+    while (!(PLLCON & PLSTA))
+        ;                               // 等待PLL时钟稳定
+    CKSEL = (CKSEL & 0xF8) | CKSEL_PLL; // 切换系统时钟到PLL
 }
 /***********************************************************************************/
-
-
 
 /***********************************************************************************
 函数名  ：		Sys_Clk_Set_TFRC										 	
@@ -87,11 +82,10 @@ void Sys_Clk_Set_PLL(unsigned char Multiple)
 ***********************************************************************************/
 void Sys_Clk_Set_TFRC(void)
 {
-	CKCON |= TFCKE;													//使能TFRC时钟
-	CKSEL = (CKSEL&0xF8) | CKSEL_TFRC;			//切换系统时钟到TFRC
+    CKCON |= TFCKE;                      //使能TFRC时钟
+    CKSEL = (CKSEL & 0xF8) | CKSEL_TFRC; //切换系统时钟到TFRC
 }
 /***********************************************************************************/
-
 
 /*********************************************************************************************************************/
 #endif

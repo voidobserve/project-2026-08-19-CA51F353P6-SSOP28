@@ -113,6 +113,7 @@ static void aip3368h_module_send_data_to_all_dev_r(u16 *buff, u8 len)
     // EA = 1;
 }
 
+#if 0
 #define AIP3368H_FLASH_TEST_ENABLE 0
 void aip3368h_module_display(void)
 {
@@ -130,6 +131,7 @@ void aip3368h_module_display(void)
     aip3368h_module_send_data_to_all_dev(display_buff, AIP3368H_DEV_NUM_L);
     aip3368h_module_send_data_to_all_dev_r(display_buff_r, AIP3368H_DEV_NUM_R);
 }
+#endif
 
 void aip3368h_module_clear(void)
 {
@@ -137,6 +139,7 @@ void aip3368h_module_clear(void)
     aip3368h_module_send_data_to_all_dev(display_buff, AIP3368H_DEV_NUM);
 }
 
+#if 0
 void aip3368h_module_init(void)
 {
     // memset(display_buff, 0xFF, sizeof(display_buff));
@@ -163,6 +166,7 @@ void aip3368h_module_init(void)
     aip3368h_module_send_data_to_all_dev(display_buff, AIP3368H_DEV_NUM_L);
     aip3368h_module_send_data_to_all_dev_r(display_buff_r, AIP3368H_DEV_NUM_R);
 }
+#endif
 
 void aip3368h_module_uninit(void)
 {

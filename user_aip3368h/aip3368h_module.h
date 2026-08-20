@@ -1,5 +1,7 @@
-#ifndef _AIP3368H_MODULE_H_
-#define _AIP3368H_MODULE_H_
+#ifndef __AIP3368H_MODULE_H__
+#define __AIP3368H_MODULE_H__
+
+
 
 #define AIP3368H_DEV_NUM   17
 #define AIP3368H_DEV_NUM_L 7

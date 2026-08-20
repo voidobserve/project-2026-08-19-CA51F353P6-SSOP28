@@ -1,1 +1,1 @@
-"Library\Sources\flash.c" OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\flash.lst) OBJECT(.\hex\flash.obj)
+"Library\Sources\flash.c" LARGE OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includes;.\driver\aip3368) DEBUG PRINT(.\lst\flash.lst) OBJECT(.\hex\flash.obj)

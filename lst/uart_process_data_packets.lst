@@ -1,17 +1,18 @@
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 1   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/20/2026 18:20:03 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART_PROCESS_DATA_PACKETS
 OBJECT MODULE PLACED IN .\hex\uart_process_data_packets.obj
-COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\uart_process_data_packets.c OMF2 OPTIMIZE(9,SIZE) BROWSE INCDI
-                    -R(.\user_aip3368h;.\user_code;.\user_config) DEBUG PRINT(.\lst\uart_process_data_packets.lst) OBJECT(.\hex\uart_process_
-                    -data_packets.obj)
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\uart_process_data_packets.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE
+                    - INCDIR(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer
+                    -0;.\includes;.\driver\aip3368) DEBUG PRINT(.\lst\uart_process_data_packets.lst) OBJECT(.\hex\uart_process_data_packets.o
+                    -bj)
 
 line level    source
 
    1          #include "user_config.h"
    2          #include "uart_process_data_packets.h"
-   3          #include "Library\includes\uart.h"
+   3          #include "uart.h"
    4          
    5          volatile u8 buff[20];
    6          
@@ -35,7 +36,7 @@ line level    source
   24   2              return;
   25   2          }
   26   1      
-  27   1          recv_data = uart1_rxbuffer_get();
+  27   1          recv_data = uart1_rxbuffer_get_byte();
   28   1      
   29   1          if (CUR_RECV_CMD_STATUS_NONE == cur_recv_cmd_status) {
   30   2              if (FORMAT_HEAD_FLAG == recv_data) {
@@ -51,7 +52,7 @@ line level    source
   40   2              buff[cur_recv_cmd_index++] = recv_data;
   41   2              if (recv_data > 20) {
   42   3                  cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
-  43   3                  Uart1_PutChar(0x44);
+  43   3                  uart1_send_byte(0x44);
   44   3              } else {
   45   3                  dest_recv_cmd_len = recv_data;
   46   3                  cur_recv_cmd_status = CUR_RECV_CMD_STATUS_LENGTH;
@@ -61,9 +62,9 @@ line level    source
   50   2      
   51   2              if (cur_recv_cmd_index >= dest_recv_cmd_len) {
   52   3                  // 如果接收到的数据包已经接收完毕
-  53   3                  // cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 2   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/20/2026 18:20:03 PAGE 2   
 
+  53   3                  // cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
   54   3      
   55   3                  // 处理数据包
   56   3                  // printf("recv data packet\n");
@@ -125,9 +126,9 @@ line level    source
  112   4                  instrument_info.left_turn_status = buff[3];
  113   4      
  114   4                  // printf("left turn status: %bu\n", instrument_info.left_turn_status);
- 115   4              } break;
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 3   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/20/2026 18:20:03 PAGE 3   
 
+ 115   4              } break;
  116   3      
  117   3              case SEND_RIGHT_TURN: {
  118   4                  instrument_info.right_turn_status = buff[3];
@@ -189,9 +190,9 @@ line level    source
  173   3                  //     instrument_info.second = buff[9];
  174   3                  //     hour_var = instrument_info.hour;
  175   3                  //     min_var = instrument_info.minute;
- 176   3                  //     sec_var = instrument_info.second;
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/19/2026 19:04:42 PAGE 4   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/20/2026 18:20:03 PAGE 4   
 
+ 176   3                  //     sec_var = instrument_info.second;
  177   3                  // }
  178   3                  // break;
  179   3      
@@ -241,11 +242,11 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    495    ----
+   CODE SIZE        =    644    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =     36    ----
+   XDATA SIZE       =     59       3
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     23       3
+   DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
    EDATA SIZE       =   ----    ----
@@ -253,6 +254,8 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    XDATA CONST SIZE =   ----    ----
    FAR CONST SIZE   =   ----    ----
 END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/20/2026 18:20:03 PAGE 5   
 
 
 C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,9 +1,9 @@
 /**************************************************************************************************************
 
 **************************************************************************************************************/
-#define IRCH  0
-#define IRCL  1
-#define PLL   2
+#define IRCH  0 // 2 ~ 4 MHz内部时钟
+#define IRCL  1 // 131 Khz内部时钟
+#define PLL   2  // 
 #define XOSCH 3
 #define XOSCL 4
 
@@ -16,7 +16,7 @@
 #define FOSC (3686400)
 #elif (SYSCLK_SRC == PLL)
 #define PLL_Multiple                                                           \
-    6 //定义PLL倍频倍数,当IRCH的频率为3.6864M时，最高倍频数不要超过6倍
+    6 // 定义PLL倍频倍数,当IRCH的频率为3.6864M时，最高倍频数不要超过6倍
 #define FOSC (3686400 * PLL_Multiple)
 #else
 #define FOSC (3686400)
@@ -34,13 +34,6 @@
 // #define UART0_EN			//如果使用UART0，打开此宏定义
 #define UART1_EN // 如果使用UART1，打开此宏定义
 
-#if (defined UART0_EN | defined UART1_EN)
-#define PRINT_EN // 使用uart_printf函数打印使能
-#ifdef PRINT_EN
-#define PRINT_PORT_SEL 0 //打印口选择 0-选择UART0   1-选择UART1
-#endif
-#endif
-
 #ifdef UART0_EN
 #define UART0_BAUTRATE 38400
 #endif
@@ -48,7 +41,7 @@
 
 // USER_TO_DO 试试能不能改成 115200
 // #define UART1_BAUTRATE 38400
-#define UART1_BAUTRATE 115200
+// #define UART1_BAUTRATE 115200
 #endif
 /*********************************************************************************************************************/
 

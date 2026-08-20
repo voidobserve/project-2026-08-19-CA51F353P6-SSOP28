@@ -8,18 +8,13 @@
 #include "includes\gpiodef_f3.h"
 
 #include "Library\includes\delay.h"
-#include "Library\includes\uart.h"
+#include "uart.h"
 #include "Library\includes\system_clock.h"
 #include "Library\Includes\rtc.h"
 #include "Library\Includes\pwm.h"
 #include "includes\system.h"
 #include "Library\includes\adc.h"
-#include "Library\includes\wdt.h"
-/*********************************************************************************************************************/
-#include "TS_Lib\Includes\ts_configuration.h"
-#include "TS_Lib\Includes\ts_def.h"
-#include "TS_Lib\Includes\ts_api.h"
-#include "TS_Lib\Includes\ts_service.h"
+#include "Library\includes\wdt.h" 
 // 用户自定义的数据类型
 #include "user_typedef.h"
 
@@ -33,7 +28,7 @@
 
 // #define		com_test		P31
 
-#define UESR_DEBUG_ENABLE 1
+#define USER_DEBUG_ENABLE 1
 
 extern unsigned char act_tmp;
 extern idata unsigned char hour_var;
