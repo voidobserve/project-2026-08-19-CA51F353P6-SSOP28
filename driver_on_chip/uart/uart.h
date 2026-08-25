@@ -3,7 +3,7 @@
 
 #include "user_typedef.h"
 
-#define UART1_TX_BUF_SIZE 20
+#define UART1_TX_BUF_SIZE 100
 #define UART1_RX_BUF_SIZE 100
 
 #define UART1_BAUTRATE 115200

@@ -82,9 +82,10 @@ typedef enum {
 	NIE_On = 1,
 } PWM_NIE_TypeDef;
 
-
+#if 0
 void PWM_init(PWM_Channel_TypeDef pwm_ch,PWM_AlignMod_TypeDef AlignMod,PWM_CKS_TypeDef cks,
 							PWM_Toggle_TypeDef toggle,unsigned char Prescal,PWM_Complementary_TypeDef Comp);
+							#endif
 void PWM_CfgDivDuty(PWM_Channel_TypeDef pwm_ch,unsigned int DIV,unsigned int DUT);
 void PWM_Update(unsigned char PWMCH_Bits);
 void PWM_EnContrl(unsigned char PWMEn_Bits);

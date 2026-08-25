@@ -1,0 +1,289 @@
+C51 COMPILER V9.60.7.0   KEY_DRIVER                                                        08/25/2026 16:48:30 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE KEY_DRIVER
+OBJECT MODULE PLACED IN .\hex\key_driver.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE driver\key\key_driver.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.\user
+                    -_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includes;.
+                    -\driver\aip3368;.\driver\key) DEBUG PRINT(.\lst\key_driver.lst) OBJECT(.\hex\key_driver.obj)
+
+line level    source
+
+   1          #include "key_driver.h"
+   2             
+   3          
+   4          enum
+   5          {
+   6              KEY_SCAN_STATUS_NONE = 0,       // 无特殊状态
+   7              KEY_SCAN_STATUS_TO_NOTIFY,      // 发送按键消息
+   8              KEY_SCAN_STATUS_TO_END_OF_SCAN, // 按键扫描结束，进行收尾处理
+   9          };
+  10          
+  11          static volatile u8 is_key_active; // 按键是否有效的计数值
+  12          
+  13          //=======================================================//
+  14          // 按键扫描函数: 扫描所有注册的按键驱动
+  15          //=======================================================//
+  16          // xdata volatile struct key_driver_para *scan_para; // 要让指针指向xdata区域的全局变量，需
+             -要同样将指针变为全局变量
+  17          volatile struct key_driver_para *scan_para; // 要让指针指向xdata区域的全局变量，需要同样
+             -将指针变为全局变量
+  18          void key_driver_scan(void *_scan_para)
+  19          // struct key_driver_para key_driver_scan(struct key_driver_para scan_para)
+  20          {
+  21   1          // volatile struct key_driver_para xdata *scan_para = (struct key_driver_para xdata *)_scan_para; // �
+             -��数内部的指针只能指向idata空间，不能指向全局变量的xdata空间
+  22   1          // volatile struct key_driver_para xdata *scan_para = (struct key_driver_para xdata *)0x642D; // 系�
+             -�会一直复位
+  23   1      
+  24   1      #if 1
+  25   1          u8 key_event = KEY_EVENT_NONE; // 存放待发送的按键事件
+  26   1          u8 cur_key_value = NO_KEY;     // 存放待发送的按键键值
+  27   1          u8 key_value = NO_KEY;
+  28   1      
+  29   1          // u8 key_scan_status = KEY_SCAN_STATUS_NONE; // 状态机，负责控制该函数内的跳转操作 /
+             -* 控制跳转还有问题，还不能使用 */
+  30   1      
+  31   1          scan_para = (struct key_driver_para *)_scan_para;
+  32   1      
+  33   1          // 如果扫描时间未到来，不执行按键扫描
+  34   1          if (scan_para->cur_scan_times < scan_para->scan_times) {
+  35   2              return;
+  36   2          }
+  37   1      
+  38   1          scan_para->cur_scan_times = 0; // 清空扫描时间
+  39   1      
+  40   1          cur_key_value = scan_para->get_value(); // 调用用户自定义的获取键值函数
+  41   1      
+  42   1          // if (cur_key_value != NO_KEY)
+  43   1          //     printf("key id %bu\n", cur_key_value); // 打印获取到的键值
+  44   1      
+  45   1          // 判断按键是否有效
+  46   1          if (cur_key_value != NO_KEY) {
+  47   2              is_key_active = 35; // 35*10Ms
+  48   2          } else if (is_key_active) {
+C51 COMPILER V9.60.7.0   KEY_DRIVER                                                        08/25/2026 16:48:30 PAGE 2   
+
+  49   2              is_key_active--;
+  50   2          }
+  51   1      
+  52   1          // if (cur_key_value != NO_KEY)
+  53   1          // {
+  54   1          //     //     printf("scan_times %bu\n", scan_para->scan_times);
+  55   1          //     //     printf("cur_scan_times %bu\n", scan_para->cur_scan_times);
+  56   1          //     //     printf("last_key %bu\n", scan_para->last_key);
+  57   1          //     //     printf("filter_value %bu\n", scan_para->filter_value);
+  58   1          //     //     printf("filter_cnt %bu\n", scan_para->filter_cnt);
+  59   1          //     //     printf("filter_time %bu\n", scan_para->filter_time);
+  60   1          //     printf("long_time %bu\n", ad_key_para.long_time);
+  61   1          //     printf("long_time %bu\n", (*scan_para).long_time);
+  62   1          //     //     printf("hold_time %bu\n", scan_para->hold_time);
+  63   1          //     //     printf("press_cnt %bu\n", scan_para->press_cnt);
+  64   1      
+  65   1          //     //     printf("click_cnt %bu\n", scan_para->click_cnt);
+  66   1          //     //     printf("click_delay_cnt %bu\n", scan_para->click_delay_cnt);
+  67   1          //     //     printf("click_delay_time %bu\n", scan_para->click_delay_time);
+  68   1          //     //     printf("notify_value %bu\n", scan_para->notify_value);
+  69   1          //     //     printf("key_type %bu\n", scan_para->key_type);
+  70   1      
+  71   1          //     //     printf("latest_key_val %bu\n", scan_para->latest_key_val);
+  72   1          //     //     printf("latest_key_event %bu\n", scan_para->latest_key_event);
+  73   1      
+  74   1          //     printf("ad key long time addr %p\n", &ad_key_para.long_time);
+  75   1          //     // printf("scan para long time addr %p\n", &(scan_para->long_time));
+  76   1          //     printf("scan para long time addr %p\n", (*scan_para).long_time);
+  77   1          // }
+  78   1      
+  79   1          //===== 按键消抖处理
+  80   1          if (cur_key_value != scan_para->filter_value && scan_para->filter_time) {
+  81   2              // 当前按键值与上一次按键值如果不相等, 重新消抖处理, 注意filter_time != 0
+             -;
+  82   2              scan_para->filter_cnt = 0;               // 消抖次数清0, 重新开始消抖
+  83   2              scan_para->filter_value = cur_key_value; // 记录上一次的按键值
+  84   2              return;                                  // 第一次检测, 返回不做处理
+  85   2          }
+  86   1      
+  87   1          // 当前按键值与上一次按键值相等, filter_cnt开始累加;
+  88   1          if (scan_para->filter_cnt < scan_para->filter_time) {
+  89   2              scan_para->filter_cnt++;
+  90   2              return;
+  91   2          }
+  92   1      
+  93   1          //===== 按键消抖结束, 开始判断按键类型(单击, 双击, 长按, 多击, HOLD, (长按/HOL
+             -D)抬起)
+  94   1          if (cur_key_value != scan_para->last_key) {
+  95   2              /*
+  96   2                  如果当前的键值为空，上一次的键值又与当前的键值不一样，说明按键�
+             -��开
+  97   2                  cur_key = NO_KEY; last_key = valid_key -> 按键被抬起
+  98   2              */
+  99   2              // printf("key event up\n");
+ 100   2      
+ 101   2              if (cur_key_value == NO_KEY) {
+ 102   3                  if (scan_para->press_cnt >= scan_para->long_time) { // 长按/HOLD状态之后被按键抬起;
+ 103   4                      key_event = KEY_EVENT_UP;
+ 104   4                      key_value = scan_para->last_key;
+ 105   4                      goto _notify; // 发送抬起消息
+ 106   4                      // key_scan_status = KEY_SCAN_STATUS_TO_NOTIFY; // 跳转到发送按键事件的操作
+ 107   4                  }
+C51 COMPILER V9.60.7.0   KEY_DRIVER                                                        08/25/2026 16:48:30 PAGE 3   
+
+ 108   3      
+ 109   3                  // if (KEY_SCAN_STATUS_NONE == key_scan_status) // 如果没有特殊操作
+ 110   3                  {
+ 111   4                      scan_para->click_delay_cnt = 1; // 按键等待下次连击延时开始
+ 112   4                  }
+ 113   3              } else {
+ 114   3                  /*
+ 115   3                      如果当前的键值不为空，上一次的键值又与当前的键值不一样，说明
+             -按键按下
+ 116   3                      cur_key = valid_key, last_key = NO_KEY -> 按键被按下
+ 117   3                  */
+ 118   3                  scan_para->press_cnt = 1; // 用于判断long和hold事件的计数器重新开始计时;
+ 119   3                  if (cur_key_value != scan_para->notify_value) { // 第一次单击/连击时按下的是不同
+             -按键, 单击次数重新开始计数
+ 120   4                      scan_para->click_cnt = 1;
+ 121   4                      scan_para->notify_value = cur_key_value;
+ 122   4                  } else {
+ 123   4                      scan_para->click_cnt++; // 单击次数累加
+ 124   4                  }
+ 125   3              }
+ 126   2      
+ 127   2              goto _scan_end; // 返回, 等待延时时间到
+ 128   2              // if (KEY_SCAN_STATUS_NONE == key_scan_status)
+ 129   2              // {
+ 130   2              //     key_scan_status = KEY_SCAN_STATUS_TO_END_OF_SCAN; // 返回, 等待延时时间到
+ 131   2              // }
+ 132   2          } else {
+ 133   2              /*
+ 134   2                  如果当前获取的键值与上次获取的键值一样，说明按键在长按或是按键�
+             -��按下
+ 135   2                  cur_key = last_key -> 没有按键按下/按键长按(HOLD)
+ 136   2              */
+ 137   2              if (cur_key_value == NO_KEY) {
+ 138   3                  // last_key = NO_KEY; cur_key = NO_KEY -> 没有按键按下
+ 139   3                  if (scan_para->click_cnt > 0) { // 有按键需要消息需要处理
+ 140   4      
+ 141   4                      // 如果只响应单击事件，可以在这里添加/修改功能
+ 142   4      
+ 143   4                      if (scan_para->click_delay_cnt > scan_para->click_delay_time) { // 按键被抬起后延�
+             -�到
+ 144   5                          // TODO: 在此可以添加任意多击事件
+ 145   5                          // if (scan_para->click_cnt >= 5)
+ 146   5                          // {
+ 147   5                          //     key_event = KEY_EVENT_FIRTH_CLICK; // 五击
+ 148   5                          // }
+ 149   5                          // else if (scan_para->click_cnt >= 4)
+ 150   5                          // {
+ 151   5                          //     key_event = KEY_EVENT_FOURTH_CLICK; // 4击
+ 152   5                          // }
+ 153   5                          // else if (scan_para->click_cnt >= 3)
+ 154   5                          // {
+ 155   5                          //     key_event = KEY_EVENT_TRIPLE_CLICK; // 三击
+ 156   5                          // }
+ 157   5                          // else if (scan_para->click_cnt >= 2)
+ 158   5                          // if (scan_para->click_cnt >= 2)
+ 159   5                          // {
+ 160   5                          //     key_event = KEY_EVENT_DOUBLE_CLICK; // 双击
+ 161   5                          // }
+ 162   5                          // else
+ 163   5                          {
+ 164   6                              key_event = KEY_EVENT_CLICK; // 单击
+ 165   6                              // printf("click \n");
+C51 COMPILER V9.60.7.0   KEY_DRIVER                                                        08/25/2026 16:48:30 PAGE 4   
+
+ 166   6                          }
+ 167   5                          key_value = scan_para->notify_value;
+ 168   5      
+ 169   5                          goto _notify;
+ 170   5                          // key_scan_status = KEY_SCAN_STATUS_TO_NOTIFY;
+ 171   5                      } else { // 按键抬起后等待下次延时时间未到
+ 172   5                          scan_para->click_delay_cnt++;
+ 173   5                          goto _scan_end; // 按键抬起后延时时间未到, 返回
+ 174   5                          // key_scan_status = KEY_SCAN_STATUS_TO_END_OF_SCAN;
+ 175   5                      }
+ 176   4                  } else {
+ 177   4                      goto _scan_end; // 没有按键需要处理
+ 178   4                      // key_scan_status = KEY_SCAN_STATUS_TO_END_OF_SCAN;
+ 179   4                  }
+ 180   3              } else {
+ 181   3                  // last_key = valid_key; cur_key = valid_key, press_cnt累加用于判断long和hold
+ 182   3                  if (scan_para->press_cnt < 255) {
+ 183   4                      scan_para->press_cnt++;
+ 184   4                  }
+ 185   3      
+ 186   3                  // printf("long time %bu\n", scan_para->long_time);
+ 187   3                  // printf("press cnt %bu\n", scan_para->press_cnt);
+ 188   3                  if (scan_para->press_cnt == scan_para->long_time) {
+ 189   4                      key_event = KEY_EVENT_LONG;
+ 190   4      
+ 191   4                      // printf("long time %bu\n", scan_para->long_time);
+ 192   4      
+ 193   4                      // printf("key event long\n");
+ 194   4                  } else if (scan_para->press_cnt == scan_para->hold_time) {
+ 195   4                      key_event = KEY_EVENT_HOLD;
+ 196   4                      scan_para->press_cnt = scan_para->long_time; // 下一次scan_para->press_cnt++,还是会�
+             -��入到这里
+ 197   4                      // printf("key event hold\n");
+ 198   4                  } else {
+ 199   4                      goto _scan_end; // press_cnt没到长按和HOLD次数, 返回
+ 200   4                      // key_scan_status = KEY_SCAN_STATUS_TO_END_OF_SCAN;
+ 201   4                  }
+ 202   3      
+ 203   3                  // press_cnt没到长按和HOLD次数, 发消息
+ 204   3                  key_value = cur_key_value;
+ 205   3                  goto _notify;
+ 206   3                  // key_scan_status = KEY_SCAN_STATUS_TO_NOTIFY;
+ 207   3              }
+ 208   2          }
+ 209   1      
+ 210   1      _notify:
+ 211   1      
+ 212   1          // if (KEY_SCAN_STATUS_TO_END_OF_SCAN != key_scan_status)
+ 213   1          {
+ 214   2              // if (KEY_TYPE_AD == scan_para->key_type) // 如果是ad按键
+ 215   2              {
+ 216   3                  scan_para->click_cnt = 0;         // 按下次数清0
+ 217   3                  scan_para->notify_value = NO_KEY; // 在延时的待发送按键值清零
+ 218   3      
+ 219   3                  scan_para->latest_key_val = key_value;   // 存放得到的按键键值
+ 220   3                  scan_para->latest_key_event = key_event; // 存放得到的按键事件
+ 221   3      
+ 222   3                  // printf("notify\n");
+ 223   3              }
+ 224   2              // else if (KEY_TYPE_TOUCH == scan_para->key_type) // 如果是触摸按键
+ 225   2              // {
+ 226   2              //     scan_para->click_cnt = 0;         // 按下次数清0
+C51 COMPILER V9.60.7.0   KEY_DRIVER                                                        08/25/2026 16:48:30 PAGE 5   
+
+ 227   2              //     scan_para->notify_value = NO_KEY; // 在延时的待发送按键值清零
+ 228   2      
+ 229   2              //     scan_para->latest_key_val = key_value;   // 存放得到的按键键值
+ 230   2              //     scan_para->latest_key_event = key_event; // 存放得到的按键事件
+ 231   2              // }
+ 232   2          }
+ 233   1      
+ 234   1      _scan_end:
+ 235   1          scan_para->last_key = cur_key_value;
+ 236   1          return;
+ 237   1      #endif
+ 238   1      }
+ 239           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    435    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

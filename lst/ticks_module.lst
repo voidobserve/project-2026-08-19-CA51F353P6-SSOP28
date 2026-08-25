@@ -1,11 +1,12 @@
-C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/20/2026 18:20:03 PAGE 1   
+C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/25/2026 17:46:48 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TICKS_MODULE
 OBJECT MODULE PLACED IN .\hex\ticks_module.obj
 COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_aip3368h\ticks_module.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.
                     -\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\inclu
-                    -des;.\driver\aip3368) DEBUG PRINT(.\lst\ticks_module.lst) OBJECT(.\hex\ticks_module.obj)
+                    -des;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1) DEBUG PRINT(.\lst\ticks_module.lst) OBJECT(.\hex\ticks_module
+                    -.obj)
 
 line level    source
 
@@ -23,175 +24,177 @@ line level    source
   11          static volatile u8 x25ms_cnt = 0;
   12          static volatile u8 x100ms_cnt = 0;
   13          
-  14          void TIMER1_ISR(void) interrupt 3   // 每1000us中断一次
-  15          {   // 周期中断
-  16   1              TH1 = TH_VAL;
-  17   1          TL1 = TL_VAL;
-  18   1      
-  19   1          if(pwm_var != pwm_tmp){
-  20   2              if(pwm_var > pwm_tmp){
-  21   3                  pwm_tmp += 2;
-  22   3                  if(pwm_var < pwm_tmp){
-  23   4                      pwm_var = pwm_tmp;
-  24   4                  }
-  25   3              }
-  26   2              else{
-  27   3                  pwm_tmp -= 2;
-  28   3                  if(pwm_var > pwm_tmp){
-  29   4                      pwm_tmp = pwm_var;
-  30   4                  }
-  31   3              }
-  32   2              INDEX = PWM_CH3;
-  33   2              PWMDUTH = (pwm_tmp>>8);
-  34   2              PWMDUTL = pwm_tmp;
-  35   2              PWMUPD = (1<<PWM_CH3);
-  36   2          }
-  37   1      
-  38   1          tick_1ms_count++;
-  39   1          if(tick_1ms_count >= 5){
-  40   2              tick_1ms_count = 0;
-  41   2              //5ms
-  42   2              tick_timer_flag |= SYSTIME_FLAG_5MS;
-  43   2              key_deb_en = 1;
-  44   2              chk_ad_en = 1;
-  45   2      
-  46   2              x25ms_cnt++;
-  47   2              if(x25ms_cnt >= 5){
-  48   3                  x25ms_cnt = 0;
-  49   3                  //25ms
-  50   3                  tick_timer_flag |= SYSTIME_FLAG_25MS;
-  51   3      
-  52   3                  x100ms_cnt++;
-C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/20/2026 18:20:03 PAGE 2   
+  14          #if 0
+              void TIMER1_ISR(void) interrupt 3   // 每1000us中断一次
+              {   // 周期中断
+                      TH1 = TH_VAL;
+                  TL1 = TL_VAL;
+              
+                  if(pwm_var != pwm_tmp){
+                      if(pwm_var > pwm_tmp){
+                          pwm_tmp += 2;
+                          if(pwm_var < pwm_tmp){
+                              pwm_var = pwm_tmp;
+                          }
+                      }
+                      else{
+                          pwm_tmp -= 2;
+                          if(pwm_var > pwm_tmp){
+                              pwm_tmp = pwm_var;
+                          }
+                      }
+                      INDEX = PWM_CH3;
+                      PWMDUTH = (pwm_tmp>>8);
+                      PWMDUTL = pwm_tmp;
+                      PWMUPD = (1<<PWM_CH3);
+                  }
+              
+                  tick_1ms_count++;
+                  if(tick_1ms_count >= 5){
+                      tick_1ms_count = 0;
+                      //5ms
+                      tick_timer_flag |= SYSTIME_FLAG_5MS;
+                      key_deb_en = 1;
+                      chk_ad_en = 1;
+              
+                      x25ms_cnt++;
+                      if(x25ms_cnt >= 5){
+                          x25ms_cnt = 0;
+                          //25ms
+                          tick_timer_flag |= SYSTIME_FLAG_25MS;
+C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/25/2026 17:46:48 PAGE 2   
 
-  53   3                  if((x100ms_cnt&0x01) == 0){
-  54   4                      //50ms
-  55   4                       tick_timer_flag |= SYSTIME_FLAG_50MS;
-  56   4                       deal_showdat_en = 1;
-  57   4                  }
-  58   3                  if(x100ms_cnt >= 4){
-  59   4                      x100ms_cnt = 0;
-  60   4                      //100ms
-  61   4                      tick_timer_flag |= SYSTIME_FLAG_100MS;
-  62   4                  }
-  63   3              }
-  64   2          }
-  65   1      
-  66   1          // tick_1ms_count++;
-  67   1          // if ((tick_1ms_count % 5) == 0)
-  68   1          // {
-  69   1          //     tick_timer_flag |= SYSTIME_FLAG_5MS;
-  70   1          //     if ((tick_1ms_count % 10) == 0)
-  71   1          //     {
-  72   1          //         tick_timer_flag |= SYSTIME_FLAG_10MS;
-  73   1          //         key_deb_en = 1;
-  74   1          //         chk_ad_en = 1;
-  75   1          //     }
-  76   1          //     if ((tick_1ms_count % 25) == 0)
-  77   1          //     {
-  78   1          //         tick_timer_flag |= SYSTIME_FLAG_25MS;
-  79   1          //         if ((tick_1ms_count % 50) == 0)
-  80   1          //         {
-  81   1          //             tick_timer_flag |= SYSTIME_FLAG_50MS;
-  82   1          //             // com_test = ~com_test;
-  83   1          //             deal_showdat_en = 1;
-  84   1          //         }
-  85   1          //         if ((tick_1ms_count % 100) == 0)
-  86   1          //         {
-  87   1          //             tick_timer_flag |= SYSTIME_FLAG_100MS;
-  88   1          //             // powup_cnt_en = 1;
-  89   1          //         }
-  90   1          //         if ((tick_1ms_count % 200) == 0)
-  91   1          //         {
-  92   1          //             tick_timer_flag |= SYSTIME_FLAG_200MS;
-  93   1          //         }
-  94   1          //         if ((tick_1ms_count % 500) == 0)
-  95   1          //         {
-  96   1          //             tick_timer_flag |= SYSTIME_FLAG_500MS;
-  97   1          //         }
-  98   1          //         if ((tick_1ms_count % 1000) == 0)
-  99   1          //         {
- 100   1          //             tick_timer_flag |= SYSTIME_FLAG_1000MS;
- 101   1          //             tick_1ms_count = 0;
- 102   1          //         }
- 103   1          //     }
- 104   1          // }
- 105   1      }
- 106          
- 107          u8 systimer_flag_is_valid(u8 flag)
- 108          {
- 109   1          if (tick_timer_flag_tmp & flag)
- 110   1              return 1;
- 111   1          return 0;
- 112   1      }
- 113          
- 114          void systimer_flag_update(void)
-C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/20/2026 18:20:03 PAGE 3   
+              
+                          x100ms_cnt++;
+                          if((x100ms_cnt&0x01) == 0){
+                              //50ms
+                               tick_timer_flag |= SYSTIME_FLAG_50MS;
+                               deal_showdat_en = 1;
+                          }
+                          if(x100ms_cnt >= 4){
+                              x100ms_cnt = 0;
+                              //100ms
+                              tick_timer_flag |= SYSTIME_FLAG_100MS;
+                          }
+                      }
+                  }
+              
+                  // tick_1ms_count++;
+                  // if ((tick_1ms_count % 5) == 0)
+                  // {
+                  //     tick_timer_flag |= SYSTIME_FLAG_5MS;
+                  //     if ((tick_1ms_count % 10) == 0)
+                  //     {
+                  //         tick_timer_flag |= SYSTIME_FLAG_10MS;
+                  //         key_deb_en = 1;
+                  //         chk_ad_en = 1;
+                  //     }
+                  //     if ((tick_1ms_count % 25) == 0)
+                  //     {
+                  //         tick_timer_flag |= SYSTIME_FLAG_25MS;
+                  //         if ((tick_1ms_count % 50) == 0)
+                  //         {
+                  //             tick_timer_flag |= SYSTIME_FLAG_50MS;
+                  //             // com_test = ~com_test;
+                  //             deal_showdat_en = 1;
+                  //         }
+                  //         if ((tick_1ms_count % 100) == 0)
+                  //         {
+                  //             tick_timer_flag |= SYSTIME_FLAG_100MS;
+                  //             // powup_cnt_en = 1;
+                  //         }
+                  //         if ((tick_1ms_count % 200) == 0)
+                  //         {
+                  //             tick_timer_flag |= SYSTIME_FLAG_200MS;
+                  //         }
+                  //         if ((tick_1ms_count % 500) == 0)
+                  //         {
+                  //             tick_timer_flag |= SYSTIME_FLAG_500MS;
+                  //         }
+                  //         if ((tick_1ms_count % 1000) == 0)
+                  //         {
+                  //             tick_timer_flag |= SYSTIME_FLAG_1000MS;
+                  //             tick_1ms_count = 0;
+                  //         }
+                  //     }
+                  // }
+              }
+              #endif
+ 108          
+ 109          u8 systimer_flag_is_valid(u8 flag)
+ 110          {
+ 111   1          if (tick_timer_flag_tmp & flag)
+ 112   1              return 1;
+ 113   1          return 0;
+C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/25/2026 17:46:48 PAGE 3   
 
- 115          {
- 116   1          bit tr1 = TR1;
- 117   1          TR1 = 0;  // 关闭定时器1中断，防止tick_timer_flag被中断修改
- 118   1          tick_timer_flag_tmp = tick_timer_flag;
- 119   1          tick_timer_flag &= ~SYSTIME_FLAG_ALL;
- 120   1          TR1 = tr1;  // 恢复定时器1中断关闭前的状态
- 121   1      }
- 122          
- 123          void systimer_set_flag(u8 flag)
- 124          {
- 125   1          tick_timer_flag |= flag;
- 126   1      }
- 127          
- 128          void tick_timer_config(void)
- 129          {
- 130   1              TR1 = 0;                        // 定时器1失能
- 131   1              ET1 = 0;                        // 定时器1中断失能
- 132   1          // memset(&sys_timer, 0, sizeof(sys_timer));
- 133   1          tick_1ms_count = 0;
- 134   1          tick_timer_flag &= ~SYSTIME_FLAG_ALL;
- 135   1      
- 136   1              TMOD = (TMOD&0xCF)|0x10;        // 模式选择: 定时器1，模式1
- 137   1              TH1 = TH_VAL;                   // 高8位装初值
- 138   1              TL1 = TL_VAL;                   // 低8位装初值
- 139   1              TR1 = 1;                        // 定时器1使能
- 140   1              ET1 = 1;                        // 定时器1中断使能
- 141   1      //      PT1 = 1;                        // 设置定时器1中断优先级为高优先级
- 142   1      }
- 143          
- 144          void tick_timer_config_close(void)
- 145          {
- 146   1          TR1 = 0;                        // 定时器1停止
- 147   1          ET1 = 0;                        // 定时器1中断禁止
- 148   1      }
- 149          
- 150          void idle_mode_timer_wakeup_config(void)
- 151          {
- 152   1      #define SLEEP_INT_TIME              1000000    //定时时间，单位为us
- 153   1      #define SLEEP_TH_VAL                (unsigned char)((0x10000 - (SLEEP_INT_TIME * (131000 / 1000)) / 12000)
+ 114   1      }
+ 115          
+ 116          void systimer_flag_update(void)
+ 117          {
+ 118   1          bit tr1 = TR1;
+ 119   1          TR1 = 0;  // 关闭定时器1中断，防止tick_timer_flag被中断修改
+ 120   1          tick_timer_flag_tmp = tick_timer_flag;
+ 121   1          tick_timer_flag &= ~SYSTIME_FLAG_ALL;
+ 122   1          TR1 = tr1;  // 恢复定时器1中断关闭前的状态
+ 123   1      }
+ 124          
+ 125          void systimer_set_flag(u8 flag)
+ 126          {
+ 127   1          tick_timer_flag |= flag;
+ 128   1      }
+ 129          
+ 130          void tick_timer_config(void)
+ 131          {
+ 132   1              TR1 = 0;                        // 定时器1失能
+ 133   1              ET1 = 0;                        // 定时器1中断失能
+ 134   1          // memset(&sys_timer, 0, sizeof(sys_timer));
+ 135   1          tick_1ms_count = 0;
+ 136   1          tick_timer_flag &= ~SYSTIME_FLAG_ALL;
+ 137   1      
+ 138   1              TMOD = (TMOD&0xCF)|0x10;        // 模式选择: 定时器1，模式1
+ 139   1              TH1 = TH_VAL;                   // 高8位装初值
+ 140   1              TL1 = TL_VAL;                   // 低8位装初值
+ 141   1              TR1 = 1;                        // 定时器1使能
+ 142   1              ET1 = 1;                        // 定时器1中断使能
+ 143   1      //      PT1 = 1;                        // 设置定时器1中断优先级为高优先级
+ 144   1      }
+ 145          
+ 146          void tick_timer_config_close(void)
+ 147          {
+ 148   1          TR1 = 0;                        // 定时器1停止
+ 149   1          ET1 = 0;                        // 定时器1中断禁止
+ 150   1      }
+ 151          
+ 152          void idle_mode_timer_wakeup_config(void)
+ 153          {
+ 154   1      #define SLEEP_INT_TIME              1000000    //定时时间，单位为us
+ 155   1      #define SLEEP_TH_VAL                (unsigned char)((0x10000 - (SLEEP_INT_TIME * (131000 / 1000)) / 12000)
              - >> 8)
- 154   1      #define SLEEP_TL_VAL                (unsigned char)(0x10000 - (SLEEP_INT_TIME * (131000 / 1000)) / 12000)
- 155   1              TR1 = 0;                        // 定时器1失能
- 156   1              ET1 = 0;                        // 定时器1中断失能
- 157   1      
- 158   1              TMOD = (TMOD&0xCF)|0x10;        // 模式选择: 定时器1，模式1
- 159   1              TH1 = SLEEP_TH_VAL;             // 高8位装初值
- 160   1              TL1 = SLEEP_TL_VAL;             // 低8位装初值
- 161   1              TR1 = 1;                        // 定时器1使能
- 162   1              ET1 = 1;                        // 定时器1中断使能
- 163   1      //      PT1 = 1;                        // 设置定时器1中断优先级为高优先级
- 164   1      }
+ 156   1      #define SLEEP_TL_VAL                (unsigned char)(0x10000 - (SLEEP_INT_TIME * (131000 / 1000)) / 12000)
+ 157   1              TR1 = 0;                        // 定时器1失能
+ 158   1              ET1 = 0;                        // 定时器1中断失能
+ 159   1      
+ 160   1              TMOD = (TMOD&0xCF)|0x10;        // 模式选择: 定时器1，模式1
+ 161   1              TH1 = SLEEP_TH_VAL;             // 高8位装初值
+ 162   1              TL1 = SLEEP_TL_VAL;             // 低8位装初值
+ 163   1              TR1 = 1;                        // 定时器1使能
+ 164   1              ET1 = 1;                        // 定时器1中断使能
+ 165   1      //      PT1 = 1;                        // 设置定时器1中断优先级为高优先级
+ 166   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    362    ----
+   CODE SIZE        =    106    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =      6    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
+C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/25/2026 17:46:48 PAGE 4   
+
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----       1
    EDATA SIZE       =   ----    ----
-C51 COMPILER V9.60.7.0   TICKS_MODULE                                                      08/20/2026 18:20:03 PAGE 4   
-
    HDATA SIZE       =   ----    ----
    XDATA CONST SIZE =   ----    ----
    FAR CONST SIZE   =   ----    ----

@@ -7,12 +7,12 @@
 	时速面板对应的芯片数量
 	有多少个芯片级联
 */
-#define AIP3368H_SPEED_PANEL_IC_NUM 7
+#define AIP3368H_SPEED_PANEL_IC_NUM (7)
 /*
 	发动机转速面板对应的芯片数量
 	有多少个芯片级联
 */
-#define AIP3368H_ENGINE_SPEED_PANEL_IC_NUM 8
+#define AIP3368H_ENGINE_SPEED_PANEL_IC_NUM (8)
 
 #if (AIP3368H_SPEED_PANEL_IC_NUM >= AIP3368H_ENGINE_SPEED_PANEL_IC_NUM)
 #define AIP3368_MAX_IC_NUM AIP3368H_SPEED_PANEL_IC_NUM
@@ -39,12 +39,14 @@ extern volatile u16
 extern volatile u16
     aip3368h_engine_speed_panel_display_buff[AIP3368H_ENGINE_SPEED_PANEL_IC_NUM];
 
-#define aip3368h_delay() // 延时函数，根据需要决定使用，测试48Mhz主频无定时中断不需要延时也能正常点亮
+extern void Dly_us(unsigned int n);
+// 延时函数，根据需要决定使用，测试48Mhz主频无定时中断不需要延时也能正常点亮
+#define aip3368h_delay()
+// #define aip3368h_delay() Delay_50us(1)
 
 void aip3368h_refresh_time_add();
 
-void aip3368h_module_init(void); 
-void aip3368h_module_display(void); 
- 
+void aip3368h_module_init(void);
+void aip3368h_module_display(void);
 
 #endif

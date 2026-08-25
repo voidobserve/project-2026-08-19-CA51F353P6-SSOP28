@@ -23,6 +23,7 @@
 返回值： 无					
 
 ******************************************************************************/
+#if 0
 void PWM_init(PWM_Channel_TypeDef pwm_ch,
 							PWM_AlignMod_TypeDef AlignMod,
 							PWM_CKS_TypeDef cks,
@@ -42,7 +43,7 @@ void PWM_init(PWM_Channel_TypeDef pwm_ch,
 		PWMCFG = TOG(toggle) | Prescal;		
 	}
 }
-
+#endif
 /******************************************************************************
 函数名：	PWM_CfgDivDuty
 功能描述：设置PWM周期和占空比

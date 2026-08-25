@@ -1,11 +1,12 @@
-C51 COMPILER V9.60.7.0   TIMER0                                                            08/20/2026 18:20:02 PAGE 1   
+C51 COMPILER V9.60.7.0   TIMER0                                                            08/25/2026 19:00:27 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TIMER0
 OBJECT MODULE PLACED IN .\hex\timer0.obj
 COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE driver_on_chip\timer0\timer0.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR
                     -(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\inc
-                    -ludes;.\driver\aip3368) DEBUG PRINT(.\lst\timer0.lst) OBJECT(.\hex\timer0.obj)
+                    -ludes;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\timer0.lst) OBJECT(.\h
+                    -ex\timer0.obj)
 
 line level    source
 
@@ -15,18 +16,18 @@ line level    source
    4          
    5          #include "aip3368.h"
    6          
-   7          void timer0_init(void)
-   8          { 
-   9   1          TMOD &= 0xFC;      // 使能定时器 0 ，定时器0配置为计数器
-  10   1          TMOD |= 0x01;      // 定时器0配置为模式1，组成16位
-  11   1          TH0 = TIMER0_HVAL; // 高8位装初值
-  12   1          TL0 = TIMER0_LVAL; // 低8位装初值
-  13   1      
-  14   1          TR0 = 1; //定时器0使能
-  15   1          ET0 = 1; //定时器0中断使能
-  16   1      }
-  17          
-  18          extern void test_timer0_cnt_add(void);
+   7          extern void user_1ms_isr(void);
+   8          
+   9          void timer0_init(void)
+  10          {
+  11   1          TMOD &= 0xFC;      // 使能定时器 0 ，定时器0配置为计数器
+  12   1          TMOD |= 0x01;      // 定时器0配置为模式1，组成16位
+  13   1          TH0 = TIMER0_HVAL; // 高8位装初值
+  14   1          TL0 = TIMER0_LVAL; // 低8位装初值
+  15   1      
+  16   1          TR0 = 1; //定时器0使能
+  17   1          ET0 = 1; //定时器0中断使能
+  18   1      }
   19          
   20          void timer0_isr(void) interrupt 1
   21          {
@@ -34,7 +35,7 @@ line level    source
   23   1          TH0 = TIMER0_HVAL;
   24   1          TL0 = TIMER0_LVAL;
   25   1      
-  26   1          aip3368h_refresh_time_add();    
+  26   1          user_1ms_isr();
   27   1      }
 
 

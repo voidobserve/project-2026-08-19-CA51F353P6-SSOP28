@@ -1,10 +1,11 @@
 #ifndef __UI_H__
 #define __UI_H__
-
-#include "include.h"
+ 
+#include "user_typedef.h"
 
 // 处于设置界面，等待超时的时间：
 #define UI_SETTING_TIME_OUT_CNT ((u16)2 * 12 * 400)
+// 处于设置界面，指示灯闪烁的时间间隔：
 #define UI_SETTING_BLINK_PERIOD ((u16)400)
 
 
@@ -20,8 +21,8 @@ typedef u8 ui_state_t;
 
 typedef struct
 {
-    u16 blink_timer_cnt;
-    u16 state_timeout_cnt;
+    u16 blink_timer_cnt; 
+    u16 err_blink_time_cnt;
     u16 auto_exit_setting_time_cnt; // 自动退出设置界面的计时器
 
     u8 blink_dir;

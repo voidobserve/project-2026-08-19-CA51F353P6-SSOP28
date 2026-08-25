@@ -8,7 +8,8 @@
 
 #include "includes\system.h"
 
-// #include <stdarg.h>
+#include <string.h>
+
 
 #if USER_DEBUG_ENABLE
 #include <stdio.h>
@@ -50,8 +51,7 @@ void uart1_init(void)
              (0x01 << 4)); // 串行接收使能
     ES1 = 1;               // UART1中断使能
 }
-
-// 发送一个字节数据
+ 
 /**
  * @brief 发送一个字节数据
  * 
@@ -98,6 +98,9 @@ void uart1_send_byte(unsigned char byte)
 
             break;
         }
+
+        // 在这里加喂狗，会把整个程序卡死
+        // WDFLG = 0xA5; // 喂狗 
     }
 }
 

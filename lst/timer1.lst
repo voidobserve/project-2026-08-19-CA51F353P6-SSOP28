@@ -1,0 +1,56 @@
+C51 COMPILER V9.60.7.0   TIMER1                                                            08/25/2026 19:00:27 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TIMER1
+OBJECT MODULE PLACED IN .\hex\timer1.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE driver_on_chip\timer1\timer1.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR
+                    -(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\inc
+                    -ludes;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\timer1.lst) OBJECT(.\h
+                    -ex\timer1.obj)
+
+line level    source
+
+   1          #include "timer1.h"
+   2          #include "ca51f3sfr.h"
+   3          
+   4          #include "user_debug.h"
+   5          
+   6          void timer1_init(void)
+   7          {
+   8   1          TMOD &= 0xCF; //
+   9   1          TMOD |= 0x10; //
+  10   1      
+  11   1          TH1 = TIMER1_HVAL;
+  12   1          TL1 = TIMER1_LVAL;
+  13   1      
+  14   1          TR1 = 1; // 定时器1使能
+  15   1          ET1 = 1; // 定时器1中断使能
+  16   1      }
+  17          
+  18          void timer1_isr(void) interrupt 3
+  19          {
+  20   1          // 触发中断后，重新写入计数值
+  21   1          TH1 = TIMER1_HVAL;
+  22   1          TL1 = TIMER1_LVAL;
+  23   1      
+  24   1              // TODO 待测试中断周期是否正确
+  25   1              user_debug_io_toggle();
+  26   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     85    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

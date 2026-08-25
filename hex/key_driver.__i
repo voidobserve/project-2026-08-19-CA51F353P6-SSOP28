@@ -1,0 +1,1 @@
+"driver\key\key_driver.c" LARGE OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includes;.\driver\aip3368;.\driver\key) DEBUG PRINT(.\lst\key_driver.lst) OBJECT(.\hex\key_driver.obj)

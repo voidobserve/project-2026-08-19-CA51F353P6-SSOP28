@@ -2,6 +2,8 @@
 #include "uart_process_data_packets.h"
 #include "uart.h"
 
+// TODO 待移植最新的双缓冲接收处理程序
+#if 0
 volatile u8 buff[20];
 
 static volatile u8 cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE;
@@ -219,3 +221,4 @@ void uart_process_data_packets(void)
         cur_recv_cmd_status = CUR_RECV_CMD_STATUS_NONE; // 重新接收数据
     }
 }
+#endif

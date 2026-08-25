@@ -1,11 +1,11 @@
 #include "aip3368.h"
 
+#include "gpiodef_f3.h" // GPIO_Init()
+#include "ca51f3xsfr.h" // 含有引脚功能控制寄存器定义
+#include "ca51f3sfr.h" // 含有引脚数据寄存器定义
 #include <string.h> // memset
 #include "user_typedef.h"
 #include "user_config.h" // USER_DEBUG_ENABLE
-
-#include "gpiodef_f3.h" // GPIO_Init()
-#include "ca51f3xsfr.h" // 含有引脚功能控制寄存器定义
 
 // REVIEW 测试时使用 u16 , 实际使用可以改为 u8
 // static volatile u8 aip3368h_refresh_cnt = 0;
@@ -39,13 +39,15 @@ static void aip3368h_module_send_data_to_all_dev(const u16 *buff_group_1,
     volatile u16 dat_group_2;
 
     /*
-        两组级联（时速面板 6 颗、发动机转速面板 8 颗）共用 DCK 和 LAT，
+        两组级联 共用 DCK 和 LAT，
         因此一帧的时钟数必须等于最大的级联数（AIP3368_MAX_IC_NUM = 8 个字）。
 
         移位寄存器型级联：先发的数据会填充到最远端的芯片，
         发多了的字会从级联链末端移出而丢失（不是“截取前一段再转发”）。
         所以级联数较少的一组，数据必须从帧的“末尾”开始发送：
         字偏移 offset = AIP3368_MAX_IC_NUM - 本组级联数。
+
+        例如：时速面板 6 颗，发动机转速面板 8 颗，
         时速面板 offset = 8 - 6 = 2，其 6 个字占帧的第 2~7 个位置，
         恰好落在 6 颗芯片上，前面 2 个字补 0（被移出丢失，无影响）。
         发动机转速面板 offset = 0，8 个字正好占满整帧。
@@ -68,9 +70,17 @@ static void aip3368h_module_send_data_to_all_dev(const u16 *buff_group_1,
             dat_group_1 = buff_group_1[i - offset_group_1];
         }
 
+        // if (i < len_group_1) {
+        //     dat_group_1 = buff_group_1[i];
+        // }
+
         if (i >= offset_group_2) {
             dat_group_2 = buff_group_2[i - offset_group_2];
         }
+
+        // if (i < len_group_2) {
+        //     dat_group_2 = buff_group_2[i];
+        // }
 
         for (j = 0; j < 16; j++) {
             DIO_GROUP_1 = dat_group_1 & (u16)0x8000 ? 1 : 0;
@@ -97,18 +107,18 @@ static void aip3368h_module_send_data_to_all_dev(const u16 *buff_group_1,
     DIO_GROUP_2 = 0;
 }
 
-#define AIP3368H_FLASH_TEST_ENABLE 1
+#define AIP3368H_FLASH_TEST_ENABLE 0
 
 // 根据显存中的数据，更新显示
 void aip3368h_module_display(void)
 {
     // 刷新间隔 单位：ms
-    // if (aip3368h_refresh_cnt < 25)
-    if (aip3368h_refresh_cnt < 500) {
+    if (aip3368h_refresh_cnt < 25) {
+        // if (aip3368h_refresh_cnt < 500) {
         return;
     } else {
         aip3368h_refresh_cnt = 0;
-    }
+    } 
 
 #if USER_DEBUG_ENABLE
 // printf("aip3368h_module_display\n");

@@ -3,6 +3,7 @@
 
 #define FORMAT_HEAD_FLAG 0xA5
 
+#if 0
 // 定义处理指令时使用到的各个状态：
 enum
 {
@@ -111,5 +112,6 @@ typedef struct
 extern instrument_info_t xdata instrument_info;
 
 void uart_process_data_packets(void);
+#endif
 
 #endif

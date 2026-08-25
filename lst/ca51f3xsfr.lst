@@ -1,11 +1,12 @@
-C51 COMPILER V9.60.7.0   CA51F3XSFR                                                        08/20/2026 18:20:03 PAGE 1   
+C51 COMPILER V9.60.7.0   CA51F3XSFR                                                        08/25/2026 19:00:27 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE CA51F3XSFR
 OBJECT MODULE PLACED IN .\hex\ca51f3xsfr.obj
 COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Library\Sources\ca51f3xsfr.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.
                     -\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\inclu
-                    -des;.\driver\aip3368) DEBUG PRINT(.\lst\ca51f3xsfr.lst) OBJECT(.\hex\ca51f3xsfr.obj)
+                    -des;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\ca51f3xsfr.lst) OBJECT(.
+                    -\hex\ca51f3xsfr.obj)
 
 line level    source
 
@@ -61,9 +62,9 @@ line level    source
   50          XRAM_U8 TLCNTKH XRAM_AT_(0x810c);
   51          XRAM_U8 TLCNTLL XRAM_AT_(0x810d);
   52          XRAM_U8 TLCNTLH XRAM_AT_(0x810e);
-  53          XRAM_U8 TLCNTD XRAM_AT_(0x810f);
-C51 COMPILER V9.60.7.0   CA51F3XSFR                                                        08/20/2026 18:20:03 PAGE 2   
+C51 COMPILER V9.60.7.0   CA51F3XSFR                                                        08/25/2026 19:00:27 PAGE 2   
 
+  53          XRAM_U8 TLCNTD XRAM_AT_(0x810f);
   54          XRAM_U8 TLCOMS XRAM_AT_(0x8110);
   55          XRAM_U8 LXCAD XRAM_AT_(0x8117);
   56          XRAM_U8 FTCTL XRAM_AT_(0x811e);

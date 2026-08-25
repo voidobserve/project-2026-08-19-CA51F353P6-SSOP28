@@ -1,14 +1,12 @@
 #include "ui.h"
-// #include "user_include.h"
+
 #include "user_config.h"
+#include "aip3368.h"
 #include "aip3368h_display.h"
 
-#include "speed_scan.h"
-#include "engine_speed_scan.h"
-#include "aip1302.h"
-
-// 错误处理函数的调用周期计数值：
-static volatile u16 ui_display_err_time_cnt = 0;
+// #include "speed_scan.h"
+// #include "engine_speed_scan.h"
+// #include "aip1302.h"
 
 volatile ui_manager_t ui_manager = {0};
 
@@ -25,6 +23,8 @@ void ui_manager_init(void)
  */
 void ui_timer_handle_isr(void)
 {
+#if 0 // 
+
     if (aip1302_update_time_interval < ((u16)-1) &&
         ui_manager.state == UI_STATE_NORMAL) {
         aip1302_update_time_interval++;
@@ -32,7 +32,11 @@ void ui_timer_handle_isr(void)
         aip1302_update_time_interval = 0;
     }
 
+#endif
+
     aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
+
+#if 0
 #if SPEED_SCAN_ENABLE
     // 递增 AIP3368H 显示 速度 刷新时间计数
     aip3368h_display_speed_refresh_time_add();
@@ -40,10 +44,12 @@ void ui_timer_handle_isr(void)
     // 递增 AIP3368H 显示 发动机转速 刷新时间计数
     aip3368h_display_engine_speed_refresh_time_add();
 
-    if (ui_display_err_time_cnt < ((u16)-1)) {
-        ui_display_err_time_cnt++;
+    if (ui_manager.err_blink_time_cnt < ((u16)-1)) {
+        ui_manager.err_blink_time_cnt++;
     }
+#endif
 
+    // 如果在设置界面
     if (ui_manager.state == UI_STATE_SETTING_DISTANCE_UNIT_TYPE ||
         ui_manager.state == UI_STATE_SETTING_TIME_MINUTE ||
         ui_manager.state == UI_STATE_SETTING_TIME_HOUR) {
@@ -75,12 +81,13 @@ void ui_display_err_handle(void)
 {
     static volatile u8 display_err_dir = 0;
 
-    if (ui_display_err_time_cnt < 475) {
+    if (ui_manager.err_blink_time_cnt < 475) {
         return;
     } else {
-        ui_display_err_time_cnt = 0;
+        ui_manager.err_blink_time_cnt = 0;
     }
 
+#if 0
     // 低油量 提示
     if (instrument.flag_is_in_warning_of_low_fuel) {
         // 直接操作显存，判断指示灯是否点亮，进而让它闪烁
@@ -119,12 +126,12 @@ void ui_display_err_handle(void)
     }
 
     // 时间冒号闪烁（样机的时间分隔符与错误提示共用一个时基）
-    // if ((aip3368h_engine_speed_panel_display_buff[1] >> 6) & 0x01) {
     if (0 == display_err_dir) {
         aip3368h_display_time_colon_light(0);
     } else {
         aip3368h_display_time_colon_light(1);
     }
+#endif
 
     display_err_dir = !display_err_dir;
 }
@@ -132,6 +139,8 @@ void ui_display_err_handle(void)
 // 显示处理
 void ui_display_handle(void)
 {
+
+#if 0
     switch (ui_manager.state) {
     case UI_STATE_NORMAL:
         // 正常显示
@@ -220,7 +229,7 @@ void ui_display_handle(void)
         ui_manager.blink_dir = !ui_manager.blink_dir;
         break;
     }
-
+ 
     // 设置超时
     if (ui_manager.auto_exit_setting_time_cnt >= UI_SETTING_TIME_OUT_CNT) {
         ui_manager.auto_exit_setting_time_cnt = 0;
@@ -237,7 +246,9 @@ void ui_display_handle(void)
         // 自动退出设置界面后，保存相关数据
         instrument_info_save_enable();
     }
+#endif
 
+#if 0
 #if SPEED_SCAN_ENABLE
     aip3368h_display_speed_handle(); // 显示时速
 #endif
@@ -245,6 +256,8 @@ void ui_display_handle(void)
     aip3368h_display_engine_speed_handle(); // 显示发动机转速
 
     ui_display_err_handle(); // 显示错误提示（例如低油量提示）
+#endif
+
     aip3368h_module_display();
 }
 
@@ -282,6 +295,7 @@ void ui_display_refresh(void)
         break;
     }
 
+#if 0
     // 立即显示 时速 单位类型
     if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
         // 公制单位
@@ -300,4 +314,5 @@ void ui_display_refresh(void)
 
     // 立即更新时间显示：
     aip3368h_display_time(aip1302_info.time_hour, aip1302_info.time_min);
+#endif
 }

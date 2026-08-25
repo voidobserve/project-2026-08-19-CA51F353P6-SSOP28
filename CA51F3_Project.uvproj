@@ -324,7 +324,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includes;.\driver\aip3368</IncludePath>
+              <IncludePath>.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includes;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes</IncludePath>
             </VariousControls>
           </C51>
           <Ax51>
@@ -374,12 +374,32 @@
       </TargetOption>
       <Groups>
         <Group>
+          <GroupName>Start_Up</GroupName>
+          <Files>
+            <File>
+              <FileName>STARTUP.A51</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\Library\Lib\STARTUP.A51</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>driver</GroupName>
           <Files>
             <File>
               <FileName>aip3368.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\driver\aip3368\aip3368.c</FilePath>
+            </File>
+            <File>
+              <FileName>aip3368h_display.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\driver\aip3368\aip3368h_display.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin_level_scan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\driver\pin_level_scan.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -395,6 +415,11 @@
               <FileName>timer0.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\driver_on_chip\timer0\timer0.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\driver_on_chip\timer1\timer1.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -417,11 +442,6 @@
               <FilePath>.\Library\Sources\system_clock.c</FilePath>
             </File>
             <File>
-              <FileName>interrupt.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\interrupt.c</FilePath>
-            </File>
-            <File>
               <FileName>flash.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Library\Sources\flash.c</FilePath>
@@ -434,42 +454,27 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Star_Up</GroupName>
-          <Files>
-            <File>
-              <FileName>STARTUP.A51</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\Library\Lib\STARTUP.A51</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>user_aip3368h</GroupName>
-          <Files>
-            <File>
-              <FileName>aip3368h_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\user_aip3368h\aip3368h_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>aip3368h_module.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\user_aip3368h\aip3368h_module.c</FilePath>
-            </File>
-            <File>
-              <FileName>ticks_module.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\user_aip3368h\ticks_module.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>user_code</GroupName>
           <Files>
             <File>
               <FileName>uart_process_data_packets.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\user_code\uart_process_data_packets.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>user_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\user_debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>engine_speed_scan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\engine_speed_scan.c</FilePath>
             </File>
           </Files>
         </Group>
