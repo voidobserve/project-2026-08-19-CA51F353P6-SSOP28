@@ -1,0 +1,69 @@
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/26/2026 18:53:42 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE BOOT_ANIMATION
+OBJECT MODULE PLACED IN .\hex\boot_animation.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\boot_animation.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.\u
+                    -ser_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\include
+                    -s;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\boot_animation.lst) OBJECT
+                    -(.\hex\boot_animation.obj)
+
+line level    source
+
+   1          #include "boot_animation.h"
+   2          #include "ca51f3sfr.h" // WDFLG
+   3          #include "user_typedef.h"
+   4          #include <string.h> // memset
+   5          #include "aip3368.h"
+   6          
+   7          volatile u16 boot_animation_param_total_time_cnt = 0;
+   8          
+   9          void boot_animation_time_base_add_1ms_isr(void)
+  10          {
+  11   1          if (boot_animation_param_total_time_cnt < ((u16)-1)) {
+  12   2              boot_animation_param_total_time_cnt++;
+  13   2          }
+  14   1      }
+  15          
+  16          void boot_animation_process(void)
+  17          {
+  18   1          // 直接让所有指示灯点亮：
+  19   1          memset(aip3368h_speed_panel_display_buff, 0xFF,
+  20   1                 sizeof(aip3368h_speed_panel_display_buff));
+  21   1          memset(aip3368h_engine_speed_panel_display_buff, 0xFF,
+  22   1                 sizeof(aip3368h_engine_speed_panel_display_buff));
+  23   1      
+  24   1          while (1) {
+  25   2              WDFLG = 0xA5; // 喂狗
+  26   2      
+  27   2              if (boot_animation_param_total_time_cnt >= BOOT_ANIMATION_TOTAL_TIME) {
+  28   3                  // 开机动画结束，退出
+  29   3      
+  30   3                              // 关闭手机图标对应的指示灯
+  31   3                              aip3368h_engine_speed_panel_display_buff[5] &= ~(0x01 << 15); 
+  32   3                  break;
+  33   3              }
+  34   2      
+  35   2              aip3368h_module_display();
+  36   2          }
+  37   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     81    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.7.0   BOOT_ANIMATION                                                    08/26/2026 18:53:42 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

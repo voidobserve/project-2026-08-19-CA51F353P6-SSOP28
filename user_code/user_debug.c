@@ -5,6 +5,8 @@
 
 #if USER_DEBUG_ENABLE
 
+volatile u8 user_debug_printf_enable = 0;
+
 void user_debug_io_init(void)
 {
     GPIO_Init(P35F, OUTPUT);

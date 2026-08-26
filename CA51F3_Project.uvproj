@@ -476,6 +476,11 @@
               <FileType>1</FileType>
               <FilePath>.\user_code\engine_speed_scan.c</FilePath>
             </File>
+            <File>
+              <FileName>boot_animation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\boot_animation.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

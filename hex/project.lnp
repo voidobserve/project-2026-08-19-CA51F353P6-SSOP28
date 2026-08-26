@@ -13,7 +13,8 @@
 ".\hex\uart_process_data_packets.obj",
 ".\hex\ui.obj",
 ".\hex\user_debug.obj",
-".\hex\engine_speed_scan.obj" 
+".\hex\engine_speed_scan.obj",
+".\hex\boot_animation.obj" 
 TO ".\hex\project" 
 
 PRINT(".\lst\project.map") REMOVEUNUSED 

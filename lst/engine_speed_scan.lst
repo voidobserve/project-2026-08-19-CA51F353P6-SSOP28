@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/25/2026 19:00:28 PAGE 1   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/26/2026 18:53:42 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ENGINE_SPEED_SCAN
@@ -62,7 +62,7 @@ line level    source
   50   1          cur_engine_speed_scan_ms_expend += engine_speed_scan_ms_expend;
   51   1          engine_speed_scan_ms_expend = 0;
   52   1      }
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/25/2026 19:00:28 PAGE 2   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/26/2026 18:53:42 PAGE 2   
 
   53          
   54          void engine_speed_scan_timer_50us_isr(void)
@@ -126,7 +126,7 @@ line level    source
  110   1      }
  111          
  112          // 发动机转速扫描
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/25/2026 19:00:28 PAGE 3   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/26/2026 18:53:42 PAGE 3   
 
  113          void engine_speed_scan(void)
  114          {
@@ -190,7 +190,7 @@ line level    source
  170   3                      1min转过的圈数 == 扫描时间内转过的圈数 / 扫描时间 * 1min
  171   3                  */
  172   3                  rpm_expend = (u32)cur_engine_speed_scan_cnt_expend *
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/25/2026 19:00:28 PAGE 4   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/26/2026 18:53:42 PAGE 4   
 
  173   3                               ENGINE_SPEED_SCAN_A_PULSE_PER_TURNS_EXPEND *
  174   3                               (CONVER_ONE_MINUTE_TO_MS /
@@ -254,7 +254,7 @@ line level    source
  232          {
  233   1          if (aip3368h_display_engine_speed_refresh_time_cnt < ((u16)-1)) {
  234   2              aip3368h_display_engine_speed_refresh_time_cnt++;
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/25/2026 19:00:28 PAGE 5   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/26/2026 18:53:42 PAGE 5   
 
  235   2          }
  236   1      }
@@ -318,7 +318,7 @@ line level    source
                       } else if (engine_speed_level_of_lag > cur_engine_speed_level) {
                           if (engine_speed_level_of_lag > 0) {
                               engine_speed_level_of_lag--;
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/25/2026 19:00:28 PAGE 6   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_SCAN                                                 08/26/2026 18:53:42 PAGE 6   
 
                           }
                       }

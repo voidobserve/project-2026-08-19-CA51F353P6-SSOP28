@@ -22,6 +22,7 @@
 
 //
 #include "ui.h"
+#include "boot_animation.h"
 
 //***************************************************************
 void SystemInit(void)
@@ -66,7 +67,15 @@ void user_1ms_isr(void)
         user_debug_1ms_cnt++;
     }
 
+    boot_animation_time_base_add_1ms_isr();
     ui_timer_handle_isr();
+
+#if AIP3368H_DISPLAY_TEST_ENABLE
+    // aip3368h_display_engine_speed_lev_test_1ms_isr();
+    // aip3368h_display_gear_test_1ms_isr();
+    // aip3368h_display_bat_lev_light_test_1ms_isr();
+    // aip3368h_display_time_test_1ms_isr();
+#endif
 }
 
 void main(void)
@@ -82,32 +91,22 @@ void main(void)
     timer0_init();
     timer1_init();
 
-    // tick_timer_config(); //定时器1初始化
     aip3368h_module_init();
     // aip3368h_module_display();
 
     ui_manager_init();
 
-#if 0
-	AD_Init();
-#endif
-
-    // powup_en = 1;
-    // powup_stp = 0;
-    // act_tmp = 0;
-
-    // save_en = 1;
-    // init_en = 1;
-
     printf("sys init\n");
 
-    aip3368h_display_test();
+    // boot_animation_process();
 
     while (1) {
-        // Mcu_FeedDog(); //喂狗
         WDFLG = 0xA5; // 喂狗
 
-        // my_loop();
+        if (user_debug_printf_enable) {
+            user_debug_printf_enable = 0;
+            printf("test\n");
+        }
 
         ui_display_handle();
     }

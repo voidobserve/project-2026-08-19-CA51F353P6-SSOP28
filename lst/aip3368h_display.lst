@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/25/2026 19:00:27 PAGE 1   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE AIP3368H_DISPLAY
@@ -13,291 +13,1055 @@ line level    source
    1          #include "aip3368h_display.h"
    2          #include "aip3368.h"
    3          
-   4          #include <string.h>
-   5          #include <stdio.h>
-   6          
-   7          // static volatile u16 test_buff[8] = {0};
-   8          
-   9          void aip3368h_display_test(void)
-  10          {
-  11   1          // memset(aip3368h_speed_panel_display_buff, 0xFF,
-  12   1          //        sizeof(aip3368h_speed_panel_display_buff));
-  13   1          // memset(aip3368h_engine_speed_panel_display_buff, 0xFF,
-  14   1          //        sizeof(aip3368h_engine_speed_panel_display_buff));
-  15   1      
-  16   1      #if 0
-              
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 0;
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/25/2026 19:00:27 PAGE 2   
+   4          #include "user_config.h"
+   5          
+   6          #include "instrument.h"
+   7          
+   8          // #include <string.h>
+   9          #if USER_DEBUG_ENABLE
+  10          #include <stdio.h> //
+  11          #include "user_debug.h"
+  12          #endif
+  13          
+  14          /**
+  15           * @brief 7段数码管段码定义 (a,b,c,d,e,f,g)
+  16           *        对应二进制位: bit0=a, bit1=b, bit2=c, bit3=d, bit4=e, bit5=f, bit6=g
+  17           */
+  18          static const u8 digit_segment_code[10] = {
+  19              0x3F, // 0: abcdef
+  20              0x06, // 1: bc
+  21              0x5B, // 2: abdeg
+  22              0x4F, // 3: abcdg
+  23              0x66, // 4: bcfg
+  24              0x6D, // 5: acdfg
+  25              0x7D, // 6: acdefg
+  26              0x07, // 7: abc
+  27              0x7F, // 8: abcdefg
+  28              0x6F  // 9: abcdfg
+  29          };
+  30          
+  31          /*
+  32              指示灯和显存的映射关系
+  33              发动机转速对应的格数，从低到高
+  34              对应的显存： aip3368h_engine_speed_panel_display_buff
+  35          */
+  36          static const aip3368h_display_mapping_t engine_speed_gear_map[] = {
+  37              // 发动机转速，第 0 格指示灯（从左往右数，从0开始，白）
+  38              {1, 4},  {1, 3},  {1, 2},  {1, 1},  {1, 0}, {2, 15}, {2, 14}, {2, 13},
+  39              {2, 12}, {2, 11}, {2, 10}, {2, 9},  {2, 8}, {2, 7},  {2, 6},  {2, 5},
+  40              {2, 4},  {2, 3},  {2, 2},  {2, 1},  {2, 0}, {3, 15}, {3, 14}, {3, 13},
+  41              {3, 12}, {0, 15}, {3, 11}, {3, 10}, {3, 9},
+  42          };
+  43          
+  44          /*
+  45              指示灯和显存的映射关系
+  46              挡位对应的指示灯
+  47              对应的显存： aip3368h_engine_speed_panel_display_buff
+  48          */
+  49          static const aip3368h_display_mapping_t gear_map[] = {
+  50              // a 段 ~ g 段
+  51              {5, 0}, {5, 1}, {5, 2}, {5, 3}, {5, 4}, {5, 5}, {5, 6},
+  52          };
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 2   
 
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 11;
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/25/2026 19:00:27 PAGE 3   
+  53          
+  54          /*
+  55              指示灯和显存的映射关系
+  56              电池电量对应的指示灯
+  57              对应的显存： aip3368h_speed_panel_display_buff
+  58          */
+  59          static const aip3368h_display_mapping_t bat_lev_map[] = {
+  60              {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6},
+  61          };
+  62          
+  63          /*
+  64              指示灯和显存的映射关系
+  65              小时个位对应的指示灯
+  66              对应的显存： aip3368h_engine_speed_panel_display_buff
+  67          */
+  68          static const aip3368h_display_mapping_t hour_bit_0_map[] = {
+  69              // a 段 ~ g 段
+  70              {7, 8}, {7, 9}, {7, 10}, {7, 11}, {7, 12}, {7, 13}, {7, 14},
+  71          };
+  72          
+  73          /*
+  74              指示灯和显存的映射关系
+  75              小时十位对应的指示灯
+  76              对应的显存： aip3368h_engine_speed_panel_display_buff
+  77          */
+  78          static const aip3368h_display_mapping_t hour_bit_1_map[] = {
+  79              // a 段 ~ g 段
+  80              {7, 1}, {7, 2}, {7, 3}, {7, 4}, {7, 5}, {7, 6}, {7, 7},
+  81          };
+  82          
+  83          /*
+  84              指示灯和显存的映射关系
+  85              分钟个位对应的指示灯
+  86              对应的显存： aip3368h_engine_speed_panel_display_buff
+  87          */
+  88          static const aip3368h_display_mapping_t minute_bit_0_map[] = {
+  89              // a 段 ~ g 段
+  90              {6 ,8}, {6, 9}, {6, 10}, {6, 11}, {6, 12}, {6, 13}, {6, 14},
+  91          };
+  92          
+  93          /*
+  94              指示灯和显存的映射关系
+  95              分钟十位对应的指示灯
+  96              对应的显存： aip3368h_engine_speed_panel_display_buff
+  97          */
+  98          static const aip3368h_display_mapping_t minute_bit_1_map[] = {
+  99              // a 段 ~ g 段
+ 100              {6, 1}, {6, 2}, {6, 3}, {6, 4}, {6, 5}, {6, 6}, {6, 7},
+ 101          };
+ 102          
+ 103          /**
+ 104           * @brief 根据传参,显示发动机转速挡位
+ 105           * 
+ 106           * @param lev 档位等级 0 ~ 28
+ 107           * 
+ 108           *  0: 显示第 0 格指示灯
+ 109           *  1: 显示第 0 ~ 1 格指示灯
+ 110           * 
+ 111           * @note 没有转速时,固定显示第 0 格指示灯
+ 112           * 
+ 113           */
+ 114          void aip3368h_display_engine_speed_lev(u8 lev)
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 3   
 
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 15;
-              
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 0;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 1;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 2;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 3;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 4;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 5;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 6;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 7;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 8;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 9;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 10;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 11;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 12;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 13;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 14;
-                  aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 15;
-              #endif
- 154   1      
- 155   1          aip3368h_speed_panel_display_buff[0] |= 0x01 << 0; // 时速面板边框，第 1 个指示灯（正面
-             -最上边是第 0 个）
- 156   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 1;
- 157   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 2;
- 158   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 3;
- 159   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 4;
- 160   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 5;
- 161   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 6;
- 162   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 7;
- 163   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 8;
- 164   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 9;
- 165   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 10;
- 166   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 11;
- 167   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 12;
- 168   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 13;
- 169   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 14;
- 170   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 15;
- 171   1      
- 172   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 0;
- 173   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 1;
- 174   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 2;
- 175   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 3;
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/25/2026 19:00:27 PAGE 4   
+ 115          {
+ 116   1          // 清空原来的显示
+ 117   1          u8 i;
+ 118   1      
+ 119   1          for (i = 0; i < ARRAY_SIZE(engine_speed_gear_map); i++) {
+ 120   2              if (lev < i) {
+ 121   3                  // 如果传参的挡位，比当前遍历的挡位还要小，清空对应的显示
+ 122   3                  aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[i]
+ 123   3                                                               .buff_index] &=
+ 124   3                      ~(0x01 << engine_speed_gear_map[i].bit_offset);
+ 125   3              } else {
+ 126   3                  // 如果传参的挡位，大于等于当前遍历的挡位
+ 127   3                  aip3368h_engine_speed_panel_display_buff[engine_speed_gear_map[i]
+ 128   3                                                               .buff_index] |=
+ 129   3                      (0x01 << engine_speed_gear_map[i].bit_offset);
+ 130   3              }
+ 131   2          }
+ 132   1      }
+ 133          
+ 134          /**
+ 135           * @brief N 字样对应的指示灯
+ 136           *
+ 137           * @param is_display 是否显示
+ 138           *
+ 139           */
+ 140          void aip3368h_display_n_light(u8 is_display)
+ 141          {
+ 142   1          if (is_display) {
+ 143   2              aip3368h_speed_panel_display_buff[4] |= 0x01 << 9;
+ 144   2          } else {
+ 145   2      
+ 146   2              aip3368h_speed_panel_display_buff[4] &= ~(0x01 << 9);
+ 147   2          }
+ 148   1      }
+ 149          
+ 150          /**
+ 151           * @brief 显示挡位
+ 152           *
+ 153           * @param gear 挡位 0 ~ 6、GEAR_UNKNOWN
+ 154           *          0：空挡，
+ 155           *          1：1挡，显示1
+ 156           *          GEAR_UNKNOWN ： 表示什么挡位都没有
+ 157           */
+ 158          void aip3368h_display_gear(u8 gear)
+ 159          {
+ 160   1          // 清空原来的显示
+ 161   1          u8 i;
+ 162   1          u8 segment_code;
+ 163   1      
+ 164   1          // 清空数码管的显示
+ 165   1          for (i = 0; i < ARRAY_SIZE(gear_map); i++) {
+ 166   2              aip3368h_engine_speed_panel_display_buff[gear_map[i].buff_index] &=
+ 167   2                  ~(0x01 << gear_map[i].bit_offset);
+ 168   2          }
+ 169   1      
+ 170   1          if (GEAR_NEUTRAL == gear) {
+ 171   2              aip3368h_display_n_light(1);
+ 172   2          } else {
+ 173   2              aip3368h_display_n_light(0);
+ 174   2          }
+ 175   1      
+ 176   1          if (GEAR_NEUTRAL == gear || GEAR_UNKNOWN == gear) {
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 4   
 
- 176   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 4;
- 177   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 5;
- 178   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 6;
- 179   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 7;
- 180   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 8;
- 181   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 9;
- 182   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 10;
- 183   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 11;
- 184   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 12;
- 185   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 13;
- 186   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 14;
- 187   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 15;
- 188   1      
- 189   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 0;
- 190   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 1;
- 191   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 2;
- 192   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 3;
- 193   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 4;
- 194   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 5;
- 195   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 6;
- 196   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 7;
- 197   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 8;
- 198   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 9;
- 199   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 10;
- 200   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 11;
- 201   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 12;
- 202   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 13;
- 203   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 14;
- 204   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 15;
- 205   1      
- 206   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 0;
- 207   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 1;
- 208   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 2;
- 209   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 3;
- 210   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 4;
- 211   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 5;
- 212   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 6;
- 213   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 7;
- 214   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 8;
- 215   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 9;
- 216   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 10;
- 217   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 11;
- 218   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 12;
- 219   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 13;
- 220   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 14;
- 221   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 15;
- 222   1      
- 223   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 0;
- 224   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 1;
- 225   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 2;
- 226   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 3;
- 227   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 4;
- 228   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 5;
- 229   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 6;
- 230   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 7;
- 231   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 8;
- 232   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 9;
- 233   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 10;
- 234   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 11;
- 235   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 12;
- 236   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 13;
- 237   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 14;
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/25/2026 19:00:27 PAGE 5   
+ 177   2              // 如果什么挡位都没有，或者是检测到了空挡
+ 178   2          } else {
+ 179   2              // 1 ~ 6 挡，显示对应数字
+ 180   2      
+ 181   2              // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+ 182   2              segment_code = digit_segment_code[gear];
+ 183   2      
+ 184   2              // 遍历 a ~ g 段数码管
+ 185   2              for (i = 0; i < 7; i++) {
+ 186   3                  // 检查该段是否需要点亮 (segment_code的对应bit是否为1)
+ 187   3                  if (segment_code & (0x01 << i)) {
+ 188   4                      aip3368h_engine_speed_panel_display_buff[gear_map[i].buff_index] |=
+ 189   4                          (0x01 << gear_map[i].bit_offset);
+ 190   4                  }
+ 191   3              }
+ 192   2          }
+ 193   1      }
+ 194          
+ 195          /**
+ 196           * @brief 电池电量 8 字样对应的指示灯
+ 197           *
+ 198           * @param is_display
+ 199           *
+ 200           */
+ 201          void aip3368h_display_battery_8_symbol_light(u8 is_display)
+ 202          {
+ 203   1          if (is_display) {
+ 204   2              aip3368h_engine_speed_panel_display_buff[3] |= (0x01 << 6);
+ 205   2          } else {
+ 206   2              aip3368h_engine_speed_panel_display_buff[3] &= ~(0x01 << 6);
+ 207   2          }
+ 208   1      }
+ 209          
+ 210          /**
+ 211           * @brief 电池图标对应的指示灯
+ 212           *
+ 213           * @param is_display
+ 214           *
+ 215           */
+ 216          void aip3368h_display_battery_icon_light(u8 is_display)
+ 217          {
+ 218   1          if (is_display) {
+ 219   2              aip3368h_engine_speed_panel_display_buff[3] |= (0x01 << 7);
+ 220   2          } else {
+ 221   2              aip3368h_engine_speed_panel_display_buff[3] &= ~(0x01 << 7);
+ 222   2          }
+ 223   1      }
+ 224          
+ 225          /**
+ 226           * @brief 电池16字样对应的指示灯
+ 227           *
+ 228           * @param is_display
+ 229           *
+ 230           */
+ 231          void aip3368h_display_battery_16_symbol_light(u8 is_display)
+ 232          {
+ 233   1          if (is_display) {
+ 234   2              aip3368h_engine_speed_panel_display_buff[3] |= (0x01 << 8);
+ 235   2          } else {
+ 236   2              aip3368h_engine_speed_panel_display_buff[3] &= ~(0x01 << 8);
+ 237   2          }
+ 238   1      }
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 5   
 
- 238   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 15;
- 239   1      
- 240   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 0;
- 241   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 1;
- 242   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 2;
- 243   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 3;
- 244   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 4;
- 245   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 5;
- 246   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 6;
- 247   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 7;
- 248   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 8;
- 249   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 9;
- 250   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 10;
- 251   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 11;
- 252   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 12;
- 253   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 13;
- 254   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 14;
- 255   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 15;
- 256   1      
- 257   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 0;
- 258   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 1;
- 259   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 2;
- 260   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 3;
- 261   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 4;
- 262   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 5;
- 263   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 6;
- 264   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 7;
- 265   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 8;
- 266   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 9;
- 267   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 10;
- 268   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 11;
- 269   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 12;
- 270   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 13;
- 271   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 14;
- 272   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 15;
- 273   1      }
+ 239          
+ 240          /**
+ 241           * @brief 电池电量对应的指示灯
+ 242           *
+ 243           * @param idx 0 ~ 8，第 idx 个指示灯（从左往右，从0开始）
+ 244           *
+ 245           * @param is_display
+ 246           *
+ 247           */
+ 248          void __aip3368h_display_bat_lev_light__(u8 idx, u8 is_display)
+ 249          {
+ 250   1          if (is_display) {
+ 251   2              aip3368h_engine_speed_panel_display_buff[bat_lev_map[idx].buff_index] |=
+ 252   2                  (0x01 << bat_lev_map[idx].bit_offset);
+ 253   2          } else {
+ 254   2              aip3368h_engine_speed_panel_display_buff[bat_lev_map[idx].buff_index] &=
+ 255   2                  ~(0x01 << bat_lev_map[idx].bit_offset);
+ 256   2          }
+ 257   1      }
+ 258          
+ 259          /**
+ 260           * @brief 根据传参，显示对应的电池电量等级（不包括低电量提示）
+ 261           *
+ 262           * @param bat_lev 1 ~ 8，第 idx 个指示灯（从左往右，从0开始）
+ 263           *              0：清空显示
+ 264           *              1：显示第 0 个指示灯
+ 265           *              2：显示第 1 个指示灯
+ 266           *
+ 267           */
+ 268          void aip3368h_display_bat_lev_light(u8 bat_lev)
+ 269          {
+ 270   1          u8 i;
+ 271   1          // 遍历整个电池电量等级对应的指示灯
+ 272   1          for (i = 0; i < ARRAY_SIZE(bat_lev_map); i++) {
+ 273   2              // 如果当前传参的值减去1，比当前遍历的值还要小，清空对应的显示
+ 274   2              if (bat_lev <= i) {
+ 275   3                  __aip3368h_display_bat_lev_light__(i, 0);
+ 276   3              } else if (bat_lev >= (i + 1)) {
+ 277   3                  // 例如，如果要点亮第 0 个指示灯，bat_lev至少要大于等于1
+ 278   3                  __aip3368h_display_bat_lev_light__(i, 1);
+ 279   3              }
+ 280   2          }
+ 281   1      }
+ 282          
+ 283          /**
+ 284           * @brief 显示小时的指定位
+ 285           *
+ 286           * @param bit_x 小时的指定位，0：个位，1：十位
+ 287           *
+ 288           * @param num 要显示的数字 0 ~ 9
+ 289           *
+ 290           */
+ 291          void __aip3368h_display_hour_digit__(u8 bit_x, u8 num)
+ 292          {
+ 293   1          u8 i;
+ 294   1          u8 segment_code;
+ 295   1          // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+ 296   1          segment_code = digit_segment_code[num];
+ 297   1      
+ 298   1          if (0 == bit_x) {
+ 299   2              // 第 0 位(个位)
+ 300   2              // 遍历 a ~ g 段数码管
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 6   
+
+ 301   2              for (i = 0; i < 7; i++) {
+ 302   3                  // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
+ 303   3                  if (segment_code & (0x01 << i)) {
+ 304   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i]
+ 305   4                                                                   .buff_index] |=
+ 306   4                          (0x01 << hour_bit_0_map[i].bit_offset);
+ 307   4                  } else {
+ 308   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i]
+ 309   4                                                                   .buff_index] &=
+ 310   4                          ~(0x01 << hour_bit_0_map[i].bit_offset);
+ 311   4                  }
+ 312   3              }
+ 313   2          } else {
+ 314   2              // 第 1 位（十位）
+ 315   2              // 遍历 a ~ g 段数码管
+ 316   2              for (i = 0; i < 7; i++) {
+ 317   3                  // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
+ 318   3                  if (segment_code & (0x01 << i)) {
+ 319   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
+ 320   4                                                                   .buff_index] |=
+ 321   4                          (0x01 << hour_bit_1_map[i].bit_offset);
+ 322   4                  } else {
+ 323   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
+ 324   4                                                                   .buff_index] &=
+ 325   4                          ~(0x01 << hour_bit_1_map[i].bit_offset);
+ 326   4                  }
+ 327   3              }
+ 328   2          }
+ 329   1      }
+ 330          
+ 331          /**
+ 332           * @brief 显示分钟的指定位
+ 333           *
+ 334           * @param bit_x 分钟的指定位，0：个位，1：十位
+ 335           *
+ 336           * @param num 要显示的数字 0 ~ 9
+ 337           *
+ 338           */
+ 339          void __aip3368h_display_minute_digit__(u8 bit_x, u8 num)
+ 340          {
+ 341   1          u8 i;
+ 342   1          u8 segment_code;
+ 343   1          // 获取该数字对应的7段码 (要显示的数字 --> 七段码)
+ 344   1          segment_code = digit_segment_code[num];
+ 345   1      
+ 346   1          if (0 == bit_x) {
+ 347   2              // 第 0 位(个位)
+ 348   2              // 遍历 a ~ g 段数码管
+ 349   2              for (i = 0; i < 7; i++) {
+ 350   3                  // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
+ 351   3                  if (segment_code & (0x01 << i)) {
+ 352   4                      aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i]
+ 353   4                                                                   .buff_index] |=
+ 354   4                          (0x01 << minute_bit_0_map[i].bit_offset);
+ 355   4                  } else {
+ 356   4                      aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i]
+ 357   4                                                                   .buff_index] &=
+ 358   4                          ~(0x01 << minute_bit_0_map[i].bit_offset);
+ 359   4                  }
+ 360   3              }
+ 361   2          } else {
+ 362   2              // 第 1 位（十位）
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 7   
+
+ 363   2              // 遍历 a ~ g 段数码管
+ 364   2              for (i = 0; i < 7; i++) {
+ 365   3                  // 检查该段是否需要点亮 ( segment_code 的对应 bit 是否为1)
+ 366   3                  if (segment_code & (0x01 << i)) {
+ 367   4                      aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i]
+ 368   4                                                                   .buff_index] |=
+ 369   4                          (0x01 << minute_bit_1_map[i].bit_offset);
+ 370   4                  } else {
+ 371   4                      aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i]
+ 372   4                                                                   .buff_index] &=
+ 373   4                          ~(0x01 << minute_bit_1_map[i].bit_offset);
+ 374   4                  }
+ 375   3              }
+ 376   2          }
+ 377   1      }
+ 378          
+ 379          /**
+ 380           * @brief 时间中间的冒号对应的指示灯（时间分隔符）
+ 381           *
+ 382           * @param is_display 是否显示
+ 383           *
+ 384           */
+ 385          void aip3368h_display_time_colon_light(u8 is_display)
+ 386          {
+ 387   1          if (is_display) {
+ 388   2              aip3368h_engine_speed_panel_display_buff[7] |= (0x01 << 15);
+ 389   2              aip3368h_engine_speed_panel_display_buff[6] |= (0x01 << 0);
+ 390   2          } else {
+ 391   2              aip3368h_engine_speed_panel_display_buff[7] &= ~(0x01 << 15);
+ 392   2              aip3368h_engine_speed_panel_display_buff[6] &= ~(0x01 << 0);
+ 393   2          }
+ 394   1      }
+ 395          
+ 396          /**
+ 397           * @brief 显示时间
+ 398           *
+ 399           * @param hour 小时
+ 400           *
+ 401           * @param min 分钟
+ 402           *
+ 403           */
+ 404          void aip3368h_display_time(u8 hour, u8 min)
+ 405          {
+ 406   1          u8 i;
+ 407   1      
+ 408   1          // 遍历 a ~ g 段数码管，清空显示
+ 409   1          for (i = 0; i < 7; i++) {
+ 410   2              aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i].buff_index] &=
+ 411   2                  ~(0x01 << hour_bit_0_map[i].bit_offset);
+ 412   2              aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i].buff_index] &=
+ 413   2                  ~(0x01 << hour_bit_1_map[i].bit_offset);
+ 414   2              aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i].buff_index] &=
+ 415   2                  ~(0x01 << minute_bit_0_map[i].bit_offset);
+ 416   2              aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i].buff_index] &=
+ 417   2                  ~(0x01 << minute_bit_1_map[i].bit_offset);
+ 418   2          }
+ 419   1      
+ 420   1          __aip3368h_display_hour_digit__(0, hour % 10);
+ 421   1          __aip3368h_display_hour_digit__(1, hour / 10);
+ 422   1          __aip3368h_display_minute_digit__(0, min % 10);
+ 423   1          __aip3368h_display_minute_digit__(1, min / 10);
+ 424   1      }
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 8   
+
+ 425          
+ 426          /**
+ 427           * @brief 在设置时间时，显示当前设置的时间的指定位
+ 428           * 
+ 429           * @param is_display 是否显示
+ 430           * 
+ 431           * @param num 要显示的数字 
+ 432           *          如果在设置分钟，范围：0 ~ 59
+ 433           *          如果在设置小时，范围：0 ~ 23
+ 434           * 
+ 435           * @param is_setting_min 当前是否在设置分钟
+ 436           * 
+ 437           */
+ 438          void aip3368h_display_time_digits_when_setting(u8 is_display, u8 num,
+ 439                                                         u8 is_setting_min)
+ 440          {
+ 441   1          u8 i;
+ 442   1      
+ 443   1          if (is_display) {
+ 444   2              if (is_setting_min) {
+ 445   3                  __aip3368h_display_minute_digit__(0, num % 10);
+ 446   3                  __aip3368h_display_minute_digit__(1, num / 10);
+ 447   3              } else {
+ 448   3                  __aip3368h_display_hour_digit__(0, num % 10);
+ 449   3                  __aip3368h_display_hour_digit__(1, num / 10);
+ 450   3              }
+ 451   2          } else {
+ 452   2              // 如果需要清空显示
+ 453   2      
+ 454   2              if (is_setting_min) {
+ 455   3                  // 遍历 a ~ g 段数码管，清空显示
+ 456   3                  for (i = 0; i < 7; i++) {
+ 457   4                      aip3368h_engine_speed_panel_display_buff[minute_bit_0_map[i]
+ 458   4                                                                   .buff_index] &=
+ 459   4                          ~(0x01 << minute_bit_0_map[i].bit_offset);
+ 460   4                      aip3368h_engine_speed_panel_display_buff[minute_bit_1_map[i]
+ 461   4                                                                   .buff_index] &=
+ 462   4                          ~(0x01 << minute_bit_1_map[i].bit_offset);
+ 463   4                  }
+ 464   3              } else {
+ 465   3                  // 遍历 a ~ g 段数码管，清空显示
+ 466   3                  for (i = 0; i < 7; i++) {
+ 467   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_0_map[i]
+ 468   4                                                                   .buff_index] &=
+ 469   4                          ~(0x01 << hour_bit_0_map[i].bit_offset);
+ 470   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
+ 471   4                                                                   .buff_index] &=
+ 472   4                          ~(0x01 << hour_bit_1_map[i].bit_offset);
+ 473   4                  }
+ 474   3              }
+ 475   2          }
+ 476   1      }
+ 477          
+ 478          #if AIP3368H_DISPLAY_TEST_ENABLE
+ 479          
+ 480          void aip3368h_display_engine_speed_lev_test_1ms_isr(void)
+ 481          {
+ 482   1          static u8 lev = 0;
+ 483   1          static u8 dir = 0;  // 控制递增、递减
+ 484   1          static u16 cnt = 0; // 计数，用于控制显示的频率
+ 485   1          cnt++;
+ 486   1          if (cnt < 200) {
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 9   
+
+ 487   2              return;
+ 488   2          } else {
+ 489   2              cnt = 0;
+ 490   2          }
+ 491   1      
+ 492   1          aip3368h_display_engine_speed_lev(lev);
+ 493   1      
+ 494   1          if (0 == dir) {
+ 495   2              lev++;
+ 496   2          } else {
+ 497   2              lev--;
+ 498   2          }
+ 499   1      
+ 500   1          if ((lev >= ARRAY_SIZE(engine_speed_gear_map)) || (lev == 0)) {
+ 501   2              dir = !dir;
+ 502   2          }
+ 503   1      }
+ 504          
+ 505          void aip3368h_display_gear_test_1ms_isr(void)
+ 506          {
+ 507   1          static u8 gear = 0;
+ 508   1          static u16 cnt = 0; // 计数，用于控制显示的频率
+ 509   1          cnt++;
+ 510   1          if (cnt < 500) {
+ 511   2              return;
+ 512   2          } else {
+ 513   2              cnt = 0;
+ 514   2          }
+ 515   1      
+ 516   1          aip3368h_display_gear(gear);
+ 517   1      
+ 518   1          // 实际最大只有6挡,这里的9只是为了测试
+ 519   1          if (gear < 9) {
+ 520   2              gear++;
+ 521   2          } else if (gear == 9) {
+ 522   2              gear = GEAR_UNKNOWN; // 表示没有接挡位
+ 523   2          } else {
+ 524   2              gear = 0;
+ 525   2          }
+ 526   1      }
+ 527          
+ 528          void aip3368h_display_bat_lev_light_test_1ms_isr(void)
+ 529          {
+ 530   1          static u8 is_display = 0;
+ 531   1          static u8 idx = 0;
+ 532   1          static u16 cnt = 0; // 计数，用于控制显示的频率
+ 533   1          cnt++;
+ 534   1          if (cnt < 500) {
+ 535   2              return;
+ 536   2          } else {
+ 537   2              cnt = 0;
+ 538   2          }
+ 539   1      
+ 540   1          aip3368h_display_bat_lev_light(idx);
+ 541   1          aip3368h_display_battery_8_symbol_light(is_display);
+ 542   1          aip3368h_display_battery_icon_light(is_display);
+ 543   1          aip3368h_display_battery_16_symbol_light(is_display);
+ 544   1      
+ 545   1          is_display = !is_display;
+ 546   1          idx++;
+ 547   1          if (idx >= ARRAY_SIZE(bat_lev_map) + 1) {
+ 548   2              // 0: 清空显示,ARRAY_SIZE(bat_lev_map) + 1:显示第 ARRAY_SIZE(bat_lev_map) 个指示灯
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 10  
+
+ 549   2              idx = 0;
+ 550   2          }
+ 551   1      }
+ 552          
+ 553          
+ 554          void aip3368h_display_time_test_1ms_isr(void)
+ 555          {
+ 556   1          static u8 hour = 0;
+ 557   1          static u8 min = 0;
+ 558   1          static u8 is_display = 0; // 控制时间分隔符是否显示
+ 559   1          static u16 cnt = 0; // 计数，用于控制显示的频率
+ 560   1          cnt++;
+ 561   1          if (cnt < 500) {
+ 562   2              return;
+ 563   2          } else {
+ 564   2              cnt = 0;
+ 565   2          }
+ 566   1      
+ 567   1          aip3368h_display_time(hour, min); 
+ 568   1          aip3368h_display_time_colon_light(is_display);
+ 569   1          is_display = !is_display;
+ 570   1      
+ 571   1          hour++;
+ 572   1          min++;
+ 573   1          if (hour >= 24) {
+ 574   2              hour = 0;
+ 575   2          }
+ 576   1      
+ 577   1          if (min >= 60) {
+ 578   2              min = 0;
+ 579   2          }
+ 580   1      }
+ 581          
+ 582          void aip3368h_display_test(void)
+ 583          {
+ 584   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 0; // 发动机转速面板边框，第 3 �
+             -�指示灯(正上方为第0个，按顺时针排序)
+ 585   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 1; // 发动机转速面板边框，第 2 �
+             -�指示灯(正上方为第0个，按顺时针排序)
+ 586   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 2; // 发动机转速面板边框，第 1 �
+             -�指示灯(正上方为第0个，按顺时针排序)
+ 587   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 3; // 发动机转速面板边框，第 0 �
+             -�指示灯(正上方为第0个，按顺时针排序)
+ 588   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 4; // 发动机转速面板边框，第 23 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 589   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 5; // 发动机转速面板边框，第 22 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 590   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 6; // 发动机转速面板边框，第 21 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 591   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 7; // 发动机转速面板边框，第 20 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 592   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 8; // 发动机转速面板边框，第 19 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 593   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 9; // 发动机转速面板边框，第 18 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 594   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 10;// 发动机转速面板边框，第 17 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 595   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 11; // 发动机转速面板边框，第 16 
+             -个指示灯(正上方为第0个，按顺时针排序)
+ 596   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 12; // 发动机转速面板边框，第 15 
+             -个指示灯(正上方为第0个，按顺时针排序)
+ 597   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 13; // 发动机转速面板边框，第 14 
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 11  
+
+             -个指示灯(正上方为第0个，按顺时针排序)
+ 598   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 14; // 发动机转速面板边框，第 13 
+             -个指示灯(正上方为第0个，按顺时针排序)
+ 599   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 15; // 发动机转速，第 25 格指示灯
+             -，红色(从0开始排序)
+ 600   1      
+ 601   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 0; // 发动机转速，第 4 格指示灯(�
+             -��0开始排序)
+ 602   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 1; // 发动机转速，第 3 格指示灯(�
+             -��0开始排序)
+ 603   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 2; // 发动机转速，第 2 格指示灯(�
+             -��0开始排序)
+ 604   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 3; // 发动机转速，第 1 格指示灯(�
+             -��0开始排序)
+ 605   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 4; // 发动机转速，第 0 格指示灯(�
+             -��0开始排序)
+ 606   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 5; // x1000rpm 字样，第 0 个指示灯
+ 607   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 6; // x1000rpm 字样，第 1 个指示灯
+ 608   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 7; // 发动机转速面板边框，第 12 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 609   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 8; // 发动机转速面板边框，第 11 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 610   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 9; // 发动机转速面板边框，第 10 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 611   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 10; // 发动机转速面板边框，第 9 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 612   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 11; // 发动机转速面板边框，第 8 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 613   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 12; // 发动机转速面板边框，第 7 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 614   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 13; // 发动机转速面板边框，第 6 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 615   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 14; // 发动机转速面板边框，第 5 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 616   1          // aip3368h_engine_speed_panel_display_buff[1] |= 0x01 << 15; // 发动机转速面板边框，第 4 �
+             -��指示灯(正上方为第0个，按顺时针排序)
+ 617   1      
+ 618   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 0;  // 发动机转速，第 20 格指示灯
+             -，红色(从0开始排序)
+ 619   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 1;// 发动机转速，第 19 格指示灯�
+             -�绿色(从0开始排序)
+ 620   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 2;  // 发动机转速，第 18 格指示灯
+             -，绿色(从0开始排序)
+ 621   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 3;  // 发动机转速，第 17 格指示灯
+             -，绿色(从0开始排序)
+ 622   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 4;  // 发动机转速，第 16 格指示灯
+             -，绿色(从0开始排序)
+ 623   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 5;  // 发动机转速，第 15 格指示灯
+             -，绿色(从0开始排序)
+ 624   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 6;  // 发动机转速，第 14 格指示灯
+             -，绿色(从0开始排序)
+ 625   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 7; // 发动机转速，第 13 格指示灯�
+             -��绿色(从0开始排序)
+ 626   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 8; // 发动机转速，第 12 格指示灯�
+             -��绿色(从0开始排序)
+ 627   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 9; // 发动机转速，第 11 格指示灯�
+             -��绿色(从0开始排序)
+ 628   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 10; // 发动机转速，第 10 格指示灯
+             -，绿色(从0开始排序)
+ 629   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 11; // 发动机转速，第 9 格指示灯�
+             -��绿色(从0开始排序)
+ 630   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 12; // 发动机转速，第 8 格指示灯�
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 12  
+
+             -��绿色(从0开始排序)
+ 631   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 13; // 发动机转速，第 7 格指示灯�
+             -��绿色(从0开始排序)
+ 632   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 14; // 发动机转速，第 6 格指示灯�
+             -��绿色(从0开始排序)
+ 633   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 15; // 发动机转速，第 5 格指示灯�
+             -��绿色(从0开始排序)
+ 634   1      
+ 635   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 0; // 发动机转速， 刻度 5 指示灯
+ 636   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 1;// 发动机转速， 刻度 4 指示灯
+ 637   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 2; // 发动机转速， 刻度 3 指示灯
+ 638   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 3;// 发动机转速， 刻度 2 指示灯
+ 639   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 4; // 发动机转速， 刻度 1 指示灯
+ 640   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 5; // 发动机转速， 刻度 0 指示灯
+ 641   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 6;// 电池电压， 8 字样对应的指示
+             -灯
+ 642   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 7; // 电池图标对应的指示灯
+ 643   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 8; // 电池电压， 16 字样对应的指�
+             -��灯
+ 644   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 9;  // 发动机转速，第 28 格指示灯
+             -，红色(从0开始排序)
+ 645   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 10; // 发动机转速，第 27 格指示灯
+             -，红色(从0开始排序)
+ 646   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 11; // 发动机转速，第 26 格指示灯
+             -，红色(从0开始排序)
+ 647   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 12; // 发动机转速，第 24 格指示灯
+             -，红色(从0开始排序)
+ 648   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 13;// 发动机转速，第 23 格指示灯�
+             -��红色(从0开始排序)
+ 649   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 14;  // 发动机转速，第 22 格指示�
+             -�，红色(从0开始排序)
+ 650   1          // aip3368h_engine_speed_panel_display_buff[3] |= 0x01 << 15; // 发动机转速，第 21 格指示灯
+             -，红色(从0开始排序)
+ 651   1      
+ 652   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 0; // 电池第 0 格指示灯，红色(从0
+             -开始排序)
+ 653   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 1; // 电池第 1 格指示灯，绿色(从0
+             -开始排序)
+ 654   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 2; // 电池第 2 格指示灯，绿色(从0
+             -开始排序)
+ 655   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 3;// 电池第 3 格指示灯，绿色(从0�
+             -��始排序)
+ 656   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 4; // 电池第 4 格指示灯，绿色(从0
+             -开始排序)
+ 657   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 5; // 电池第 5 格指示灯，绿色(从0
+             -开始排序)
+ 658   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 6; // 电池第 6 格指示灯，绿色(从0
+             -开始排序)
+ 659   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 7; // 发动机转速，刻度 14 指示灯�
+             -��红色
+ 660   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 8; // 发动机转速，刻度 13 指示灯�
+             -��红色
+ 661   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 9; // 发动机转速，刻度 12 指示灯�
+             -��红色
+ 662   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 10; // 发动机转速，刻度 11 指示灯
+             -，红色
+ 663   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 11; // 发动机转速，刻度 10 指示灯
+             -，红色
+ 664   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 12; // 发动机转速，刻度 9 指示灯�
+             -��白色
+ 665   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 13; // 发动机转速，刻度 8 指示灯�
+             -��白色
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 13  
+
+ 666   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 14; // 发动机转速，刻度 7 指示灯�
+             -��白色
+ 667   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 15; // 发动机转速，刻度 6 指示灯�
+             -��白色
+ 668   1      
+ 669   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 0; // 挡位数码管， A 段
+ 670   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 1; // 挡位数码管， B 段
+ 671   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 2; // 挡位数码管， C 段
+ 672   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 3; // 挡位数码管， D 段
+ 673   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 4; // 挡位数码管， E 段
+ 674   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 5; // 挡位数码管， F 段
+ 675   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 6; // 挡位数码管， G 段
+ 676   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 7; // 挡位边框，第 0 个指示灯(左�
+             -��角为第0个，顺时针排序)
+ 677   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 8; // 挡位边框，第 1 个指示灯(左�
+             -��角为第0个，顺时针排序)
+ 678   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 9; // 挡位边框，第 2 个指示灯(左�
+             -��角为第0个，顺时针排序)
+ 679   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 10; // 挡位边框，第 3 个指示灯(左
+             -上角为第0个，顺时针排序)
+ 680   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 11; // 挡位边框，第 4 个指示灯(左
+             -上角为第0个，顺时针排序)
+ 681   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 12; // 挡位边框，第 5 个指示灯(左
+             -上角为第0个，顺时针排序)
+ 682   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 13; // 挡位边框，第 6 个指示灯(左
+             -上角为第0个，顺时针排序)
+ 683   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 14; // 挡位边框，第 7 个指示灯(左
+             -上角为第0个，顺时针排序)
+ 684   1          // aip3368h_engine_speed_panel_display_buff[5] |= 0x01 << 15; // 手机图标对应的指示灯，白�
+             -��
+ 685   1      
+ 686   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 0; // 时间分隔符，第 1 个指示灯
+ 687   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 1; // 分钟十位数码管, A 段
+ 688   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 2; // 分钟十位数码管, B 段
+ 689   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 3; // 分钟十位数码管, C 段
+ 690   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 4; // 分钟十位数码管, D 段
+ 691   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 5; // 分钟十位数码管, E 段
+ 692   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 6; // 分钟十位数码管, F 段
+ 693   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 7; // 分钟十位数码管, G 段
+ 694   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 8; // 分钟个位数码管, A 段
+ 695   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 9; // 分钟个位数码管, B 段
+ 696   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 10; // 分钟个位数码管, C 段
+ 697   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 11;      // 分钟个位数码管, D 段
+ 698   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 12; // 分钟个位数码管, E 段
+ 699   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 13; // 分钟个位数码管, F 段
+ 700   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 14; // 分钟个位数码管, G 段
+ 701   1          // aip3368h_engine_speed_panel_display_buff[6] |= 0x01 << 15; // 大灯(远光灯)指示灯
+ 702   1      
+ 703   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 0; // COLOCK 字样指示灯
+ 704   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 1; // 小时十位数码管, A 段
+ 705   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 2; // 小时十位数码管, B 段
+ 706   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 3; // 小时十位数码管, C 段
+ 707   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 4; // 小时十位数码管, D 段
+ 708   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 5; // 小时十位数码管, E 段
+ 709   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 6; // 小时十位数码管, F 段
+ 710   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 7; // 小时十位数码管, G 段
+ 711   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 8; // 小时个位数码管, A 段
+ 712   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 9; // 小时个位数码管, B 段
+ 713   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 10; // 小时个位数码管, C 段
+ 714   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 11;      // 小时个位数码管, D 段
+ 715   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 12; // 小时个位数码管, E 段
+ 716   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 13; // 小时个位数码管, F 段
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 14  
+
+ 717   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 14; // 小时个位数码管, G 段
+ 718   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 15; // 时间分隔符, 第 0 个指示灯
+ 719   1      
+ 720   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 0; // 时速面板边框，第 1 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 721   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 1; // 时速面板边框，第 0 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 722   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 2; // 时速面板边框，第 23 个指示灯（�
+             -�面最上边是第 0 个，按顺时针排序）
+ 723   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 3;// 时速面板边框，第 22 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 724   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 4;// 时速面板边框，第 21 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 725   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 5; // TRIP 字样，第 0 个指示灯
+ 726   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 6;// TRIP 字样，第 1 个指示灯
+ 727   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 7;// 时速面板边框，第 20 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 728   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 8;// 时速面板边框，第 19 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 729   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 9;// 时速面板边框，第 18 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 730   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 10;// 时速面板边框，第 17 个指示灯（�
+             -�面最上边是第 0 个，按顺时针排序）
+ 731   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 11;// 时速面板边框，第 16 个指示灯（�
+             -�面最上边是第 0 个，按顺时针排序）
+ 732   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 12;// 时速面板边框，第 15 个指示灯（�
+             -�面最上边是第 0 个，按顺时针排序）
+ 733   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 13; // 时速面板边框，第 14 个指示灯（�
+             -��面最上边是第 0 个，按顺时针排序）
+ 734   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 14;// 时速面板边框，第 13 个指示灯（�
+             -�面最上边是第 0 个，按顺时针排序）
+ 735   1          // aip3368h_speed_panel_display_buff[0] |= 0x01 << 15; // 油量边框，第 1 个指示灯(从面板�
+             -��下方第 0 个开始，顺时针排序)
+ 736   1      
+ 737   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 0; // 左侧油量格数，第 3 格指示灯(从�
+             -� 0 格开始)
+ 738   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 1;// 右侧油量格数，第 3 格指示灯(从第
+             - 0 格开始)
+ 739   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 2;// 右侧油量格数，第 4 格指示灯(从第
+             - 0 格开始)
+ 740   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 3;// 左侧油量格数，第 4 格指示灯(从第
+             - 0 格开始)
+ 741   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 4;// 油量图标对应的指示灯
+ 742   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 5;// 时速面板边框，第 12 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 743   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 6;// 时速面板边框，第 11 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 744   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 7;// 时速面板边框，第 10 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 745   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 8;// 时速面板边框，第 9 个指示灯（正�
+             -��最上边是第 0 个，按顺时针排序）
+ 746   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 9;// 时速面板边框，第 8 个指示灯（正�
+             -��最上边是第 0 个，按顺时针排序）
+ 747   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 10;// 时速面板边框，第 7 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 748   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 11;// 时速面板边框，第 6 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 749   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 12;// 时速面板边框，第 5 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 750   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 13;// 时速面板边框，第 4 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 751   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 14;// 时速面板边框，第 3 个指示灯（正
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 15  
+
+             -面最上边是第 0 个，按顺时针排序）
+ 752   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 15;// 时速面板边框，第 2 个指示灯（正
+             -面最上边是第 0 个，按顺时针排序）
+ 753   1      
+ 754   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 0; // ABS图标对应的指示灯
+ 755   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 1; // 发动机故障对应的指示灯
+ 756   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 2; // 油量边框，第 2 个指示灯(从面板�
+             -�下方第 0 个开始，顺时针排序)
+ 757   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 3;// 油量边框，第 3 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 758   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 4;// 油量边框，第 4 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 759   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 5;// 油量边框，第 5 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 760   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 6;// 油量边框，第 6 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 761   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 7;// 油量边框，第 7 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 762   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 8;// 油量边框，第 8 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 763   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 9;// 油量边框，第 9 个指示灯(从面板左
+             -下方第 0 个开始，顺时针排序)
+ 764   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 10;// 右侧油量格数，第 0 格指示灯(从�
+             -� 0 格开始)
+ 765   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 11;// 左侧油量格数，第 0 格指示灯(从�
+             -� 0 格开始)
+ 766   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 12;// 左侧油量格数，第 1 格指示灯(从�
+             -� 0 格开始)
+ 767   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 13;// 右侧油量格数，第 1 格指示灯(从�
+             -� 0 格开始)
+ 768   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 14;// 右侧油量格数，第 2 格指示灯(从�
+             -� 0 格开始)
+ 769   1          // aip3368h_speed_panel_display_buff[2] |= 0x01 << 15;// 左侧油量格数，第 2 格指示灯(从�
+             -� 0 格开始)
+ 770   1      
+ 771   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 0; // 时速，第 1 个数码管， E 段指示灯
+             -(数码管从左边第0个开始排序)
+ 772   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 1;// 时速，第 1 个数码管， F 段指示灯(
+             -数码管从左边第0个开始排序)
+ 773   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 2;// 时速，第 1 个数码管， G 段指示灯(
+             -数码管从左边第0个开始排序)
+ 774   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 3;// 时速，第 2 个数码管， A 段指示灯(
+             -数码管从左边第0个开始排序)
+ 775   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 4;// 时速，第 2 个数码管， B 段指示灯(
+             -数码管从左边第0个开始排序)
+ 776   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 5;// 时速，第 2 个数码管， C 段指示灯(
+             -数码管从左边第0个开始排序)
+ 777   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 6;// 时速，第 2 个数码管， D 段指示灯(
+             -数码管从左边第0个开始排序)
+ 778   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 7;// 时速，第 2 个数码管， E 段指示灯(
+             -数码管从左边第0个开始排序)
+ 779   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 8;// 时速，第 2 个数码管， F 段指示灯(
+             -数码管从左边第0个开始排序)
+ 780   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 9;// 时速，第 2 个数码管， G 段指示灯(
+             -数码管从左边第0个开始排序)
+ 781   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 10; // 右转向指示灯
+ 782   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 11; // mph 字样对应的指示灯
+ 783   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 12; // km/h 字样第 0 个指示灯
+ 784   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 13;// km/h 字样第 1 个指示灯
+ 785   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 14; // 温度过热图标对应的指示灯
+ 786   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 15; // 机油图标对应的指示灯
+ 787   1      
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 16  
+
+ 788   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 0; // 里程 第 5 个数码管， B 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 789   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 1;// 里程 第 5 个数码管， C 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 790   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 2;// 里程 第 5 个数码管， D 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 791   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 3;// 里程 第 5 个数码管， E 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 792   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 4;// 里程 第 5 个数码管， F 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 793   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 5;// 里程 第 5 个数码管， G 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 794   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 6; // mile 字样对应的指示灯
+ 795   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 7; // km 字样对应的指示灯
+ 796   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 8; // 左转向指示灯
+ 797   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 9; // N 字样对应的指示灯
+ 798   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 10; // 时速 第 0 个数码管， 第 0 个指示
+             -灯(数码管从左边第0个开始排序)
+ 799   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 11;// 时速 第 0 个数码管， 第 1 个指示�
+             -��(数码管从左边第0个开始排序)
+ 800   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 12;// 时速 第 1 个数码管， A 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 801   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 13;// 时速 第 1 个数码管， B 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 802   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 14;// 时速 第 1 个数码管， C 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 803   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 15;// 时速 第 1 个数码管， D 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 804   1      
+ 805   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 0; // 里程 第 2 个数码管， A 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 806   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 1;// 里程 第 2 个数码管， B 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 807   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 2;// 里程 第 2 个数码管， C 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 808   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 3;// 里程 第 2 个数码管， D 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 809   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 4;// 里程 第 2 个数码管， E 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 810   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 5;// 里程 第 2 个数码管， F 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 811   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 6;// 里程 第 2 个数码管， G 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 812   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 7;// 里程 第 3 个数码管， A 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 813   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 8;// 里程 第 3 个数码管， B 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 814   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 9;// 里程 第 3 个数码管， C 段指示灯(�
+             -�码管从左边第0个开始排序)
+ 815   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 10;// 里程 第 3 个数码管， D 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 816   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 11;// 里程 第 3 个数码管， E 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 817   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 12;// 里程 第 3 个数码管， F 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 818   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 13;// 里程 第 3 个数码管， G 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 819   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 14; // 里程 小数点对应的指示灯
+ 820   1          // aip3368h_speed_panel_display_buff[5] |= 0x01 << 15; // 里程 第 4 个数码管， A 段指示灯(
+             -数码管从左边第0个开始排序)
+ 821   1      
+ 822   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 0; // ODO 字样对应的指示灯
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/26/2026 18:53:40 PAGE 17  
+
+ 823   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 1; // 油量边框，第 0 个指示灯(从面板�
+             -�下方第 0 个开始，顺时针排序)
+ 824   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 2; // 里程 第 0 个数码管， A 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 825   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 3; // 里程 第 0 个数码管， B 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 826   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 4; // 里程 第 0 个数码管， C 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 827   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 5; // 里程 第 0 个数码管， D 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 828   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 6; // 里程 第 0 个数码管， E 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 829   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 7; // 里程 第 0 个数码管， F 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 830   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 8; // 里程 第 0 个数码管， G 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 831   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 9; // 里程 第 1 个数码管， A 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 832   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 10; // 里程 第 1 个数码管， B 段指示灯(
+             -数码管从左边第0个开始排序)
+ 833   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 11; // 里程 第 1 个数码管， C 段指示灯(
+             -数码管从左边第0个开始排序)
+ 834   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 12;// 里程 第 1 个数码管， D 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 835   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 13;// 里程 第 1 个数码管， E 段指示灯(�
+             -��码管从左边第0个开始排序)
+ 836   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 14; // 里程 第 1 个数码管， F 段指示灯(
+             -数码管从左边第0个开始排序)
+ 837   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 15; // 里程 第 1 个数码管， G 段指示灯(
+             -数码管从左边第0个开始排序)
+ 838   1      }
+ 839          #endif
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =      8    ----
+   CODE SIZE        =   2027    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =   ----    ----
+   XDATA SIZE       =    168      14
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

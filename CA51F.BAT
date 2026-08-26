@@ -20,5 +20,6 @@ SET CPU_XTAL=0x016E3600
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\ui.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\user_debug.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\engine_speed_scan.__i"
+"C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\boot_animation.__i"
 "C:\Keil_v5\C51\BIN\LX51.EXE" @".\hex\project.lnp"
 "C:\Keil_v5\C51\BIN\OHX51.EXE" ".\hex\project" HEX
