@@ -10,12 +10,9 @@
 
 #include <string.h>
 
-
 #if USER_DEBUG_ENABLE
 #include <stdio.h>
 #endif
-
-volatile uart_driver_tx_info_t uart1_drv_tx_info;
 
 volatile bit uart1_tx_busy_flag; // 发送忙碌标志
 volatile uart1_rx_buffer_t uart1_rx_buffer;
@@ -34,7 +31,6 @@ void uart1_init(void)
     unsigned int value_temp;
 
     uart1_tx_busy_flag = 0;
-    memset(&uart1_drv_tx_info, 0, sizeof(uart_driver_tx_info_t));
     memset(&uart1_rx_buffer, 0, sizeof(uart1_rx_buffer_t));
 
     GPIO_Init(P11F, P11_UART1_TX_SETTING);
@@ -45,13 +41,12 @@ void uart1_init(void)
     S1RELH = (unsigned char)(value_temp >> 8);
     S1RELL = (unsigned char)(value_temp);
 
-    // S1CON = 0xD0;
     S1CON = ((0x01 << 7) | // 8位异步模式
              (0x01 << 6) | // 使能中断
              (0x01 << 4)); // 串行接收使能
     ES1 = 1;               // UART1中断使能
 }
- 
+
 /**
  * @brief 发送一个字节数据
  * 
@@ -63,44 +58,20 @@ void uart1_init(void)
  */
 void uart1_send_byte(unsigned char byte)
 {
-    unsigned char free_space;
-    unsigned char tail_tmp;
-
     while (1) {
-        tail_tmp = uart1_drv_tx_info.tail;
-        if (uart1_drv_tx_info.head < tail_tmp) {
-            // 头指针在尾指针前面
-            free_space = tail_tmp - uart1_drv_tx_info.head;
-        } else {
-            // 头指针在尾指针后面
-            free_space = UART1_TX_BUF_SIZE + tail_tmp - uart1_drv_tx_info.head;
-        }
 
-        // 如果缓冲区有空间，则存放数据。如果缓冲区已满，则等待
-        if (free_space > 1) {
-            ES1 = 0; // 不使能UART1中断
+        // 等待上一次发送完成
+        if (!uart1_tx_busy_flag) {
 
-            // 先偏移指针，再存放数据
-            uart1_drv_tx_info.head++;
-            uart1_drv_tx_info.head %= UART1_TX_BUF_SIZE;
-            uart1_drv_tx_info.buff[uart1_drv_tx_info.head] = byte;
-
-            if (!uart1_tx_busy_flag) {
-                // 如果上一次发送已经完成，则立即发送
-                ES1 = 1;
-                uart1_drv_tx_info.tail++;
-                uart1_drv_tx_info.tail %= UART1_TX_BUF_SIZE;
-                S1BUF = uart1_drv_tx_info.buff[uart1_drv_tx_info.tail];
-                uart1_tx_busy_flag = 1;
-            } else {
-                ES1 = 1;
-            }
-
+            ES1 = 0; // 不使能 UART1 中断
+            S1BUF = byte;
+            uart1_tx_busy_flag = 1;
+            ES1 = 1;
             break;
         }
 
-        // 在这里加喂狗，会把整个程序卡死
-        // WDFLG = 0xA5; // 喂狗 
+        // 在这里加喂狗，在频繁收发时，会把整个程序卡死
+        // WDFLG = 0xA5; // 喂狗
     }
 }
 
@@ -125,7 +96,11 @@ u8 uart1_rxbuffer_get_byte(void)
     }
 
     // 先偏移索引，再取出数据
-    uart1_rx_buffer.tail = (uart1_rx_buffer.tail + 1) % UART1_RX_BUF_SIZE;
+    uart1_rx_buffer.tail++;
+    if (uart1_rx_buffer.tail >= UART1_RX_BUF_SIZE) {
+        uart1_rx_buffer.tail = 0;
+    }
+
     rxbyte = uart1_rx_buffer.buffer[uart1_rx_buffer.tail];
 
     uart1_rx_buffer.count--;
@@ -138,7 +113,10 @@ void uart1_rxbuffer_put(u8 byte)
     // 目前的逻辑：缓冲区满，覆盖旧的数据
 
     // 先偏移索引，再存放数据
-    uart1_rx_buffer.head = (uart1_rx_buffer.head + 1) % UART1_RX_BUF_SIZE;
+    uart1_rx_buffer.head++;
+    if (uart1_rx_buffer.head >= UART1_RX_BUF_SIZE) {
+        uart1_rx_buffer.head = 0;
+    }
     uart1_rx_buffer.buffer[uart1_rx_buffer.head] = byte;
 
     uart1_rx_buffer.count++;
@@ -152,19 +130,14 @@ void UART1_ISR(void) interrupt 6
 {
     if (S1CON & BIT0) {
         // 接收中断
-        // S1CON = (S1CON & 0xFC) | 0x01; // REVIEW 官方的示例
+        // S1CON = (S1CON & 0xFC) | 0x01; // REVIEW 该行是官方demo的示例
         S1CON |= 0x01; // 写1清空接收中断标志
         uart1_rxbuffer_put(S1BUF);
     }
 
     if (S1CON & BIT1) {
-        S1CON = (S1CON & ~(BIT0 | BIT1)) | BIT1;
-        if (uart1_drv_tx_info.head != uart1_drv_tx_info.tail) {
-            uart1_drv_tx_info.tail++;
-            uart1_drv_tx_info.tail %= UART1_TX_BUF_SIZE;
-            S1BUF = uart1_drv_tx_info.buff[uart1_drv_tx_info.tail];
-        } else {
-            uart1_tx_busy_flag = 0;
-        }
+        // 串口1 发送完 S1BUF 数据中的停止位后，触发发送中断，进入这里
+        S1CON |= (0x01 << 1); // 写1清空发送中断标志
+        uart1_tx_busy_flag = 0;
     }
 }

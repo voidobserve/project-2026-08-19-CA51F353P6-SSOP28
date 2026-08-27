@@ -1,4 +1,5 @@
 #include "user_debug.h"
+
 #include "gpiodef_f3.h" // GPIO_Init()
 #include "ca51f3xsfr.h"
 #include "ca51f3sfr.h"
@@ -14,7 +15,8 @@ void user_debug_io_init(void)
 
 void user_debug_io_toggle(void)
 {
-    USER_DEBUG_IO ^= USER_DEBUG_IO;
+    // USER_DEBUG_IO ^= 1; // 这种方法更占程序空间
+    USER_DEBUG_IO = !USER_DEBUG_IO;
 }
 
 #endif

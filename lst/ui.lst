@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI                                                                08/26/2026 18:53:42 PAGE 1   
+C51 COMPILER V9.60.7.0   UI                                                                08/27/2026 18:51:43 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI
@@ -62,7 +62,7 @@ line level    source
   51   1      
   52   1          // 如果在设置界面
   53   1          if (ui_manager.state == UI_STATE_SETTING_DISTANCE_UNIT_TYPE ||
-C51 COMPILER V9.60.7.0   UI                                                                08/26/2026 18:53:42 PAGE 2   
+C51 COMPILER V9.60.7.0   UI                                                                08/27/2026 18:51:43 PAGE 2   
 
   54   1              ui_manager.state == UI_STATE_SETTING_TIME_MINUTE ||
   55   1              ui_manager.state == UI_STATE_SETTING_TIME_HOUR) {
@@ -126,7 +126,7 @@ line level    source
                       // 让第 0 格电量的指示灯、电池8字样、电池图标指示灯一起闪烁
               
                       // 判断电池电量第 0 格指示灯有没有点亮
-C51 COMPILER V9.60.7.0   UI                                                                08/26/2026 18:53:42 PAGE 3   
+C51 COMPILER V9.60.7.0   UI                                                                08/27/2026 18:51:43 PAGE 3   
 
                       // if ((aip3368h_speed_panel_display_buff[3] >> 12) & 0x01) {
                       if (0 == display_err_dir) {
@@ -190,7 +190,7 @@ line level    source
                               }
                           } else if (DISTANCE_UNIT_TYPE_IMPERIAL ==
                                      instrument.save_info.distance_unit_type) {
-C51 COMPILER V9.60.7.0   UI                                                                08/26/2026 18:53:42 PAGE 4   
+C51 COMPILER V9.60.7.0   UI                                                                08/27/2026 18:51:43 PAGE 4   
 
                               // 直接读取显存，判断有没有点亮对应的指示灯
                               if ((aip3368h_speed_panel_display_buff[0] >> 2) & 0x01) {
@@ -254,7 +254,7 @@ line level    source
                       if (UI_STATE_SETTING_TIME_MINUTE == ui_manager.state ||
                           UI_STATE_SETTING_TIME_HOUR == ui_manager.state) {
                           // 如果是设置时间，超时后，将时间写回时钟IC
-C51 COMPILER V9.60.7.0   UI                                                                08/26/2026 18:53:42 PAGE 5   
+C51 COMPILER V9.60.7.0   UI                                                                08/27/2026 18:51:43 PAGE 5   
 
                           aip1302_update_time(aip1302_info);
                       }
@@ -318,7 +318,7 @@ line level    source
  298   1      #if 0
                   // 立即显示 时速 单位类型
                   if (DISTANCE_UNIT_TYPE_METRIC == instrument.save_info.distance_unit_type) {
-C51 COMPILER V9.60.7.0   UI                                                                08/26/2026 18:53:42 PAGE 6   
+C51 COMPILER V9.60.7.0   UI                                                                08/27/2026 18:51:43 PAGE 6   
 
                       // 公制单位
                       aip3368h_display_mph_light(0);

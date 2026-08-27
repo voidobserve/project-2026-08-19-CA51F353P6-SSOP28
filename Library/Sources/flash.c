@@ -1,3 +1,4 @@
+// encoding = utf-8
 #ifndef _FLASH_C_
 #define _FLASH_C_
 /*********************************************************************************************************************/
@@ -12,106 +13,106 @@
 /*********************************************************************************************************************/
 
 /***********************************************************************************
-º¯ Êý Ãû£ºData_Area_Erase_Sector										 	
-¹¦ÄÜÃèÊö£º²Á³ýÊý¾ÝÇø¿Õ¼äµÄÒ»¸öÉÈÇø						
-º¯ÊýËµÃ÷£º								
-Êä    Èë£ºunsigned char SectorNumber	ÉÈÇøºÅ									
-·µ    »Ø£ºÎÞ																	
+å‡½ æ•° åï¼šData_Area_Erase_Sector										 	
+åŠŸèƒ½æè¿°ï¼šæ“¦é™¤æ•°æ®åŒºç©ºé—´çš„ä¸€ä¸ªæ‰‡åŒº						
+å‡½æ•°è¯´æ˜Žï¼š								
+è¾“    å…¥ï¼šunsigned char SectorNumber	æ‰‡åŒºå·									
+è¿”    å›žï¼šæ— 																	
 ***********************************************************************************/
 void Data_Area_Sector_Erase(unsigned char SectorNumber)
 {
 	unsigned int SectorAddress;
 	FSCMD 	= 	0;
 	SectorAddress = 0x80*SectorNumber;
-	LOCK  = CMD_DATA_AREA_UNLOCK;						//Êý¾ÝÇø½âËø
-	PTSH = (unsigned char)(SectorAddress>>8);			//ÌîÐ´ÉÈÇøµØÖ·
-	PTSL = (unsigned char)(SectorAddress);				//ÌîÐ´ÉÈÇøµØÖ·	
-	FSCMD = CMD_DATA_AREA_ERASE_SECTOR;					//Ö´ÐÐ²Á³ýÉÈÇø²Ù×÷
-	LOCK  = CMD_FLASH_LOCK;						    	//¶ÔFLASH¼ÓËø
+	LOCK  = CMD_DATA_AREA_UNLOCK;						//æ•°æ®åŒºè§£é”
+	PTSH = (unsigned char)(SectorAddress>>8);			//å¡«å†™æ‰‡åŒºåœ°å€
+	PTSL = (unsigned char)(SectorAddress);				//å¡«å†™æ‰‡åŒºåœ°å€	
+	FSCMD = CMD_DATA_AREA_ERASE_SECTOR;					//æ‰§è¡Œæ“¦é™¤æ‰‡åŒºæ“ä½œ
+	LOCK  = CMD_FLASH_LOCK;						    	//å¯¹FLASHåŠ é”
 } 
 
 /***********************************************************************************
-º¯ Êý Ãû£ºData_Area_Write_Byte											 	
-¹¦ÄÜÃèÊö£ºÏòFLASHÊý¾ÝÇøÐ´ÈëÒ»¸ö×Ö½ÚÊý¾Ý																	
-Êä    Èë£ºunsigned int Address	Êý¾ÝÇø¿Õ¼äÐ´ÈëµØÖ·											
-					unsigned char Data		Ð´ÈëÊý¾Ý												
-·µ    »Ø£ºÎÞ																	
+å‡½ æ•° åï¼šData_Area_Write_Byte											 	
+åŠŸèƒ½æè¿°ï¼šå‘FLASHæ•°æ®åŒºå†™å…¥ä¸€ä¸ªå­—èŠ‚æ•°æ®																	
+è¾“    å…¥ï¼šunsigned int Address	æ•°æ®åŒºç©ºé—´å†™å…¥åœ°å€											
+					unsigned char Data		å†™å…¥æ•°æ®												
+è¿”    å›žï¼šæ— 																	
 ***********************************************************************************/
 void Data_Area_Write_Byte(unsigned int Address,unsigned char Data)
 {
 	FSCMD 	= 	0;
-	LOCK  = CMD_DATA_AREA_UNLOCK;						//Êý¾ÝÇø½âËø
-	PTSH = (unsigned char)(Address>>8);					//ÌîÐ´¸ßÎ»µØÖ·
-	PTSL = (unsigned char)Address;        				//ÌîÐ´µÍÎ»µØÖ·
-	FSCMD = CMD_DATA_AREA_WIRTE;						//Ö´ÐÐÐ´²Ù×÷
-	FSDAT = Data;										//×°ÔØÊý¾Ý	
+	LOCK  = CMD_DATA_AREA_UNLOCK;						//æ•°æ®åŒºè§£é”
+	PTSH = (unsigned char)(Address>>8);					//å¡«å†™é«˜ä½åœ°å€
+	PTSL = (unsigned char)Address;        				//å¡«å†™ä½Žä½åœ°å€
+	FSCMD = CMD_DATA_AREA_WIRTE;						//æ‰§è¡Œå†™æ“ä½œ
+	FSDAT = Data;										//è£…è½½æ•°æ®	
 	FSCMD 	= 	0;
-	LOCK  = CMD_FLASH_LOCK;								//¶ÔFLASH¼ÓËø
+	LOCK  = CMD_FLASH_LOCK;								//å¯¹FLASHåŠ é”
 } 
 
 /***********************************************************************************
-º¯ Êý Ãû£ºData_Area_Mass_Write										 	
-¹¦ÄÜÃèÊö£ºÏòFLASHÊý¾ÝÇøÅúÁ¿Ð´ÈëÊý¾Ý																	
-Êä    Èë£ºunsigned int wAddress	  Êý¾ÝÇø¿Õ¼äÐ´ÈëÆðÊ¼µØÖ·											
-					unsigned char *pData		Êý¾ÝÖ¸Õë£¬Ö¸ÏòÐ´ÈëÊý¾Ý»º´æÊý×é
-					unsigned char Length		Ð´ÈëÊý¾Ý³¤¶È												
-·µ    »Ø£ºÎÞ																	
+å‡½ æ•° åï¼šData_Area_Mass_Write										 	
+åŠŸèƒ½æè¿°ï¼šå‘FLASHæ•°æ®åŒºæ‰¹é‡å†™å…¥æ•°æ®																	
+è¾“    å…¥ï¼šunsigned int wAddress	  æ•°æ®åŒºç©ºé—´å†™å…¥èµ·å§‹åœ°å€											
+					unsigned char *pData		æ•°æ®æŒ‡é’ˆï¼ŒæŒ‡å‘å†™å…¥æ•°æ®ç¼“å­˜æ•°ç»„
+					unsigned char Length		å†™å…¥æ•°æ®é•¿åº¦												
+è¿”    å›žï¼šæ— 																	
 ***********************************************************************************/
 void Data_Area_Mass_Write(unsigned int Address,unsigned char *pData,unsigned int Length)
 {
 	unsigned int i;
 	FSCMD 	= 	0;
-	LOCK  = CMD_DATA_AREA_UNLOCK;						//Êý¾ÝÇø½âËø
-	PTSH = (unsigned char)(Address>>8);					//ÌîÐ´¸ßÎ»µØÖ·
-	PTSL = (unsigned char)Address;        				//ÌîÐ´µÍÎ»µØÖ·
-	FSCMD = CMD_DATA_AREA_WIRTE;						//Ö´ÐÐÐ´²Ù×÷
+	LOCK  = CMD_DATA_AREA_UNLOCK;						//æ•°æ®åŒºè§£é”
+	PTSH = (unsigned char)(Address>>8);					//å¡«å†™é«˜ä½åœ°å€
+	PTSL = (unsigned char)Address;        				//å¡«å†™ä½Žä½åœ°å€
+	FSCMD = CMD_DATA_AREA_WIRTE;						//æ‰§è¡Œå†™æ“ä½œ
 	for(i = 0; i < Length; i++)
 	{
-		FSDAT = *pData++;								//×°ÔØÊý¾Ý	
+		FSDAT = *pData++;								//è£…è½½æ•°æ®	
 	}
 	FSCMD 	= 	0;
-	LOCK  = CMD_FLASH_LOCK;						    	//¶ÔFLASH¼ÓËø
+	LOCK  = CMD_FLASH_LOCK;						    	//å¯¹FLASHåŠ é”
 } 
 
 /***********************************************************************************
-º¯ Êý Ãû£ºData_Area_Read_Byte											 	
-¹¦ÄÜÃèÊö£º´ÓFLASHÊý¾ÝÇø¶Á³öÒ»×Ö½ÚÊý¾Ý																
-Êä    Èë£ºunsigned int Address	Êý¾ÝÇø¿Õ¼ä¶ÁµØÖ·																							
-·µ    »Ø£º¶ÁÈ¡µÄÒ»×Ö½ÚÊý¾Ý																	
+å‡½ æ•° åï¼šData_Area_Read_Byte											 	
+åŠŸèƒ½æè¿°ï¼šä»ŽFLASHæ•°æ®åŒºè¯»å‡ºä¸€å­—èŠ‚æ•°æ®																
+è¾“    å…¥ï¼šunsigned int Address	æ•°æ®åŒºç©ºé—´è¯»åœ°å€																							
+è¿”    å›žï¼šè¯»å–çš„ä¸€å­—èŠ‚æ•°æ®																	
 ***********************************************************************************/
 unsigned char Data_Area_Read_Byte(unsigned int Address)
 {	
 	unsigned char Data_Temp;
 	FSCMD 	= 	0;
-	PTSH = (unsigned char)(Address>>8);					//ÌîÐ´¸ßÎ»µØÖ·
-	PTSL = (unsigned char)Address;        				//ÌîÐ´µÍÎ»µØÖ·
-	FSCMD = CMD_DATA_AREA_READ;							//Ö´ÐÐ¶Á²Ù×÷
+	PTSH = (unsigned char)(Address>>8);					//å¡«å†™é«˜ä½åœ°å€
+	PTSL = (unsigned char)Address;        				//å¡«å†™ä½Žä½åœ°å€
+	FSCMD = CMD_DATA_AREA_READ;							//æ‰§è¡Œè¯»æ“ä½œ
 	Data_Temp = FSDAT;
 	FSCMD 	= 	0;
-	LOCK  = CMD_FLASH_LOCK;						    	//¶ÔFLASH¼ÓËø
+	LOCK  = CMD_FLASH_LOCK;						    	//å¯¹FLASHåŠ é”
 	return Data_Temp;
 } 
 
 /***********************************************************************************
-º¯ Êý Ãû£ºData_Area_Mass_Read										 	
-¹¦ÄÜÃèÊö£º´ÓFLASHÊý¾ÝÇøÅúÁ¿¶Á³öÊý¾Ý																	
-Êä    Èë£ºunsigned int Address	  Êý¾ÝÇø¿Õ¼ä¶ÁÆðÊ¼µØÖ·											
-					unsigned char *pData		Êý¾ÝÖ¸Õë£¬Ö¸Ïò¶Á³öÊý¾Ý»º´æÊý×é
-					unsigned char Length		¶ÁÊý¾Ý³¤¶È												
-·µ    »Ø£ºÎÞ																	
+å‡½ æ•° åï¼šData_Area_Mass_Read										 	
+åŠŸèƒ½æè¿°ï¼šä»ŽFLASHæ•°æ®åŒºæ‰¹é‡è¯»å‡ºæ•°æ®																	
+è¾“    å…¥ï¼šunsigned int Address	  æ•°æ®åŒºç©ºé—´è¯»èµ·å§‹åœ°å€											
+					unsigned char *pData		æ•°æ®æŒ‡é’ˆï¼ŒæŒ‡å‘è¯»å‡ºæ•°æ®ç¼“å­˜æ•°ç»„
+					unsigned char Length		è¯»æ•°æ®é•¿åº¦												
+è¿”    å›žï¼šæ— 																	
 ***********************************************************************************/
 void Data_Area_Mass_Read(unsigned int Address,unsigned char *pData,unsigned int Length)
 {
 	unsigned int i;
 	FSCMD 	= 	0;
-	PTSH = (unsigned char)(Address>>8);					//ÌîÐ´¸ßÎ»µØÖ·
-	PTSL = (unsigned char)Address;        				//ÌîÐ´µÍÎ»µØÖ·
-	FSCMD = CMD_DATA_AREA_READ;							//Ö´ÐÐ¶Á²Ù×÷
+	PTSH = (unsigned char)(Address>>8);					//å¡«å†™é«˜ä½åœ°å€
+	PTSL = (unsigned char)Address;        				//å¡«å†™ä½Žä½åœ°å€
+	FSCMD = CMD_DATA_AREA_READ;							//æ‰§è¡Œè¯»æ“ä½œ
 	for(i = 0; i < Length; i++)
 	{												
 		*pData++ = FSDAT;
 	}
 	FSCMD 	= 	0;
-	LOCK  = CMD_FLASH_LOCK;						    	//¶ÔFLASH¼ÓËø
+	LOCK  = CMD_FLASH_LOCK;						    	//å¯¹FLASHåŠ é”
 } 
 #endif 

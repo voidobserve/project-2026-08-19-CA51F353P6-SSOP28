@@ -396,11 +396,6 @@
               <FileType>1</FileType>
               <FilePath>.\driver\aip3368\aip3368h_display.c</FilePath>
             </File>
-            <File>
-              <FileName>pin_level_scan.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\driver\pin_level_scan.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -480,6 +475,16 @@
               <FileName>boot_animation.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\user_code\boot_animation.c</FilePath>
+            </File>
+            <File>
+              <FileName>instrument.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\instrument.c</FilePath>
+            </File>
+            <File>
+              <FileName>pin_level_scan.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\pin_level_scan.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   FLASH                                                             08/26/2026 18:53:41 PAGE 1   
+C51 COMPILER V9.60.7.0   FLASH                                                             08/27/2026 18:51:43 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE FLASH
@@ -10,129 +10,130 @@ COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Library\Sources\flash.c LARGE OM
 
 line level    source
 
-   1          #ifndef _FLASH_C_
-   2          #define _FLASH_C_
-   3          /*********************************************************************************************************
+   1          // encoding = utf-8
+   2          #ifndef _FLASH_C_
+   3          #define _FLASH_C_
+   4          /*********************************************************************************************************
              -************/
-   4          #include "ca51f_config.h"
-   5          #include "includes\ca51f3sfr.h"
-   6          #include "includes\ca51f3xsfr.h"
-   7          #include "includes\gpiodef_f3.h"
-   8          
-   9          #include "includes\system.h"
-  10          #include "Library\includes\flash.h"
-  11          #include <intrins.h>
-  12          /*********************************************************************************************************
+   5          #include "ca51f_config.h"
+   6          #include "includes\ca51f3sfr.h"
+   7          #include "includes\ca51f3xsfr.h"
+   8          #include "includes\gpiodef_f3.h"
+   9          
+  10          #include "includes\system.h"
+  11          #include "Library\includes\flash.h"
+  12          #include <intrins.h>
+  13          /*********************************************************************************************************
              -************/
-  13          
-  14          /***********************************************************************************
-  15          ∫Ø  ˝ √˚£∫Data_Area_Erase_Sector                                                                                        
-  16          π¶ƒ‹√Ë ˆ£∫≤¡≥˝ ˝æ›«¯ø’º‰µƒ“ª∏ˆ…»«¯                                              
-  17          ∫Ø ˝Àµ√˜£∫                                                              
-  18           ‰    »Î£∫unsigned char SectorNumber    …»«¯∫≈                                                                  
-  19          ∑µ    ªÿ£∫Œﬁ                                                                                                                                    
-  20          ***********************************************************************************/
-  21          void Data_Area_Sector_Erase(unsigned char SectorNumber)
-  22          {
-  23   1              unsigned int SectorAddress;
-  24   1              FSCMD   =       0;
-  25   1              SectorAddress = 0x80*SectorNumber;
-  26   1              LOCK  = CMD_DATA_AREA_UNLOCK;                                           // ˝æ›«¯Ω‚À¯
-  27   1              PTSH = (unsigned char)(SectorAddress>>8);                       //ÃÓ–¥…»«¯µÿ÷∑
-  28   1              PTSL = (unsigned char)(SectorAddress);                          //ÃÓ–¥…»«¯µÿ÷∑  
-  29   1              FSCMD = CMD_DATA_AREA_ERASE_SECTOR;                                     //÷¥––≤¡≥˝…»«¯≤Ÿ◊˜
-  30   1              LOCK  = CMD_FLASH_LOCK;                                                 //∂‘FLASHº”À¯
-  31   1      } 
-  32          
-  33          /***********************************************************************************
-  34          ∫Ø  ˝ √˚£∫Data_Area_Write_Byte                                                                                          
-  35          π¶ƒ‹√Ë ˆ£∫œÚFLASH ˝æ›«¯–¥»Î“ª∏ˆ◊÷Ω⁄ ˝æ›                                                                                                                                 
-  36           ‰    »Î£∫unsigned int Address   ˝æ›«¯ø’º‰–¥»Îµÿ÷∑                                                                                      
-  37                                                  unsigned char Data              –¥»Î ˝æ›                                                                                                
-  38          ∑µ    ªÿ£∫Œﬁ                                                                                                                                    
-  39          ***********************************************************************************/
-  40          void Data_Area_Write_Byte(unsigned int Address,unsigned char Data)
-  41          {
-  42   1              FSCMD   =       0;
-  43   1              LOCK  = CMD_DATA_AREA_UNLOCK;                                           // ˝æ›«¯Ω‚À¯
-  44   1              PTSH = (unsigned char)(Address>>8);                                     //ÃÓ–¥∏ﬂŒªµÿ÷∑
-  45   1              PTSL = (unsigned char)Address;                                  //ÃÓ–¥µÕŒªµÿ÷∑
-  46   1              FSCMD = CMD_DATA_AREA_WIRTE;                                            //÷¥–––¥≤Ÿ◊˜
-  47   1              FSDAT = Data;                                                                           //◊∞‘ÿ ˝æ›      
-  48   1              FSCMD   =       0;
-  49   1              LOCK  = CMD_FLASH_LOCK;                                                         //∂‘FLASHº”À¯
-  50   1      } 
-C51 COMPILER V9.60.7.0   FLASH                                                             08/26/2026 18:53:41 PAGE 2   
+  14          
+  15          /***********************************************************************************
+  16          ÂáΩ Êï∞ ÂêçÔºöData_Area_Erase_Sector                                                                                    
+  17          ÂäüËÉΩÊèèËø∞ÔºöÊì¶Èô§Êï∞ÊçÆÂå∫Á©∫Èó¥ÁöÑ‰∏Ä‰∏™ÊâáÂå∫                                             
+  18          ÂáΩÊï∞ËØ¥ÊòéÔºö                                                         
+  19          Ëæì    ÂÖ•Ôºöunsigned char SectorNumber ÊâáÂå∫Âè∑                                                                       
+  20          Ëøî    ÂõûÔºöÊó†                                                                                                                                        
+  21          ***********************************************************************************/
+  22          void Data_Area_Sector_Erase(unsigned char SectorNumber)
+  23          {
+  24   1              unsigned int SectorAddress;
+  25   1              FSCMD   =       0;
+  26   1              SectorAddress = 0x80*SectorNumber;
+  27   1              LOCK  = CMD_DATA_AREA_UNLOCK;                                           //Êï∞ÊçÆÂå∫Ëß£ÈîÅ
+  28   1              PTSH = (unsigned char)(SectorAddress>>8);                       //Â°´ÂÜôÊâáÂå∫Âú∞ÂùÄ
+  29   1              PTSL = (unsigned char)(SectorAddress);                          //Â°´ÂÜôÊâáÂå∫Âú∞ÂùÄ    
+  30   1              FSCMD = CMD_DATA_AREA_ERASE_SECTOR;                                     //ÊâßË°åÊì¶Èô§ÊâáÂå∫Êìç‰Ωú
+  31   1              LOCK  = CMD_FLASH_LOCK;                                                 //ÂØπFLASHÂä†ÈîÅ
+  32   1      } 
+  33          
+  34          /***********************************************************************************
+  35          ÂáΩ Êï∞ ÂêçÔºöData_Area_Write_Byte                                                                                              
+  36          ÂäüËÉΩÊèèËø∞ÔºöÂêëFLASHÊï∞ÊçÆÂå∫ÂÜôÂÖ•‰∏Ä‰∏™Â≠óËäÇÊï∞ÊçÆ                                                                                                                                        
+  37          Ëæì    ÂÖ•Ôºöunsigned int Address       Êï∞ÊçÆÂå∫Á©∫Èó¥ÂÜôÂÖ•Âú∞ÂùÄ                                                                                     
+  38                                                  unsigned char Data              ÂÜôÂÖ•Êï∞ÊçÆ                                                                                            
+  39          Ëøî    ÂõûÔºöÊó†                                                                                                                                        
+  40          ***********************************************************************************/
+  41          void Data_Area_Write_Byte(unsigned int Address,unsigned char Data)
+  42          {
+  43   1              FSCMD   =       0;
+  44   1              LOCK  = CMD_DATA_AREA_UNLOCK;                                           //Êï∞ÊçÆÂå∫Ëß£ÈîÅ
+  45   1              PTSH = (unsigned char)(Address>>8);                                     //Â°´ÂÜôÈ´ò‰ΩçÂú∞ÂùÄ
+  46   1              PTSL = (unsigned char)Address;                                  //Â°´ÂÜô‰Ωé‰ΩçÂú∞ÂùÄ
+  47   1              FSCMD = CMD_DATA_AREA_WIRTE;                                            //ÊâßË°åÂÜôÊìç‰Ωú
+  48   1              FSDAT = Data;                                                                           //Ë£ÖËΩΩÊï∞ÊçÆ  
+  49   1              FSCMD   =       0;
+  50   1              LOCK  = CMD_FLASH_LOCK;                                                         //ÂØπFLASHÂä†ÈîÅ
+C51 COMPILER V9.60.7.0   FLASH                                                             08/27/2026 18:51:43 PAGE 2   
 
-  51          
-  52          /***********************************************************************************
-  53          ∫Ø  ˝ √˚£∫Data_Area_Mass_Write                                                                                  
-  54          π¶ƒ‹√Ë ˆ£∫œÚFLASH ˝æ›«¯≈˙¡ø–¥»Î ˝æ›                                                                                                                                     
-  55           ‰    »Î£∫unsigned int wAddress    ˝æ›«¯ø’º‰–¥»Î∆ ºµÿ÷∑                                                                                        
-  56                                                  unsigned char *pData             ˝æ›÷∏’Î£¨÷∏œÚ–¥»Î ˝æ›ª∫¥Ê ˝◊È
-  57                                                  unsigned char Length            –¥»Î ˝æ›≥§∂»                                                                                            
-  58          ∑µ    ªÿ£∫Œﬁ                                                                                                                                    
-  59          ***********************************************************************************/
-  60          void Data_Area_Mass_Write(unsigned int Address,unsigned char *pData,unsigned int Length)
-  61          {
-  62   1              unsigned int i;
-  63   1              FSCMD   =       0;
-  64   1              LOCK  = CMD_DATA_AREA_UNLOCK;                                           // ˝æ›«¯Ω‚À¯
-  65   1              PTSH = (unsigned char)(Address>>8);                                     //ÃÓ–¥∏ﬂŒªµÿ÷∑
-  66   1              PTSL = (unsigned char)Address;                                  //ÃÓ–¥µÕŒªµÿ÷∑
-  67   1              FSCMD = CMD_DATA_AREA_WIRTE;                                            //÷¥–––¥≤Ÿ◊˜
-  68   1              for(i = 0; i < Length; i++)
-  69   1              {
-  70   2                      FSDAT = *pData++;                                                               //◊∞‘ÿ ˝æ›      
-  71   2              }
-  72   1              FSCMD   =       0;
-  73   1              LOCK  = CMD_FLASH_LOCK;                                                 //∂‘FLASHº”À¯
-  74   1      } 
-  75          
-  76          /***********************************************************************************
-  77          ∫Ø  ˝ √˚£∫Data_Area_Read_Byte                                                                                           
-  78          π¶ƒ‹√Ë ˆ£∫¥”FLASH ˝æ›«¯∂¡≥ˆ“ª◊÷Ω⁄ ˝æ›                                                                                                                           
-  79           ‰    »Î£∫unsigned int Address   ˝æ›«¯ø’º‰∂¡µÿ÷∑                                                                                                                                                                                        
-  80          ∑µ    ªÿ£∫∂¡»°µƒ“ª◊÷Ω⁄ ˝æ›                                                                                                                                      
-  81          ***********************************************************************************/
-  82          unsigned char Data_Area_Read_Byte(unsigned int Address)
-  83          {       
-  84   1              unsigned char Data_Temp;
-  85   1              FSCMD   =       0;
-  86   1              PTSH = (unsigned char)(Address>>8);                                     //ÃÓ–¥∏ﬂŒªµÿ÷∑
-  87   1              PTSL = (unsigned char)Address;                                  //ÃÓ–¥µÕŒªµÿ÷∑
-  88   1              FSCMD = CMD_DATA_AREA_READ;                                                     //÷¥––∂¡≤Ÿ◊˜
-  89   1              Data_Temp = FSDAT;
-  90   1              FSCMD   =       0;
-  91   1              LOCK  = CMD_FLASH_LOCK;                                                 //∂‘FLASHº”À¯
-  92   1              return Data_Temp;
-  93   1      } 
-  94          
-  95          /***********************************************************************************
-  96          ∫Ø  ˝ √˚£∫Data_Area_Mass_Read                                                                                   
-  97          π¶ƒ‹√Ë ˆ£∫¥”FLASH ˝æ›«¯≈˙¡ø∂¡≥ˆ ˝æ›                                                                                                                                     
-  98           ‰    »Î£∫unsigned int Address     ˝æ›«¯ø’º‰∂¡∆ ºµÿ÷∑                                                                                  
-  99                                                  unsigned char *pData             ˝æ›÷∏’Î£¨÷∏œÚ∂¡≥ˆ ˝æ›ª∫¥Ê ˝◊È
- 100                                                  unsigned char Length            ∂¡ ˝æ›≥§∂»                                                                                              
- 101          ∑µ    ªÿ£∫Œﬁ                                                                                                                                    
- 102          ***********************************************************************************/
- 103          void Data_Area_Mass_Read(unsigned int Address,unsigned char *pData,unsigned int Length)
- 104          {
- 105   1              unsigned int i;
- 106   1              FSCMD   =       0;
- 107   1              PTSH = (unsigned char)(Address>>8);                                     //ÃÓ–¥∏ﬂŒªµÿ÷∑
- 108   1              PTSL = (unsigned char)Address;                                  //ÃÓ–¥µÕŒªµÿ÷∑
- 109   1              FSCMD = CMD_DATA_AREA_READ;                                                     //÷¥––∂¡≤Ÿ◊˜
- 110   1              for(i = 0; i < Length; i++)
- 111   1              {                                                                                               
- 112   2                      *pData++ = FSDAT;
-C51 COMPILER V9.60.7.0   FLASH                                                             08/26/2026 18:53:41 PAGE 3   
+  51   1      } 
+  52          
+  53          /***********************************************************************************
+  54          ÂáΩ Êï∞ ÂêçÔºöData_Area_Mass_Write                                                                                      
+  55          ÂäüËÉΩÊèèËø∞ÔºöÂêëFLASHÊï∞ÊçÆÂå∫ÊâπÈáèÂÜôÂÖ•Êï∞ÊçÆ                                                                                                                                      
+  56          Ëæì    ÂÖ•Ôºöunsigned int wAddress        Êï∞ÊçÆÂå∫Á©∫Èó¥ÂÜôÂÖ•Ëµ∑ÂßãÂú∞ÂùÄ                                                                                     
+  57                                                  unsigned char *pData            Êï∞ÊçÆÊåáÈíàÔºåÊåáÂêëÂÜôÂÖ•Êï∞ÊçÆÁºìÂ≠òÊï∞ÁªÑ
+  58                                                  unsigned char Length            ÂÜôÂÖ•Êï∞ÊçÆÈïøÂ∫¶                                                                                              
+  59          Ëøî    ÂõûÔºöÊó†                                                                                                                                        
+  60          ***********************************************************************************/
+  61          void Data_Area_Mass_Write(unsigned int Address,unsigned char *pData,unsigned int Length)
+  62          {
+  63   1              unsigned int i;
+  64   1              FSCMD   =       0;
+  65   1              LOCK  = CMD_DATA_AREA_UNLOCK;                                           //Êï∞ÊçÆÂå∫Ëß£ÈîÅ
+  66   1              PTSH = (unsigned char)(Address>>8);                                     //Â°´ÂÜôÈ´ò‰ΩçÂú∞ÂùÄ
+  67   1              PTSL = (unsigned char)Address;                                  //Â°´ÂÜô‰Ωé‰ΩçÂú∞ÂùÄ
+  68   1              FSCMD = CMD_DATA_AREA_WIRTE;                                            //ÊâßË°åÂÜôÊìç‰Ωú
+  69   1              for(i = 0; i < Length; i++)
+  70   1              {
+  71   2                      FSDAT = *pData++;                                                               //Ë£ÖËΩΩÊï∞ÊçÆ  
+  72   2              }
+  73   1              FSCMD   =       0;
+  74   1              LOCK  = CMD_FLASH_LOCK;                                                 //ÂØπFLASHÂä†ÈîÅ
+  75   1      } 
+  76          
+  77          /***********************************************************************************
+  78          ÂáΩ Êï∞ ÂêçÔºöData_Area_Read_Byte                                                                                               
+  79          ÂäüËÉΩÊèèËø∞Ôºö‰ªéFLASHÊï∞ÊçÆÂå∫ËØªÂá∫‰∏ÄÂ≠óËäÇÊï∞ÊçÆ                                                                                                                           
+  80          Ëæì    ÂÖ•Ôºöunsigned int Address       Êï∞ÊçÆÂå∫Á©∫Èó¥ËØªÂú∞ÂùÄ                                                                                                                                                                                        
+  81          Ëøî    ÂõûÔºöËØªÂèñÁöÑ‰∏ÄÂ≠óËäÇÊï∞ÊçÆ                                                                                                                                   
+  82          ***********************************************************************************/
+  83          unsigned char Data_Area_Read_Byte(unsigned int Address)
+  84          {       
+  85   1              unsigned char Data_Temp;
+  86   1              FSCMD   =       0;
+  87   1              PTSH = (unsigned char)(Address>>8);                                     //Â°´ÂÜôÈ´ò‰ΩçÂú∞ÂùÄ
+  88   1              PTSL = (unsigned char)Address;                                  //Â°´ÂÜô‰Ωé‰ΩçÂú∞ÂùÄ
+  89   1              FSCMD = CMD_DATA_AREA_READ;                                                     //ÊâßË°åËØªÊìç‰Ωú
+  90   1              Data_Temp = FSDAT;
+  91   1              FSCMD   =       0;
+  92   1              LOCK  = CMD_FLASH_LOCK;                                                 //ÂØπFLASHÂä†ÈîÅ
+  93   1              return Data_Temp;
+  94   1      } 
+  95          
+  96          /***********************************************************************************
+  97          ÂáΩ Êï∞ ÂêçÔºöData_Area_Mass_Read                                                                                       
+  98          ÂäüËÉΩÊèèËø∞Ôºö‰ªéFLASHÊï∞ÊçÆÂå∫ÊâπÈáèËØªÂá∫Êï∞ÊçÆ                                                                                                                                      
+  99          Ëæì    ÂÖ•Ôºöunsigned int Address         Êï∞ÊçÆÂå∫Á©∫Èó¥ËØªËµ∑ÂßãÂú∞ÂùÄ                                                                                        
+ 100                                                  unsigned char *pData            Êï∞ÊçÆÊåáÈíàÔºåÊåáÂêëËØªÂá∫Êï∞ÊçÆÁºìÂ≠òÊï∞ÁªÑ
+ 101                                                  unsigned char Length            ËØªÊï∞ÊçÆÈïøÂ∫¶                                                                                         
+ 102          Ëøî    ÂõûÔºöÊó†                                                                                                                                        
+ 103          ***********************************************************************************/
+ 104          void Data_Area_Mass_Read(unsigned int Address,unsigned char *pData,unsigned int Length)
+ 105          {
+ 106   1              unsigned int i;
+ 107   1              FSCMD   =       0;
+ 108   1              PTSH = (unsigned char)(Address>>8);                                     //Â°´ÂÜôÈ´ò‰ΩçÂú∞ÂùÄ
+ 109   1              PTSL = (unsigned char)Address;                                  //Â°´ÂÜô‰Ωé‰ΩçÂú∞ÂùÄ
+ 110   1              FSCMD = CMD_DATA_AREA_READ;                                                     //ÊâßË°åËØªÊìç‰Ωú
+ 111   1              for(i = 0; i < Length; i++)
+ 112   1              {                                                                                               
+C51 COMPILER V9.60.7.0   FLASH                                                             08/27/2026 18:51:43 PAGE 3   
 
- 113   2              }
- 114   1              FSCMD   =       0;
- 115   1              LOCK  = CMD_FLASH_LOCK;                                                 //∂‘FLASHº”À¯
- 116   1      } 
- 117          #endif 
+ 113   2                      *pData++ = FSDAT;
+ 114   2              }
+ 115   1              FSCMD   =       0;
+ 116   1              LOCK  = CMD_FLASH_LOCK;                                                 //ÂØπFLASHÂä†ÈîÅ
+ 117   1      } 
+ 118          #endif 
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE

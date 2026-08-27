@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UART                                                              08/26/2026 18:53:41 PAGE 1   
+C51 COMPILER V9.60.7.0   UART                                                              08/27/2026 18:51:43 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART
@@ -22,176 +22,147 @@ line level    source
   10          
   11          #include <string.h>
   12          
-  13          
-  14          #if USER_DEBUG_ENABLE
-  15          #include <stdio.h>
-  16          #endif
-  17          
-  18          volatile uart_driver_tx_info_t uart1_drv_tx_info;
+  13          #if USER_DEBUG_ENABLE
+  14          #include <stdio.h>
+  15          #endif
+  16          
+  17          volatile bit uart1_tx_busy_flag; // 发送忙碌标志
+  18          volatile uart1_rx_buffer_t uart1_rx_buffer;
   19          
-  20          volatile bit uart1_tx_busy_flag; // 发送忙碌标志
-  21          volatile uart1_rx_buffer_t uart1_rx_buffer;
-  22          
-  23          #if USER_DEBUG_ENABLE
-  24          // 重写puchar()函数
-  25          char putchar(char c)
-  26          {
-  27   1          uart1_send_byte(c);
-  28   1          return c;
-  29   1      }
-  30          #endif
-  31          
-  32          void uart1_init(void)
-  33          {
-  34   1          unsigned int value_temp;
+  20          #if USER_DEBUG_ENABLE
+  21          // 重写puchar()函数
+  22          char putchar(char c)
+  23          {
+  24   1          uart1_send_byte(c);
+  25   1          return c;
+  26   1      }
+  27          #endif
+  28          
+  29          void uart1_init(void)
+  30          {
+  31   1          unsigned int value_temp;
+  32   1      
+  33   1          uart1_tx_busy_flag = 0;
+  34   1          memset(&uart1_rx_buffer, 0, sizeof(uart1_rx_buffer_t));
   35   1      
-  36   1          uart1_tx_busy_flag = 0;
-  37   1          memset(&uart1_drv_tx_info, 0, sizeof(uart_driver_tx_info_t));
-  38   1          memset(&uart1_rx_buffer, 0, sizeof(uart1_rx_buffer_t));
-  39   1      
-  40   1          GPIO_Init(P11F, P11_UART1_TX_SETTING);
-  41   1          GPIO_Init(P12F, P12_UART1_RX_SETTING);
-  42   1      
-  43   1          // 波特率
-  44   1          value_temp = 0x400 - FOSC / (UART1_BAUTRATE * 32);
-  45   1          S1RELH = (unsigned char)(value_temp >> 8);
-  46   1          S1RELL = (unsigned char)(value_temp);
-  47   1      
-  48   1          // S1CON = 0xD0;
-  49   1          S1CON = ((0x01 << 7) | // 8位异步模式
-  50   1                   (0x01 << 6) | // 使能中断
-  51   1                   (0x01 << 4)); // 串行接收使能
-  52   1          ES1 = 1;               // UART1中断使能
-C51 COMPILER V9.60.7.0   UART                                                              08/26/2026 18:53:41 PAGE 2   
+  36   1          GPIO_Init(P11F, P11_UART1_TX_SETTING);
+  37   1          GPIO_Init(P12F, P12_UART1_RX_SETTING);
+  38   1      
+  39   1          // 波特率
+  40   1          value_temp = 0x400 - FOSC / (UART1_BAUTRATE * 32);
+  41   1          S1RELH = (unsigned char)(value_temp >> 8);
+  42   1          S1RELL = (unsigned char)(value_temp);
+  43   1      
+  44   1          S1CON = ((0x01 << 7) | // 8位异步模式
+  45   1                   (0x01 << 6) | // 使能中断
+  46   1                   (0x01 << 4)); // 串行接收使能
+  47   1          ES1 = 1;               // UART1中断使能
+  48   1      }
+  49          
+  50          /**
+  51           * @brief 发送一个字节数据
+  52           * 
+C51 COMPILER V9.60.7.0   UART                                                              08/27/2026 18:51:43 PAGE 2   
 
-  53   1      }
-  54           
-  55          /**
-  56           * @brief 发送一个字节数据
+  53           * 往发送缓冲区中存放数据，通过串口中断发送
+  54           * 
+  55           * @note 会阻塞主循环，直到发送完成
+  56           *      如果缓冲区有空间，则存放数据。如果缓冲区已满，则等待
   57           * 
-  58           * 往发送缓冲区中存放数据，通过串口中断发送
-  59           * 
-  60           * @note 会阻塞主循环，直到发送完成
-  61           *      如果缓冲区有空间，则存放数据。如果缓冲区已满，则等待
-  62           * 
-  63           */
-  64          void uart1_send_byte(unsigned char byte)
-  65          {
-  66   1          unsigned char free_space;
-  67   1          unsigned char tail_tmp;
-  68   1      
-  69   1          while (1) {
-  70   2              tail_tmp = uart1_drv_tx_info.tail;
-  71   2              if (uart1_drv_tx_info.head < tail_tmp) {
-  72   3                  // 头指针在尾指针前面
-  73   3                  free_space = tail_tmp - uart1_drv_tx_info.head;
-  74   3              } else {
-  75   3                  // 头指针在尾指针后面
-  76   3                  free_space = UART1_TX_BUF_SIZE + tail_tmp - uart1_drv_tx_info.head;
-  77   3              }
-  78   2      
-  79   2              // 如果缓冲区有空间，则存放数据。如果缓冲区已满，则等待
-  80   2              if (free_space > 1) {
-  81   3                  ES1 = 0; // 不使能UART1中断
-  82   3      
-  83   3                  // 先偏移指针，再存放数据
-  84   3                  uart1_drv_tx_info.head++;
-  85   3                  uart1_drv_tx_info.head %= UART1_TX_BUF_SIZE;
-  86   3                  uart1_drv_tx_info.buff[uart1_drv_tx_info.head] = byte;
-  87   3      
-  88   3                  if (!uart1_tx_busy_flag) {
-  89   4                      // 如果上一次发送已经完成，则立即发送
-  90   4                      ES1 = 1;
-  91   4                      uart1_drv_tx_info.tail++;
-  92   4                      uart1_drv_tx_info.tail %= UART1_TX_BUF_SIZE;
-  93   4                      S1BUF = uart1_drv_tx_info.buff[uart1_drv_tx_info.tail];
-  94   4                      uart1_tx_busy_flag = 1;
-  95   4                  } else {
-  96   4                      ES1 = 1;
-  97   4                  }
-  98   3      
-  99   3                  break;
- 100   3              }
- 101   2      
- 102   2              // 在这里加喂狗，会把整个程序卡死
- 103   2              // WDFLG = 0xA5; // 喂狗 
- 104   2          }
- 105   1      }
- 106          
- 107          u8 uart1_rxbuffer_get_count(void)
- 108          {
- 109   1          return uart1_rx_buffer.count;
- 110   1      }
- 111          
- 112          /**
- 113           * @brief 从接收缓冲区中取出一个字节数据
- 114           *     
-C51 COMPILER V9.60.7.0   UART                                                              08/26/2026 18:53:41 PAGE 3   
+  58           */
+  59          void uart1_send_byte(unsigned char byte)
+  60          {
+  61   1          while (1) {
+  62   2      
+  63   2              // 等待上一次发送完成
+  64   2              if (!uart1_tx_busy_flag) {
+  65   3      
+  66   3                  ES1 = 0; // 不使能 UART1 中断
+  67   3                  S1BUF = byte;
+  68   3                  uart1_tx_busy_flag = 1;
+  69   3                  ES1 = 1;
+  70   3                  break;
+  71   3              }
+  72   2      
+  73   2              // 在这里加喂狗，在频繁收发时，会把整个程序卡死
+  74   2              // WDFLG = 0xA5; // 喂狗
+  75   2          }
+  76   1      }
+  77          
+  78          u8 uart1_rxbuffer_get_count(void)
+  79          {
+  80   1          return uart1_rx_buffer.count;
+  81   1      }
+  82          
+  83          /**
+  84           * @brief 从接收缓冲区中取出一个字节数据
+  85           *     
+  86           * @note 使用该函数前，需要先判断接收缓冲区中是否有数据
+  87           * 
+  88           */
+  89          u8 uart1_rxbuffer_get_byte(void)
+  90          {
+  91   1          u8 rxbyte;
+  92   1      
+  93   1          if (0 == uart1_rx_buffer.count) {
+  94   2              // 缓冲区空
+  95   2              return 0;
+  96   2          }
+  97   1      
+  98   1          // 先偏移索引，再取出数据
+  99   1          uart1_rx_buffer.tail++;
+ 100   1          if (uart1_rx_buffer.tail >= UART1_RX_BUF_SIZE) {
+ 101   2              uart1_rx_buffer.tail = 0;
+ 102   2          }
+ 103   1      
+ 104   1          rxbyte = uart1_rx_buffer.buffer[uart1_rx_buffer.tail];
+ 105   1      
+ 106   1          uart1_rx_buffer.count--;
+ 107   1      
+ 108   1          return rxbyte;
+ 109   1      }
+ 110          
+ 111          void uart1_rxbuffer_put(u8 byte)
+ 112          {
+ 113   1          // 目前的逻辑：缓冲区满，覆盖旧的数据
+ 114   1      
+C51 COMPILER V9.60.7.0   UART                                                              08/27/2026 18:51:43 PAGE 3   
 
- 115           * @note 使用该函数前，需要先判断接收缓冲区中是否有数据
- 116           * 
- 117           */
- 118          u8 uart1_rxbuffer_get_byte(void)
- 119          {
- 120   1          u8 rxbyte;
+ 115   1          // 先偏移索引，再存放数据
+ 116   1          uart1_rx_buffer.head++;
+ 117   1          if (uart1_rx_buffer.head >= UART1_RX_BUF_SIZE) {
+ 118   2              uart1_rx_buffer.head = 0;
+ 119   2          }
+ 120   1          uart1_rx_buffer.buffer[uart1_rx_buffer.head] = byte;
  121   1      
- 122   1          if (0 == uart1_rx_buffer.count) {
- 123   2              // 缓冲区空
- 124   2              return 0;
- 125   2          }
- 126   1      
- 127   1          // 先偏移索引，再取出数据
- 128   1          uart1_rx_buffer.tail = (uart1_rx_buffer.tail + 1) % UART1_RX_BUF_SIZE;
- 129   1          rxbyte = uart1_rx_buffer.buffer[uart1_rx_buffer.tail];
- 130   1      
- 131   1          uart1_rx_buffer.count--;
- 132   1      
- 133   1          return rxbyte;
- 134   1      }
- 135          
- 136          void uart1_rxbuffer_put(u8 byte)
- 137          {
- 138   1          // 目前的逻辑：缓冲区满，覆盖旧的数据
- 139   1      
- 140   1          // 先偏移索引，再存放数据
- 141   1          uart1_rx_buffer.head = (uart1_rx_buffer.head + 1) % UART1_RX_BUF_SIZE;
- 142   1          uart1_rx_buffer.buffer[uart1_rx_buffer.head] = byte;
- 143   1      
- 144   1          uart1_rx_buffer.count++;
- 145   1      
- 146   1          if (uart1_rx_buffer.count > UART1_RX_BUF_SIZE) {
- 147   2              uart1_rx_buffer.count = UART1_RX_BUF_SIZE;
- 148   2          }
- 149   1      }
- 150          
- 151          void UART1_ISR(void) interrupt 6
- 152          {
- 153   1          if (S1CON & BIT0) {
- 154   2              // 接收中断
- 155   2              // S1CON = (S1CON & 0xFC) | 0x01; // REVIEW 官方的示例
- 156   2              S1CON |= 0x01; // 写1清空接收中断标志
- 157   2              uart1_rxbuffer_put(S1BUF);
- 158   2          }
- 159   1      
- 160   1          if (S1CON & BIT1) {
- 161   2              S1CON = (S1CON & ~(BIT0 | BIT1)) | BIT1;
- 162   2              if (uart1_drv_tx_info.head != uart1_drv_tx_info.tail) {
- 163   3                  uart1_drv_tx_info.tail++;
- 164   3                  uart1_drv_tx_info.tail %= UART1_TX_BUF_SIZE;
- 165   3                  S1BUF = uart1_drv_tx_info.buff[uart1_drv_tx_info.tail];
- 166   3              } else {
- 167   3                  uart1_tx_busy_flag = 0;
- 168   3              }
- 169   2          }
- 170   1      }
+ 122   1          uart1_rx_buffer.count++;
+ 123   1      
+ 124   1          if (uart1_rx_buffer.count > UART1_RX_BUF_SIZE) {
+ 125   2              uart1_rx_buffer.count = UART1_RX_BUF_SIZE;
+ 126   2          }
+ 127   1      }
+ 128          
+ 129          void UART1_ISR(void) interrupt 6
+ 130          {
+ 131   1          if (S1CON & BIT0) {
+ 132   2              // 接收中断
+ 133   2              // S1CON = (S1CON & 0xFC) | 0x01; // REVIEW 该行是官方demo的示例
+ 134   2              S1CON |= 0x01; // 写1清空接收中断标志
+ 135   2              uart1_rxbuffer_put(S1BUF);
+ 136   2          }
+ 137   1      
+ 138   1          if (S1CON & BIT1) {
+ 139   2              // 串口1 发送完 S1BUF 数据中的停止位后，触发发送中断，进入这里
+ 140   2              S1CON |= (0x01 << 1); // 写1清空发送中断标志
+ 141   2              uart1_tx_busy_flag = 0;
+ 142   2          }
+ 143   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    342    ----
+   CODE SIZE        =    206    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =    205       1
-C51 COMPILER V9.60.7.0   UART                                                              08/26/2026 18:53:41 PAGE 4   
-
+   XDATA SIZE       =    103       1
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

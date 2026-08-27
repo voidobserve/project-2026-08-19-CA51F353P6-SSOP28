@@ -7,7 +7,6 @@ SET CPU_XTAL=0x016E3600
 "C:\Keil_v5\C51\BIN\A51.EXE" @".\hex\STARTUP._ia"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\aip3368.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\aip3368h_display.__i"
-"C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\pin_level_scan.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\uart.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\timer0.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\timer1.__i"
@@ -21,5 +20,7 @@ SET CPU_XTAL=0x016E3600
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\user_debug.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\engine_speed_scan.__i"
 "C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\boot_animation.__i"
+"C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\instrument.__i"
+"C:\Keil_v5\C51\BIN\C51.EXE" @".\hex\pin_level_scan.__i"
 "C:\Keil_v5\C51\BIN\LX51.EXE" @".\hex\project.lnp"
 "C:\Keil_v5\C51\BIN\OHX51.EXE" ".\hex\project" HEX

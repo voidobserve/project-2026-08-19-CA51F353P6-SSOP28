@@ -1,7 +1,6 @@
 ".\hex\STARTUP.obj",
 ".\hex\aip3368.obj",
 ".\hex\aip3368h_display.obj",
-".\hex\pin_level_scan.obj",
 ".\hex\uart.obj",
 ".\hex\timer0.obj",
 ".\hex\timer1.obj",
@@ -14,7 +13,9 @@
 ".\hex\ui.obj",
 ".\hex\user_debug.obj",
 ".\hex\engine_speed_scan.obj",
-".\hex\boot_animation.obj" 
+".\hex\boot_animation.obj",
+".\hex\instrument.obj",
+".\hex\pin_level_scan.obj" 
 TO ".\hex\project" 
 
 PRINT(".\lst\project.map") REMOVEUNUSED 

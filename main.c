@@ -17,10 +17,11 @@
 #include "timer1.h"
 
 // 自定义的功能驱动
+#include "pin_level_scan.h"
 #include "aip3368.h"
 #include "aip3368h_display.h"
 
-//
+#include "instrument.h"
 #include "ui.h"
 #include "boot_animation.h"
 
@@ -52,8 +53,8 @@ void SystemInit(void)
             WDRE(WDRE_reset); //设置看门狗时钟源为XOSCL，模式为复位模式
 #endif
 
-    WDVTHH = 0;  //看门狗复位阈值高八位设置 当前值为5s
-    WDVTHL = 75; //看门狗复位阈值低八位设置
+    WDVTHH = 0;  // 看门狗复位阈值高八位设置 当前值为 5s
+    WDVTHL = 75; // 看门狗复位阈值低八位设置
     WDFLG = 0xA5;
 }
 
@@ -69,17 +70,24 @@ void user_1ms_isr(void)
 
     boot_animation_time_base_add_1ms_isr();
     ui_timer_handle_isr();
+    instrument_info_save_time_add();
 
 #if AIP3368H_DISPLAY_TEST_ENABLE
     // aip3368h_display_engine_speed_lev_test_1ms_isr();
     // aip3368h_display_gear_test_1ms_isr();
     // aip3368h_display_bat_lev_light_test_1ms_isr();
     // aip3368h_display_time_test_1ms_isr();
+    // aip3368h_display_mileage_test_1ms_isr();
+    // aip3368h_display_speed_test_1ms_isr();
+    // aip3368h_display_fuel_lev_test_1ms_isr();
+
+    aip3368h_display_light_blink_test_1ms_isr();
 #endif
 }
 
 void main(void)
 {
+    u8 byte = 0;
 
     SystemInit();
     EA = 1;
@@ -91,17 +99,33 @@ void main(void)
     timer0_init();
     timer1_init();
 
+    pin_level_scan_init();
     aip3368h_module_init();
     // aip3368h_module_display();
 
     ui_manager_init();
 
+    instrument_info_init();
+
+#if USER_DEBUG_ENABLE
     printf("sys init\n");
+#endif
 
     // boot_animation_process();
 
     while (1) {
         WDFLG = 0xA5; // 喂狗
+
+        // if (user_debug_1ms_cnt >= 100) {
+        // user_debug_1ms_cnt = 0;
+        // printf("main\n");
+        // }
+
+        // 串口接收测试
+        // if (uart1_rxbuffer_get_count()) {
+        //     byte = uart1_rxbuffer_get_byte();
+        //     printf("%x ", (u16)byte);
+        // }
 
         if (user_debug_printf_enable) {
             user_debug_printf_enable = 0;
@@ -109,6 +133,8 @@ void main(void)
         }
 
         ui_display_handle();
+        pin_level_handle();
+        instrument_info_save_handle();
     }
 }
 

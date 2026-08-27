@@ -57,12 +57,47 @@ void aip3368h_display_time(u8 hour, u8 minute);
 void aip3368h_display_time_digits_when_setting(u8 is_display, u8 num,
                                                u8 is_setting_min);
 
+void aip3368h_display_high_beam_light(u8 is_display);
+void aip3368h_display_x1000rpm_light(u8 is_display);
+
+void aip3368h_display_trip_light(u8 is_display);
+void aip3368h_display_odo_light(u8 is_display);
+void aip3368h_display_miles_light(u8 is_display);
+void aip3368h_display_km_light(u8 is_display);
+
+void __aip3368h_display_mileage_bit_x__(u8 bit_x, u8 num, u8 is_display);
+void aip3368h_display_mileage_point_light(u8 is_display);
+void aip3368h_display_mileage(u32 mileage,
+                              mileage_display_mode_t mileage_display_mode);
+
+void aip3368h_display_left_turn_light(u8 is_display);
+void aip3368h_display_right_turn_light(u8 is_display);
+void aip3368h_display_mph_light(u8 is_display);
+void aip3368h_display_kmh_light(u8 is_display);
+
+void aip3368h_display_speed_bit(u8 bit_x, u8 num, u8 is_display);
+void aip3368h_display_speed(u16 speed);
+
+void aip3368h_display_engine_err_light(u8 is_display);
+void aip3368h_display_abs_light(u8 is_display);
+void aip3368h_display_engine_oil_light(u8 is_display);
+void aip3368h_display_temp_of_water_err_light(u8 is_display);
+void aip3368h_display_fuel_icon_light(u8 is_display);
+
+void __aip3368h_display_fuel_lev__(u8 idx, u8 is_display);
+void aip3368h_display_fuel_lev(u8 lev);
+
 #if AIP3368H_DISPLAY_TEST_ENABLE
 
 void aip3368h_display_engine_speed_lev_test_1ms_isr(void);
 void aip3368h_display_gear_test_1ms_isr(void);
 void aip3368h_display_bat_lev_light_test_1ms_isr(void);
 void aip3368h_display_time_test_1ms_isr(void);
+void aip3368h_display_mileage_test_1ms_isr(void);
+void aip3368h_display_speed_test_1ms_isr(void);
+void aip3368h_display_fuel_lev_test_1ms_isr(void);
+
+void aip3368h_display_light_blink_test_1ms_isr(void);
 
 void aip3368h_display_test(void);
 #endif

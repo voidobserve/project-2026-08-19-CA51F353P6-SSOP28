@@ -1,3 +1,4 @@
+// encoding - UTF-8
 #ifndef FLASH_H
 #define FLASH_H
 enum
@@ -16,7 +17,7 @@ enum
 	CMD_FLASH_LOCK = 0xAA,
 };
 
- //¼Ä´æÆ÷FSCMDÎ»¶¨Òå
+ //å¯„å­˜å™¨FSCMDä½å®šä¹‰
 #define IFEN		(1<<7)
 
 void Data_Area_Sector_Erase(unsigned char SectorNumber);

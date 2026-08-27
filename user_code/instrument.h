@@ -36,23 +36,31 @@ typedef u8 distance_unit_type_t; // 距离相关的单位类型
 // 定义存储在flash中的数据
 typedef struct
 {
-    // 总里程表（单位：m，使用英制单位时，只需要再发送时进行转换）
-    // （大计里程，范围：0 ~ 999999 KM）
-    u32 total_mileage;
-    // 短距离里程表(单位：m，使用英制单位时，只需要再发送时进行转换)
-    // （小计里程，范围：0 ~ 99999.9 KM）
-    u32 subtotal_mileage;
-
+    u32 write_cnt;               // 写入flash的次数
+    u8 check_sum;                // 校验和
     u8 is_display_total_mileage; // 0：显示总里程，1：显示短距离里程
     // 要显示的 单位类型，km/h 或 mph。在时速和里程中用到
     distance_unit_type_t distance_unit_type;
-
-    u8 is_save_data_valid;
 } save_info_t;
 
 typedef struct
 {
-    save_info_t save_info;
+    // ==============================================================
+    // ==============================================================
+    // 需要掉电保存的数据：
+    u8 is_display_total_mileage; // 0：显示总里程，1：显示短距离里程
+    // 要显示的 单位类型，km/h 或 mph。在时速和里程中用到
+    distance_unit_type_t distance_unit_type;
+
+    // ==============================================================
+    // ==============================================================
+
+    // 总里程表（单位：m，使用英制单位时，只需要再发送时进行转换）
+    // （大计里程，范围：0 ~ 999 99 KM）
+    u32 total_mileage;
+    // 短距离里程表(单位：m，使用英制单位时，只需要再发送时进行转换)
+    // （小计里程，范围：0 ~ 999 9.9 KM）
+    u32 subtotal_mileage;
 
     u32 engine_speed; // 发动机的转速（单位：rpm）
 
@@ -67,12 +75,10 @@ typedef struct
     u8 flag_is_in_warning_of_low_battery;
 
     gear_t gear; // 档位
-
 } instrument_t;
 extern volatile instrument_t instrument;
 
-void instrument_info_init(void);
-// void instrument_info_save(void);
+void instrument_info_init(void); 
 
 void instrument_info_save_time_add(void);
 void instrument_info_save_enable(void);

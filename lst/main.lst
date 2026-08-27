@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              08/26/2026 18:53:41 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              08/27/2026 18:51:43 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -28,112 +28,138 @@ line level    source
   17          #include "timer1.h"
   18          
   19          // 自定义的功能驱动
-  20          #include "aip3368.h"
-  21          #include "aip3368h_display.h"
-  22          
-  23          //
-  24          #include "ui.h"
-  25          #include "boot_animation.h"
-  26          
-  27          //***************************************************************
-  28          void SystemInit(void)
-  29          {
-  30   1      #ifdef LVD_RST_ENABLE
-  31   1          LVDCON = 0xE1; //设置LVD复位电压为2V
-  32   1      #endif
-  33   1      
-  34   1      #if (SYSCLK_SRC == PLL)
-  35   1          Sys_Clk_Set_PLL(PLL_Multiple);
-  36   1      #endif
-  37   1      
-  38   1      /***************************看门狗阈值设置计算公式如下****************************
-  39   1      看门狗触发时间 = (WDVTH * 800H+7FFH) * clock cycle
-  40   1      当看门狗时钟为3.6864M时,时间覆盖范围为0.56ms--36s
-  41   1      *********************************************************************************/
-  42   1      //备注：需默认开启看门狗功能，并将其设置为复位模式
-  43   1      #if (RTC_CLK_SELECT == IRCL)
-  44   1          CKCON |= ILCKE; //使能IRCL
-  45   1          WDCON = WDTS(WDTS_IRCL) |
-  46   1                  WDRE(WDRE_reset); //设置看门狗时钟源为IRCL，模式为复位模式
-  47   1      #elif (RTC_CLK_SELECT == XOSCL)
+  20          #include "pin_level_scan.h"
+  21          #include "aip3368.h"
+  22          #include "aip3368h_display.h"
+  23          
+  24          #include "instrument.h"
+  25          #include "ui.h"
+  26          #include "boot_animation.h"
+  27          
+  28          //***************************************************************
+  29          void SystemInit(void)
+  30          {
+  31   1      #ifdef LVD_RST_ENABLE
+  32   1          LVDCON = 0xE1; //设置LVD复位电压为2V
+  33   1      #endif
+  34   1      
+  35   1      #if (SYSCLK_SRC == PLL)
+  36   1          Sys_Clk_Set_PLL(PLL_Multiple);
+  37   1      #endif
+  38   1      
+  39   1      /***************************看门狗阈值设置计算公式如下****************************
+  40   1      看门狗触发时间 = (WDVTH * 800H+7FFH) * clock cycle
+  41   1      当看门狗时钟为3.6864M时,时间覆盖范围为0.56ms--36s
+  42   1      *********************************************************************************/
+  43   1      //备注：需默认开启看门狗功能，并将其设置为复位模式
+  44   1      #if (RTC_CLK_SELECT == IRCL)
+  45   1          CKCON |= ILCKE; //使能IRCL
+  46   1          WDCON = WDTS(WDTS_IRCL) |
+  47   1                  WDRE(WDRE_reset); //设置看门狗时钟源为IRCL，模式为复位模式
+  48   1      #elif (RTC_CLK_SELECT == XOSCL)
                   CKCON |= XLCKE;
                   while (!(CKCON & XLSTA))
                       ;
                   WDCON = WDTS(WDTS_XOSCL) |
                           WDRE(WDRE_reset); //设置看门狗时钟源为XOSCL，模式为复位模式
+C51 COMPILER V9.60.7.0   MAIN                                                              08/27/2026 18:51:43 PAGE 2   
+
               #endif
-C51 COMPILER V9.60.7.0   MAIN                                                              08/26/2026 18:53:41 PAGE 2   
-
-  54   1      
-  55   1          WDVTHH = 0;  //看门狗复位阈值高八位设置 当前值为5s
-  56   1          WDVTHL = 75; //看门狗复位阈值低八位设置
-  57   1          WDFLG = 0xA5;
-  58   1      }
-  59          
-  60          // TEST ONLY
-  61          volatile uint8_t user_debug_1ms_cnt = 0;
-  62          
-  63          void user_1ms_isr(void)
-  64          {
-  65   1      
-  66   1          if (user_debug_1ms_cnt < ((u8)-1)) {
-  67   2              user_debug_1ms_cnt++;
-  68   2          }
-  69   1      
-  70   1          boot_animation_time_base_add_1ms_isr();
-  71   1          ui_timer_handle_isr();
-  72   1      
-  73   1      #if AIP3368H_DISPLAY_TEST_ENABLE
-  74   1          // aip3368h_display_engine_speed_lev_test_1ms_isr();
-  75   1          // aip3368h_display_gear_test_1ms_isr();
-  76   1          // aip3368h_display_bat_lev_light_test_1ms_isr();
-  77   1          aip3368h_display_time_test_1ms_isr();
-  78   1      #endif
-  79   1      }
-  80          
-  81          void main(void)
-  82          {
+  55   1      
+  56   1          WDVTHH = 0;  // 看门狗复位阈值高八位设置 当前值为 5s
+  57   1          WDVTHL = 75; // 看门狗复位阈值低八位设置
+  58   1          WDFLG = 0xA5;
+  59   1      }
+  60          
+  61          // TEST ONLY
+  62          volatile uint8_t user_debug_1ms_cnt = 0;
+  63          
+  64          void user_1ms_isr(void)
+  65          {
+  66   1      
+  67   1          if (user_debug_1ms_cnt < ((u8)-1)) {
+  68   2              user_debug_1ms_cnt++;
+  69   2          }
+  70   1      
+  71   1          boot_animation_time_base_add_1ms_isr();
+  72   1          ui_timer_handle_isr();
+  73   1          instrument_info_save_time_add();
+  74   1      
+  75   1      #if AIP3368H_DISPLAY_TEST_ENABLE
+  76   1          // aip3368h_display_engine_speed_lev_test_1ms_isr();
+  77   1          // aip3368h_display_gear_test_1ms_isr();
+  78   1          // aip3368h_display_bat_lev_light_test_1ms_isr();
+  79   1          // aip3368h_display_time_test_1ms_isr();
+  80   1          // aip3368h_display_mileage_test_1ms_isr();
+  81   1          // aip3368h_display_speed_test_1ms_isr();
+  82   1          // aip3368h_display_fuel_lev_test_1ms_isr();
   83   1      
-  84   1          SystemInit();
-  85   1          EA = 1;
-  86   1      
-  87   1      #if USER_DEBUG_ENABLE
-  88   1          user_debug_io_init();
-  89   1      #endif
-  90   1          uart1_init();
-  91   1          timer0_init();
-  92   1          timer1_init();
-  93   1      
-  94   1          aip3368h_module_init();
-  95   1          // aip3368h_module_display();
-  96   1      
-  97   1          ui_manager_init();
-  98   1      
-  99   1          printf("sys init\n");
- 100   1      
- 101   1          // boot_animation_process();
- 102   1      
- 103   1          while (1) {
- 104   2              WDFLG = 0xA5; // 喂狗
- 105   2      
- 106   2              if (user_debug_printf_enable) {
- 107   3                  user_debug_printf_enable = 0;
- 108   3                  printf("test\n");
- 109   3              }
- 110   2      
- 111   2              ui_display_handle();
- 112   2          }
- 113   1      }
- 114          
- 115          // #endif
-C51 COMPILER V9.60.7.0   MAIN                                                              08/26/2026 18:53:41 PAGE 3   
+  84   1          aip3368h_display_light_blink_test_1ms_isr();
+  85   1      #endif
+  86   1      }
+  87          
+  88          void main(void)
+  89          {
+  90   1          u8 byte = 0;
+  91   1      
+  92   1          SystemInit();
+  93   1          EA = 1;
+  94   1      
+  95   1      #if USER_DEBUG_ENABLE
+  96   1          user_debug_io_init();
+  97   1      #endif
+  98   1          uart1_init();
+  99   1          timer0_init();
+ 100   1          timer1_init();
+ 101   1      
+ 102   1          pin_level_scan_init();
+ 103   1          aip3368h_module_init();
+ 104   1          // aip3368h_module_display();
+ 105   1      
+ 106   1          ui_manager_init();
+ 107   1      
+ 108   1          instrument_info_init();
+ 109   1      
+ 110   1      #if USER_DEBUG_ENABLE
+ 111   1          printf("sys init\n");
+ 112   1      #endif
+ 113   1      
+ 114   1          // boot_animation_process();
+ 115   1      
+C51 COMPILER V9.60.7.0   MAIN                                                              08/27/2026 18:51:43 PAGE 3   
 
+ 116   1          while (1) {
+ 117   2              WDFLG = 0xA5; // 喂狗
+ 118   2      
+ 119   2              // if (user_debug_1ms_cnt >= 100) {
+ 120   2              // user_debug_1ms_cnt = 0;
+ 121   2              // printf("main\n");
+ 122   2              // }
+ 123   2      
+ 124   2              // 串口接收测试
+ 125   2              // if (uart1_rxbuffer_get_count()) {
+ 126   2              //     byte = uart1_rxbuffer_get_byte();
+ 127   2              //     printf("%x ", (u16)byte);
+ 128   2              // }
+ 129   2      
+ 130   2              if (user_debug_printf_enable) {
+ 131   3                  user_debug_printf_enable = 0;
+ 132   3                  printf("test\n");
+ 133   3              }
+ 134   2      
+ 135   2              ui_display_handle();
+ 136   2              pin_level_handle();
+ 137   2              instrument_info_save_handle();
+ 138   2          }
+ 139   1      }
+ 140          
+ 141          // #endif
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    102    ----
+   CODE SIZE        =    122    ----
    CONSTANT SIZE    =     16    ----
-   XDATA SIZE       =      1    ----
+   XDATA SIZE       =      1       1
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

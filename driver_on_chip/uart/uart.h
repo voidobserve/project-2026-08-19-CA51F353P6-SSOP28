@@ -3,29 +3,11 @@
 
 #include "user_typedef.h"
 
-#define UART1_TX_BUF_SIZE 100
+#define UART1_ENABLE 1
+
 #define UART1_RX_BUF_SIZE 100
 
 #define UART1_BAUTRATE 115200
-
-#define UART1_ENABLE 1
-
-// ===========================================================================
-// 驱动层定义
-// ===========================================================================
-
-typedef struct
-{
-    unsigned char head;
-    unsigned char tail;
-    unsigned char buff[UART1_TX_BUF_SIZE];
-} uart_driver_tx_info_t;
-
-// ===========================================================================
-//
-// ===========================================================================
-
-extern volatile uart_driver_tx_info_t uart1_drv_tx_info;
 
 // 环形缓冲区结构体定义
 typedef struct
