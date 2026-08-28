@@ -32,7 +32,7 @@ static volatile u16 aip3368h_display_engine_speed_refresh_time_cnt = 0;
 // 发动机转速的相关配置
 void engine_speed_scan_config(void)
 {
-    GPIO_Init(P02F, OUTPUT);
+    // GPIO_Init(P02F, OUTPUT);
 }
 
 void update_engine_speed_scan_data(void) // 更新检测发动机转速的数据

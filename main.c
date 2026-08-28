@@ -24,6 +24,9 @@
 #include "instrument.h"
 #include "ui.h"
 #include "boot_animation.h"
+#include "uart_receiver.h"
+#include "key_event_process.h"
+#include "ui_speed_process.h"
 
 //***************************************************************
 void SystemInit(void)
@@ -71,6 +74,8 @@ void user_1ms_isr(void)
     boot_animation_time_base_add_1ms_isr();
     ui_timer_handle_isr();
     instrument_info_save_time_add();
+    uart_receiver_process_timeout_add();
+    aip3368h_display_speed_refresh_time_add();
 
 #if AIP3368H_DISPLAY_TEST_ENABLE
     // aip3368h_display_engine_speed_lev_test_1ms_isr();
@@ -81,7 +86,7 @@ void user_1ms_isr(void)
     // aip3368h_display_speed_test_1ms_isr();
     // aip3368h_display_fuel_lev_test_1ms_isr();
 
-    aip3368h_display_light_blink_test_1ms_isr();
+    // aip3368h_display_light_blink_test_1ms_isr();
 #endif
 }
 
@@ -101,7 +106,6 @@ void main(void)
 
     pin_level_scan_init();
     aip3368h_module_init();
-    // aip3368h_module_display();
 
     ui_manager_init();
 
@@ -116,24 +120,19 @@ void main(void)
     while (1) {
         WDFLG = 0xA5; // Î¹¹·
 
-        // if (user_debug_1ms_cnt >= 100) {
-        // user_debug_1ms_cnt = 0;
-        // printf("main\n");
-        // }
-
         // ´®¿Ú½ÓÊÕ²âÊÔ
         // if (uart1_rxbuffer_get_count()) {
         //     byte = uart1_rxbuffer_get_byte();
         //     printf("%x ", (u16)byte);
         // }
 
-        if (user_debug_printf_enable) {
-            user_debug_printf_enable = 0;
-            printf("test\n");
-        }
-
+        key_event_process();
         ui_display_handle();
+        ui_speed_process();
         pin_level_handle();
+        uart1_txbuffer_handle();
+        uart_receiver_process();
+
         instrument_info_save_handle();
     }
 }

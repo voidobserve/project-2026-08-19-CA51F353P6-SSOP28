@@ -249,7 +249,7 @@ void aip3368h_display_n_light(u8 is_display)
  * @brief 显示挡位
  *
  * @param gear 挡位 0 ~ 6、GEAR_UNKNOWN
- *          0：空挡，
+ *          0：空挡、N挡
  *          1：1挡，显示1
  *          GEAR_UNKNOWN ： 表示什么挡位都没有
  */
@@ -910,7 +910,7 @@ void aip3368h_display_speed_bit(u8 bit_x, u8 num, u8 is_display)
 /**
  * @brief 时速数码管显示时速
  *
- * @param speed 0 ~ 199，如果超过了 199，会显示 1XX，例如 246 会显示成 146  
+ * @param speed 0 ~ 199，如果超过了 199，会显示 199
  *      数码管从右往左排序
  *      参数小于 10 ，只有第 0 位数码管在显示
  *      参数小于 100 ，只有第 0、1 位数码管在显示
@@ -927,7 +927,12 @@ void aip3368h_display_speed(u16 speed)
     u16 tmp = 0; // 计算有效数据位使用的临时变量
     u8 i;
 
+    if (speed > 199) {
+        // 在这里限制要显示的时速不能超过 199
+        speed = 199;
+    }
     tmp = speed;
+
     while (1) {
         valid_bits++; // 刚进入，默认至少有1位有效数据
         tmp /= 10;
@@ -1069,6 +1074,50 @@ void aip3368h_display_fuel_lev(u8 lev)
             // 如果当前传参的值，比当前遍历的值还要大（至少要大于等于1），显示对应的指示灯
             __aip3368h_display_fuel_lev__(i, 1);
         }
+    }
+}
+
+/**
+ * @brief 根据当前在显示的ODO里程或TRIP里程，显示里程的ODO或TRIP字样对应的指示灯
+ * 
+ * @param is_display_total_mileage 是否在显示ODO里程
+ * @return void 
+ */
+void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage)
+{
+    aip3368h_display_trip_light(is_display_total_mileage ? 0 : 1);
+    aip3368h_display_odo_light(is_display_total_mileage ? 1 : 0);
+}
+
+/**
+ * @brief 刷新显示的里程（TOTAL 或 TRIP），TRIP和ODO对应的指示灯
+ *
+ */
+void aip3368h_display_mileage_refresh(void)
+{
+    u8 is_display_total_mileage = instrument.is_display_total_mileage;
+    u32 mileage_value = is_display_total_mileage ? instrument.total_mileage
+                                                 : instrument.subtotal_mileage;
+    u8 display_mode = is_display_total_mileage ? MILEAGE_DISPLAY_MODE_ODO
+                                               : MILEAGE_DISPLAY_MODE_TRIP;
+
+    aip3368h_display_mileage(mileage_value, display_mode);
+    aip3368h_display_mileage_mode_lights(is_display_total_mileage);
+}
+
+/**
+ * @brief 显示里程的单位对应的指示灯（公里或英里）
+ * 
+ * @param distance_unit_type 里程的单位类型(公里或英里)
+ */
+void aip3368h_display_mileage_unit_lights(u8 distance_unit_type)
+{
+    if (DISTANCE_UNIT_TYPE_METRIC == distance_unit_type) {
+        aip3368h_display_miles_light(0);
+        aip3368h_display_km_light(1);
+    } else if (DISTANCE_UNIT_TYPE_IMPERIAL == distance_unit_type) {
+        aip3368h_display_km_light(0);
+        aip3368h_display_miles_light(1);
     }
 }
 

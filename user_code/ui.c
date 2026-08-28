@@ -3,6 +3,8 @@
 #include "user_config.h"
 #include "aip3368.h"
 #include "aip3368h_display.h"
+#include "instrument.h"
+#include "ui_speed_process.h"
 
 // #include "speed_scan.h"
 // #include "engine_speed_scan.h"
@@ -22,18 +24,7 @@ void ui_manager_init(void)
  *
  */
 void ui_timer_handle_isr(void)
-{
-#if 0 // 
-
-    if (aip1302_update_time_interval < ((u16)-1) &&
-        ui_manager.state == UI_STATE_NORMAL) {
-        aip1302_update_time_interval++;
-    } else {
-        aip1302_update_time_interval = 0;
-    }
-
-#endif
-
+{ 
     aip3368h_refresh_time_add(); // 控制将显存数据刷新到屏幕驱动ic的周期
 
 #if 0
@@ -278,19 +269,16 @@ void ui_display_refresh(void)
     switch (ui_manager.state) {
     case UI_STATE_NORMAL:
         // 正常显示
-
-#if SPEED_SCAN_ENABLE
+ 
         // 显示时速
-        aip3368h_display_speed_by_unit_type(instrument.speed_of_lag);
-#endif
+        aip3368h_display_speed_by_unit_type(instrument.speed_to_display); 
 
         break;
     case UI_STATE_SETTING_DISTANCE_UNIT_TYPE:
         // 设置 要显示的单位类型 km/h 或 mph
 
         break;
-    case UI_STATE_SETTING_TIME_MINUTE:
-        // 设置 车轮的周长
+    case UI_STATE_SETTING_TIME_MINUTE: 
 
         break;
     }

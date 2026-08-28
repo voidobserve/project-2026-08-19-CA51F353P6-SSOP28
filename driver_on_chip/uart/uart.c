@@ -17,6 +17,8 @@
 volatile bit uart1_tx_busy_flag; // 发送忙碌标志
 volatile uart1_rx_buffer_t uart1_rx_buffer;
 
+volatile uart1_tx_buffer_t uart1_tx_buffer;
+
 #if USER_DEBUG_ENABLE
 // 重写puchar()函数
 char putchar(char c)
@@ -31,6 +33,7 @@ void uart1_init(void)
     unsigned int value_temp;
 
     uart1_tx_busy_flag = 0;
+    memset(&uart1_tx_buffer, 0, sizeof(uart1_tx_buffer_t));
     memset(&uart1_rx_buffer, 0, sizeof(uart1_rx_buffer_t));
 
     GPIO_Init(P11F, P11_UART1_TX_SETTING);
@@ -124,6 +127,79 @@ void uart1_rxbuffer_put(u8 byte)
     if (uart1_rx_buffer.count > UART1_RX_BUF_SIZE) {
         uart1_rx_buffer.count = UART1_RX_BUF_SIZE;
     }
+}
+
+void uart1_txbuffer_put_byte(u8 byte)
+{
+    // 目前的逻辑：缓冲区满，覆盖旧的数据
+
+    // 先偏移索引，再存放数据
+    uart1_tx_buffer.head++;
+    if (uart1_tx_buffer.head >= UART1_TX_BUF_SIZE) {
+        uart1_tx_buffer.head = 0;
+    }
+    uart1_tx_buffer.buffer[uart1_tx_buffer.head] = byte;
+
+    uart1_tx_buffer.count++;
+
+    if (uart1_tx_buffer.count > UART1_TX_BUF_SIZE) {
+        uart1_tx_buffer.count = UART1_TX_BUF_SIZE;
+    }
+}
+
+u8 uart1_txbuffer_get_byte(void)
+{
+    u8 tx_byte;
+
+    if (0 == uart1_tx_buffer.count) {
+        // 缓冲区空
+        return 0;
+    }
+
+    // 先偏移索引，再取出数据
+    uart1_tx_buffer.tail++;
+    if (uart1_tx_buffer.tail >= UART1_TX_BUF_SIZE) {
+        uart1_tx_buffer.tail = 0;
+    }
+
+    tx_byte = uart1_tx_buffer.buffer[uart1_tx_buffer.tail];
+
+    uart1_tx_buffer.count--;
+
+    return tx_byte;
+}
+
+/**
+ * @brief 往串口发送缓冲区放入一串数据
+ * 
+ * @note 受制于芯片性能，不能频繁调用该函数，也不能一次发送过多数据
+ * 
+ * @param buff 
+ * @param len 
+ */
+void uart1_txbuffer_put_buff(u8 *buff, u8 len)
+{
+    u8 i;
+    for (i = 0; i < len; i++) {
+        uart1_txbuffer_put_byte(buff[i]);
+    }
+}
+
+/**
+ * @brief 处理串口发送缓冲区的数据，尽量以非阻塞的形式
+ * 
+ */
+void uart1_txbuffer_handle(void)
+{
+    u8 tx_byte;
+    if (uart1_tx_buffer.count == 0 || uart1_tx_busy_flag) {
+        // 发送缓冲区中没有数据，直接返回
+        // 发送缓冲区有数据，但发送忙碌，直接返回
+        return;
+    }
+
+    tx_byte = uart1_txbuffer_get_byte();
+    uart1_send_byte(tx_byte);
 }
 
 void UART1_ISR(void) interrupt 6

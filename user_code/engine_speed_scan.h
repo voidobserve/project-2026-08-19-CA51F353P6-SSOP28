@@ -8,7 +8,8 @@
 
 // ======================================================
 // 检测发动机转速所需的配置（检测霍尔元器件传过来的信号）：
-#define ENGINE_SPEED_SCAN_PIN P02 // 检测发动机转速的引脚
+// TODO
+#define ENGINE_SPEED_SCAN_PIN 0 // 检测发动机转速的引脚
 
 // 检测发动机转速的另一个引脚（检测16PIN中传过来的信号）：
 #define ENGINE_SPEED_SCAN_PIN_EXPEND P26

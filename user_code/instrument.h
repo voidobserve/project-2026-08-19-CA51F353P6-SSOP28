@@ -55,30 +55,42 @@ typedef struct
     // ==============================================================
     // ==============================================================
 
-    // 总里程表（单位：m，使用英制单位时，只需要再发送时进行转换）
+    // 总里程表（单位：km，使用英制单位时，需要进行转换）
     // （大计里程，范围：0 ~ 999 99 KM）
     u32 total_mileage;
-    // 短距离里程表(单位：m，使用英制单位时，只需要再发送时进行转换)
+    // 短距离里程表(单位：x100 m，使用英制单位时，需要进行转换)
     // （小计里程，范围：0 ~ 999 9.9 KM）
     u32 subtotal_mileage;
 
     u32 engine_speed; // 发动机的转速（单位：rpm）
 
-    u8 speed;        // 时速(单位：km/h，使用英制单位时，需要进行转换)
-    u8 speed_of_lag; // 最终要显示的时速
+    u16 speed; // 时速(单位：km/h，使用英制单位时，需要进行转换)
+    // 最终要显示的时速
+    u16 speed_to_display;
 
-    u8 fuel; // 油量(单位：百分比)
+    u8 fuel_percent;            // 油量(单位：百分比)
+    gear_t gear;                // 档位
+    u16 bat_voltage;            // 电池电压（单位：mV）
+    u8 time_hour;               // 小时
+    u8 time_minute;             // 分钟
+    u8 left_turn_valid;         // 左转灯是否有效
+    u8 right_turn_valid;        // 右转灯是否有效
+    u8 engine_err_valid;        // 发动机故障是否有效
+    u8 abs_valid;               // ABS是否有效
+    u8 engine_oil_valid;        // 机油压力提示是否有效
+    u8 temp_of_water_err_valid; // 水温异常提示是否有效
+    u8 high_beam_valid;         // 远光灯是否有效
+
+    u8 key_event; // 按键事件
 
     // 标志位，是否处于低油量提示
     u8 flag_is_in_warning_of_low_fuel;
     // 标志位，是否处于低电量提示
     u8 flag_is_in_warning_of_low_battery;
-
-    gear_t gear; // 档位
 } instrument_t;
 extern volatile instrument_t instrument;
 
-void instrument_info_init(void); 
+void instrument_info_init(void);
 
 void instrument_info_save_time_add(void);
 void instrument_info_save_enable(void);

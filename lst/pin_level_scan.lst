@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   PIN_LEVEL_SCAN                                                    08/27/2026 18:51:44 PAGE 1   
+C51 COMPILER V9.60.7.0   PIN_LEVEL_SCAN                                                    08/28/2026 18:50:05 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE PIN_LEVEL_SCAN
@@ -21,36 +21,49 @@ line level    source
    9          
   10          void pin_level_scan_init(void)
   11          {
-  12   1          GPIO_Init(P14F, INPUT); // 引脚有外部上拉，不用再配置上拉
-  13   1      
-  14   1          GPIO_Init(P15F, INPUT); // 引脚有外部上拉，不用再配置上拉
-  15   1      }
-  16          
-  17          // 引脚电平扫描
-  18          void pin_level_handle(void)
-  19          {
-  20   1          if (SIGNAL_VALID_LEV_OF_ABS == PIN_DETECT_ABS) {
-  21   2              aip3368h_display_abs_light(1);
-  22   2          } else {
-  23   2              aip3368h_display_abs_light(0);
-  24   2          }
-  25   1      
-  26   1          if (SIGNAL_VALID_LEV_OF_ENGINE_ERR == PIN_DETECT_ENGINE_ERR) {
-  27   2              aip3368h_display_engine_err_light(1);
-  28   2          } else {
-  29   2              aip3368h_display_engine_err_light(0);
-  30   2          }
-  31   1      }
+  12   1          // ABS 检测脚
+  13   1          GPIO_Init(P14F, INPUT); // 引脚有外部上拉，不用再配置上拉
+  14   1      
+  15   1          // 发动机故障检测脚
+  16   1          GPIO_Init(P15F, INPUT); // 引脚有外部上拉，不用再配置上拉
+  17   1      
+  18   1          // 机油压力提示 检测脚
+  19   1          GPIO_Init(P02F, INPUT); // 引脚有外部上拉，不用再配置上拉
+  20   1      }
+  21          
+  22          // 引脚电平扫描
+  23          void pin_level_handle(void)
+  24          {
+  25   1          if (SIGNAL_VALID_LEV_OF_ABS == PIN_DETECT_ABS) {
+  26   2              aip3368h_display_abs_light(1);
+  27   2          } else {
+  28   2              aip3368h_display_abs_light(0);
+  29   2          }
+  30   1      
+  31   1          if (SIGNAL_VALID_LEV_OF_ENGINE_ERR == PIN_DETECT_ENGINE_ERR) {
+  32   2              aip3368h_display_engine_err_light(1);
+  33   2          } else {
+  34   2              aip3368h_display_engine_err_light(0);
+  35   2          }
+  36   1      
+  37   1          if (SIGNAL_VALID_LEV_OF_ENGINE_OIL == PIN_DETECT_ENGINE_OIL) {
+  38   2              aip3368h_display_engine_oil_light(1);
+  39   2          } else {
+  40   2              aip3368h_display_engine_oil_light(0);
+  41   2          }
+  42   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =     36    ----
+   CODE SIZE        =     52    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.7.0   PIN_LEVEL_SCAN                                                    08/28/2026 18:50:05 PAGE 2   
+
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----
    XDATA CONST SIZE =   ----    ----

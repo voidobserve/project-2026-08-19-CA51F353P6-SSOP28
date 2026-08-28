@@ -129,6 +129,12 @@ void instrument_info_init(void)
         // 初始化完成后，将数据写回flash
         instrument_info_save_enable();
     }
+
+    // 每次上电，初始化非掉电保存的数据
+    instrument.gear = GEAR_UNKNOWN;
+    
+    // TEST ONLY 
+    // instrument.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL; 
 }
 
 void instrument_info_save(void)

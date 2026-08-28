@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/27/2026 18:51:43 PAGE 1   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/28/2026 09:14:50 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART_PROCESS_DATA_PACKETS
@@ -62,7 +62,7 @@ line level    source
                   } else if (CUR_RECV_CMD_STATUS_LENGTH == cur_recv_cmd_status) {
                       buff[cur_recv_cmd_index++] = recv_data;
               
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/27/2026 18:51:43 PAGE 2   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/28/2026 09:14:50 PAGE 2   
 
                       if (cur_recv_cmd_index >= dest_recv_cmd_len) {
                           // 如果接收到的数据包已经接收完毕
@@ -126,7 +126,7 @@ line level    source
               
                       case SEND_LEFT_TURN: {
                           instrument_info.left_turn_status = buff[3];
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/27/2026 18:51:43 PAGE 3   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/28/2026 09:14:50 PAGE 3   
 
               
                           // printf("left turn status: %bu\n", instrument_info.left_turn_status);
@@ -190,7 +190,7 @@ line level    source
                           //     instrument_info.hour = buff[7];
                           //     instrument_info.minute = buff[8];
                           //     instrument_info.second = buff[9];
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/27/2026 18:51:43 PAGE 4   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/28/2026 09:14:50 PAGE 4   
 
                           //     hour_var = instrument_info.hour;
                           //     min_var = instrument_info.minute;
@@ -254,7 +254,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    BIT SIZE         =   ----    ----
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----
-C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/27/2026 18:51:43 PAGE 5   
+C51 COMPILER V9.60.7.0   UART_PROCESS_DATA_PACKETS                                         08/28/2026 09:14:50 PAGE 5   
 
    XDATA CONST SIZE =   ----    ----
    FAR CONST SIZE   =   ----    ----

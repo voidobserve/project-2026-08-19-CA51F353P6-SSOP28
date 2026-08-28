@@ -9,9 +9,14 @@
 
 void pin_level_scan_init(void)
 {
+    // ABS 检测脚
     GPIO_Init(P14F, INPUT); // 引脚有外部上拉，不用再配置上拉
 
+    // 发动机故障检测脚
     GPIO_Init(P15F, INPUT); // 引脚有外部上拉，不用再配置上拉
+
+    // 机油压力提示 检测脚
+    GPIO_Init(P02F, INPUT); // 引脚有外部上拉，不用再配置上拉
 }
 
 // 引脚电平扫描
@@ -27,5 +32,11 @@ void pin_level_handle(void)
         aip3368h_display_engine_err_light(1);
     } else {
         aip3368h_display_engine_err_light(0);
+    }
+
+    if (SIGNAL_VALID_LEV_OF_ENGINE_OIL == PIN_DETECT_ENGINE_OIL) {
+        aip3368h_display_engine_oil_light(1);
+    } else {
+        aip3368h_display_engine_oil_light(0);
     }
 }

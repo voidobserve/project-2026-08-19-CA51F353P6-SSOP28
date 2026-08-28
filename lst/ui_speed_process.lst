@@ -1,0 +1,272 @@
+C51 COMPILER V9.60.7.0   UI_SPEED_PROCESS                                                  08/28/2026 18:50:06 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI_SPEED_PROCESS
+OBJECT MODULE PLACED IN .\hex\ui_speed_process.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\ui_speed_process.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.
+                    -\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\inclu
+                    -des;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\ui_speed_process.lst) OB
+                    -JECT(.\hex\ui_speed_process.obj)
+
+line level    source
+
+   1          #include "ui_speed_process.h"
+   2          #include "user_typedef.h"
+   3          #include "aip3368h_display.h"
+   4          #include "ui.h"
+   5          #include "instrument.h"
+   6          
+   7          #include "user_config.h"
+   8          
+   9          // 计数器，计数满一段时间后，更新显示
+  10          static volatile u8 aip3368h_display_speed_refresh_time_cnt = 0;
+  11          
+  12          // 滑动平均滤波的各项定义：
+  13          #define SPEED_FILTER_ARRAY_SIZE (40)
+  14          static volatile u16 speed_filter_array[SPEED_FILTER_ARRAY_SIZE] = {0};
+  15          static volatile u8 speed_filter_index = 0;
+  16          
+  17          void speed_filter_init(u16 speed)
+  18          {
+  19   1          u8 i;
+  20   1          for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++) {
+  21   2              speed_filter_array[i] = speed;
+  22   2          }
+  23   1      
+  24   1          speed_filter_index = 0;
+  25   1      }
+  26          
+  27          void speed_filter_add(u16 speed)
+  28          {
+  29   1          speed_filter_array[speed_filter_index] = speed;
+  30   1          speed_filter_index++;
+  31   1          if (speed_filter_index >= SPEED_FILTER_ARRAY_SIZE) {
+  32   2              speed_filter_index = 0;
+  33   2          }
+  34   1      }
+  35          
+  36          u16 speed_filter_get_speed(void)
+  37          {
+  38   1          u8 i;
+  39   1          u32 sum = 0;
+  40   1          u16 max_speed = 0;
+  41   1          u16 min_speed = (u8)-1;
+  42   1      
+  43   1          // for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++)
+  44   1          // {
+  45   1          //     printf("speed[%u] == %u\n", (u16)i, (u16)speed_filter_array[i]);
+  46   1          // }
+  47   1          // printf("\n===================\n");
+  48   1      
+  49   1          for (i = 0; i < SPEED_FILTER_ARRAY_SIZE; i++) {
+  50   2              sum += speed_filter_array[i];
+  51   2      
+  52   2              if (max_speed < speed_filter_array[i]) {
+C51 COMPILER V9.60.7.0   UI_SPEED_PROCESS                                                  08/28/2026 18:50:06 PAGE 2   
+
+  53   3                  max_speed = speed_filter_array[i];
+  54   3              }
+  55   2      
+  56   2              if (min_speed > speed_filter_array[i]) {
+  57   3                  min_speed = speed_filter_array[i];
+  58   3              }
+  59   2          }
+  60   1      
+  61   1          sum -= (max_speed + min_speed);
+  62   1      
+  63   1          return sum / (SPEED_FILTER_ARRAY_SIZE - 2);
+  64   1      }
+  65          
+  66          /**
+  67           * @brief 递增AIP3368H显示速度刷新时间计数
+  68           *      
+  69           * @note  在1ms定时器中断内调用
+  70           *
+  71           */
+  72          void aip3368h_display_speed_refresh_time_add(void)
+  73          {
+  74   1          if (!(UI_STATE_NORMAL == ui_manager.state ||
+  75   1                UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state)) {
+  76   2              // 不在 正常界面 ，或者不在 设置 要显示的单位类型界面，直接返回
+  77   2              aip3368h_display_speed_refresh_time_cnt = 0;
+  78   2              return;
+  79   2          }
+  80   1      
+  81   1          // 防止计数溢出
+  82   1          if (aip3368h_display_speed_refresh_time_cnt < ((u8)-1)) {
+  83   2              aip3368h_display_speed_refresh_time_cnt++;
+  84   2          }
+  85   1      }
+  86          
+  87          /**
+  88           * @brief 根据单位类型（公制 或 英制）来显示时速
+  89           *
+  90           * @param speed 公制单位下的速度值
+  91           */
+  92          void aip3368h_display_speed_by_unit_type(u16 speed)
+  93          {
+  94   1          if (DISTANCE_UNIT_TYPE_METRIC == instrument.distance_unit_type) {
+  95   2              // 显示时速
+  96   2              aip3368h_display_speed(speed);
+  97   2          } else if (DISTANCE_UNIT_TYPE_IMPERIAL == instrument.distance_unit_type) {
+  98   2              // 1km/h == 0.621427mile/h
+  99   2              // 显示时速
+ 100   2              aip3368h_display_speed((u32)speed * 621 / 1000);
+ 101   2          }
+ 102   1      }
+ 103          
+ 104          /**
+ 105           * @brief 根据当前时速值，来更新显示时速
+ 106           * 
+ 107           * @note 在主循环调用
+ 108           * 
+ 109           * @return * void 
+ 110           */
+ 111          void ui_speed_process(void)
+ 112          {
+ 113   1          static volatile u8 is_initialized = 0; // 是否初始化
+ 114   1          volatile u16 cur_speed;                //
+C51 COMPILER V9.60.7.0   UI_SPEED_PROCESS                                                  08/28/2026 18:50:06 PAGE 3   
+
+ 115   1      
+ 116   1          /*
+ 117   1              一阶低通滤波器配置，滤波系数 α ，范围：0 ~ 10，推荐值 1 ~ 3
+ 118   1              α越小越平滑但响应慢,α越大响应快但平滑差
+ 119   1          */
+ 120   1      #define ALPHA 7 // 滤波系数 α
+ 121   1          static volatile u16 filtered_speed;
+ 122   1          u8 base_step;       // 显示时速期间，每次调节显示的步长
+ 123   1          u16 speed_abs_diff; // 存放当前显示的时速和当前时速的差值
+ 124   1      
+ 125   1          if (!(UI_STATE_NORMAL == ui_manager.state ||
+ 126   1                UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state)) {
+ 127   2              // 不在 正常界面 ，或者不在 设置 要显示的单位类型界面，直接返回
+ 128   2              is_initialized = 0; //
+ 129   2              return;
+ 130   2          }
+ 131   1      
+ 132   1          if (0 == is_initialized) {
+ 133   2              is_initialized = 1;
+ 134   2      
+ 135   2              instrument.speed_to_display =
+ 136   2                  instrument.speed; // 初始化，直接获取当前最新的速度值
+ 137   2              filtered_speed = instrument.speed;
+ 138   2              aip3368h_display_speed_by_unit_type(instrument.speed_to_display);
+ 139   2              speed_filter_init(instrument.speed);
+ 140   2      
+ 141   2              if (instrument.distance_unit_type == DISTANCE_UNIT_TYPE_METRIC) {
+ 142   3                  // 公制单位： km/h
+ 143   3                  aip3368h_display_mph_light(0);
+ 144   3                  aip3368h_display_kmh_light(1);
+ 145   3              } else {
+ 146   3                  // 英制单位： mile/h
+ 147   3                  aip3368h_display_kmh_light(0);
+ 148   3                  aip3368h_display_mph_light(1);
+ 149   3              }
+ 150   2          }
+ 151   1      
+ 152   1          if (aip3368h_display_speed_refresh_time_cnt >= UI_SPEED_REFRESH_PERIOD) {
+ 153   2              aip3368h_display_speed_refresh_time_cnt = 0;
+ 154   2      
+ 155   2              // 如果当前显示的速度值和计算出来的速度值相差太大，需要进行快速逼�
+             -�：
+ 156   2              if (instrument.speed_to_display > instrument.speed) {
+ 157   3                  speed_abs_diff = instrument.speed_to_display - instrument.speed;
+ 158   3                  if (speed_abs_diff >= 10) {
+ 159   4                      // 根据速度插值，调节步长
+ 160   4                      if (speed_abs_diff >= 50) {
+ 161   5                          base_step = 20;
+ 162   5                      } else if (speed_abs_diff >= 20) {
+ 163   5                          base_step = 10;
+ 164   5                      } else {
+ 165   5                          base_step = 5;
+ 166   5                      }
+ 167   4      
+ 168   4                      instrument.speed_to_display -= base_step;
+ 169   4      #if USER_DEBUG_ENABLE
+ 170   4                      // printf("instrument.speed_to_display == %u\n", (u16)instrument.speed_to_display);
+ 171   4      #endif
+ 172   4      
+ 173   4                      speed_filter_init(instrument.speed);
+ 174   4                      filtered_speed = instrument.speed;
+ 175   4                      aip3368h_display_speed_by_unit_type(
+C51 COMPILER V9.60.7.0   UI_SPEED_PROCESS                                                  08/28/2026 18:50:06 PAGE 4   
+
+ 176   4                          instrument.speed_to_display);
+ 177   4                      return;
+ 178   4                  }
+ 179   3              } else if (instrument.speed_to_display < instrument.speed) {
+ 180   3                  speed_abs_diff = instrument.speed - instrument.speed_to_display;
+ 181   3                  if (speed_abs_diff >= 10) {
+ 182   4                      // 根据速度插值，调节步长
+ 183   4                      if (speed_abs_diff >= 50) {
+ 184   5                          base_step = 20;
+ 185   5                      } else if (speed_abs_diff >= 20) {
+ 186   5                          base_step = 10;
+ 187   5                      } else {
+ 188   5                          base_step = 5;
+ 189   5                      }
+ 190   4      
+ 191   4                      instrument.speed_to_display += base_step;
+ 192   4      #if USER_DEBUG_ENABLE
+ 193   4                      // printf("instrument.speed_to_display == %u\n", (u16)instrument.speed_to_display);
+ 194   4      #endif
+ 195   4      
+ 196   4                      speed_filter_init(instrument.speed);
+ 197   4                      filtered_speed = instrument.speed;
+ 198   4      
+ 199   4                      aip3368h_display_speed_by_unit_type(
+ 200   4                          instrument.speed_to_display);
+ 201   4                      return;
+ 202   4                  }
+ 203   3              }
+ 204   2      
+ 205   2              speed_filter_add(instrument.speed);
+ 206   2              cur_speed = speed_filter_get_speed();
+ 207   2              /*
+ 208   2                  如果当前速度值和过滤后的速度值都是10以下，需要注意
+ 209   2                  不能再经过低通滤波器，会导致最后计算出的时速变为0
+ 210   2              */
+ 211   2              if (cur_speed < 10) {
+ 212   3                  filtered_speed = cur_speed;
+ 213   3              } else {
+ 214   3                  // 套用一阶低通滤波器计算公式：
+ 215   3                  filtered_speed =
+ 216   3                      ((u32)ALPHA * cur_speed + (10 - ALPHA) * (u32)filtered_speed) /
+ 217   3                      10;
+ 218   3              }
+ 219   2      
+ 220   2              cur_speed = filtered_speed;
+ 221   2      
+ 222   2              if (instrument.speed_to_display > cur_speed) {
+ 223   3                  instrument.speed_to_display--;
+ 224   3              } else if (instrument.speed_to_display < cur_speed) {
+ 225   3                  instrument.speed_to_display++;
+ 226   3              }
+ 227   2      
+ 228   2      #if USER_DEBUG_ENABLE
+ 229   2              // printf("speed_to_display == %u\n", (u16)speed_to_display);
+ 230   2      #endif
+ 231   2              aip3368h_display_speed_by_unit_type(instrument.speed_to_display);
+ 232   2          }
+ 233   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    861    ----
+C51 COMPILER V9.60.7.0   UI_SPEED_PROCESS                                                  08/28/2026 18:50:06 PAGE 5   
+
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     85      16
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

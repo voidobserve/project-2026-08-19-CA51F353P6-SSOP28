@@ -452,11 +452,6 @@
           <GroupName>user_code</GroupName>
           <Files>
             <File>
-              <FileName>uart_process_data_packets.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\user_code\uart_process_data_packets.c</FilePath>
-            </File>
-            <File>
               <FileName>ui.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\user_code\ui.c</FilePath>
@@ -485,6 +480,26 @@
               <FileName>pin_level_scan.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\user_code\pin_level_scan.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_receiver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\uart_receiver.c</FilePath>
+            </File>
+            <File>
+              <FileName>key_event_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\key_event_process.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_transmitter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\uart_transmitter.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_speed_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\ui_speed_process.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -87,6 +87,10 @@ void aip3368h_display_fuel_icon_light(u8 is_display);
 void __aip3368h_display_fuel_lev__(u8 idx, u8 is_display);
 void aip3368h_display_fuel_lev(u8 lev);
 
+void aip3368h_display_mileage_mode_lights(u8 is_display_total_mileage);
+void aip3368h_display_mileage_refresh(void);
+void aip3368h_display_mileage_unit_lights(u8 distance_unit_type);
+
 #if AIP3368H_DISPLAY_TEST_ENABLE
 
 void aip3368h_display_engine_speed_lev_test_1ms_isr(void);
