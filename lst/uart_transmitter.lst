@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UART_TRANSMITTER                                                  08/28/2026 18:50:05 PAGE 1   
+C51 COMPILER V9.60.7.0   UART_TRANSMITTER                                                  08/29/2026 16:30:41 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART_TRANSMITTER
@@ -21,38 +21,40 @@ line level    source
    9          
   10          void uart_transmitter_send_instruct(uart_instruct_t uart_instruct)
   11          {
-  12   1          u8 check_sum = 0; // 存放校验和
-  13   1      
-  14   1          uart_transmitter_buffer[0] = UART_INSTRUCT_HEAD;
-  15   1      
-  16   1          switch (uart_instruct) {
-  17   2          case UART_INSTRUCT_TIME:
-  18   2              uart_transmitter_buffer[1] = 0x06;               // 帧长度
-  19   2              uart_transmitter_buffer[2] = UART_INSTRUCT_TIME; // 指令
-  20   2              uart_transmitter_buffer[3] = instrument.time_hour;
-  21   2              uart_transmitter_buffer[4] = instrument.time_minute;
-  22   2      
-  23   2              check_sum = uart_transmitter_buffer[0] + uart_transmitter_buffer[1] +
-  24   2                          uart_transmitter_buffer[2] + uart_transmitter_buffer[3] +
-  25   2                          uart_transmitter_buffer[4];
-  26   2              uart_transmitter_buffer[5] = check_sum;
-  27   2              break;
-  28   2      
-  29   2          default:
-  30   2              return;
-  31   2              break;
-  32   2          }
-  33   1      
-  34   1          uart1_txbuffer_put_buff(uart_transmitter_buffer,
-  35   1                                  ARRAY_SIZE(uart_transmitter_buffer));
-  36   1      }
-  37           
+  12   1          u8 i = 0;
+  13   1          u8 check_sum = 0; // 存放校验和
+  14   1      
+  15   1          uart_transmitter_buffer[0] = UART_INSTRUCT_HEAD;
+  16   1      
+  17   1          switch (uart_instruct) {
+  18   2          case UART_INSTRUCT_TIME:
+  19   2              uart_transmitter_buffer[1] = 0x06;               // 帧长度
+  20   2              uart_transmitter_buffer[2] = UART_INSTRUCT_TIME; // 指令
+  21   2              uart_transmitter_buffer[3] = instrument.time_hour;
+  22   2              uart_transmitter_buffer[4] = instrument.time_minute;
+  23   2      
+  24   2              check_sum = uart_transmitter_buffer[0] + uart_transmitter_buffer[1] +
+  25   2                          uart_transmitter_buffer[2] + uart_transmitter_buffer[3] +
+  26   2                          uart_transmitter_buffer[4];
+  27   2              uart_transmitter_buffer[5] = check_sum;
+  28   2              break;
+  29   2      
+  30   2          default:
+  31   2              return;
+  32   2              break;
+  33   2          }
+  34   1      
+  35   1          for (i = 0; i < 3; i++) {
+  36   2              uart1_txbuffer_put_buff(uart_transmitter_buffer,
+  37   2                                      ARRAY_SIZE(uart_transmitter_buffer));
+  38   2          }
+  39   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =     76    ----
+   CODE SIZE        =     98    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =     10    ----
+   XDATA SIZE       =     10       1
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
@@ -60,10 +62,10 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----
    XDATA CONST SIZE =   ----    ----
+C51 COMPILER V9.60.7.0   UART_TRANSMITTER                                                  08/29/2026 16:30:41 PAGE 2   
+
    FAR CONST SIZE   =   ----    ----
 END OF MODULE INFORMATION.
-
-C51 COMPILER V9.60.7.0   UART_TRANSMITTER                                                  08/28/2026 18:50:05 PAGE 2   
 
 
 C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

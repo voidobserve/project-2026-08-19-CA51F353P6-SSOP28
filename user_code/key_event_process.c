@@ -6,9 +6,7 @@
 #include "uart_transmitter.h"
 
 void key_event_process(void)
-{
-    u8 i;
-
+{ 
     if (instrument.key_event == KEY_EVENT_NONE) {
         return;
     }
@@ -62,17 +60,12 @@ void key_event_process(void)
         } else if (UI_STATE_SETTING_DISTANCE_UNIT_TYPE == ui_manager.state) {
             ui_set_state(UI_STATE_SETTING_TIME_MINUTE);
         } else if (UI_STATE_SETTING_TIME_MINUTE == ui_manager.state) {
-            for (i = 0; i < 3; i++) {
-                // 重复发送三次设置时间的指令
+                // 重复发送设置时间的指令
                 uart_transmitter_send_instruct(UART_INSTRUCT_TIME);
-            }
-
             ui_set_state(UI_STATE_SETTING_TIME_HOUR);
-        } else if (UI_STATE_SETTING_TIME_HOUR == ui_manager.state) {
-            for (i = 0; i < 3; i++) {
-                // 重复发送三次设置时间的指令
-                uart_transmitter_send_instruct(UART_INSTRUCT_TIME);
-            }
+        } else if (UI_STATE_SETTING_TIME_HOUR == ui_manager.state) { 
+               // 重复发送设置时间的指令
+                uart_transmitter_send_instruct(UART_INSTRUCT_TIME); 
             ui_set_state(UI_STATE_NORMAL);
         }
 

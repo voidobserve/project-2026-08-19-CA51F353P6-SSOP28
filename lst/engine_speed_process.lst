@@ -1,0 +1,266 @@
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/29/2026 16:30:42 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ENGINE_SPEED_PROCESS
+OBJECT MODULE PLACED IN .\hex\engine_speed_process.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\engine_speed_process.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCD
+                    -IR(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\i
+                    -ncludes;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\engine_speed_process
+                    -.lst) OBJECT(.\hex\engine_speed_process.obj)
+
+line level    source
+
+   1          #include "engine_speed_process.h"
+   2          
+   3          #include "instrument.h"
+   4          #include "aip3368h_display.h"
+   5          
+   6          #include "gpiodef_f3.h" // GPIO_Init()
+   7          #include "ca51f3xsfr.h"
+   8          #include "ca51f3sfr.h"
+   9          
+  10          #include "user_config.h"
+  11          #if USER_DEBUG_ENABLE
+  12          #include <stdio.h>
+  13          #endif
+  14          
+  15          // 由采集端通过串口发送过来的发动机转速
+  16          volatile u32 rpm_from_collector;
+  17          
+  18          volatile u32 engine_speed_scan_cnt; // 检测到的脉冲个数，在定时器中断累加
+  19          volatile u16 engine_speed_scan_ms;  // 在定时器中断累加
+  20          
+  21          static volatile u32 cur_engine_speed_scan_cnt;
+  22          static volatile u32 cur_engine_speed_scan_ms;
+  23          
+  24          volatile u8 flag_is_engine_speed_scan_over_time; // 标志位，检测是否超时
+  25          
+  26          // 计数器，计数满一段时间后，更新显示
+  27          static volatile u16 aip3368h_display_engine_speed_refresh_time_cnt = 0;
+  28          
+  29          // 发动机转速的相关配置
+  30          void engine_speed_scan_config(void)
+  31          {
+  32   1          GPIO_Init(P16F, INPUT);
+  33   1      }
+  34          
+  35          void update_engine_speed_scan_data(void) // 更新检测发动机转速的数据
+  36          {
+  37   1          cur_engine_speed_scan_cnt += engine_speed_scan_cnt;
+  38   1          engine_speed_scan_cnt = 0;
+  39   1          cur_engine_speed_scan_ms += engine_speed_scan_ms;
+  40   1          engine_speed_scan_ms = 0;
+  41   1      }
+  42          
+  43          void engine_speed_scan_timer_50us_isr(void)
+  44          {
+  45   1          // 记录上一次检测到的引脚电平（发送机转速检测脚）
+  46   1          static volatile bit last_engine_speed_scan_level = 0;
+  47   1          // 记录发动机转速扫描的时间
+  48   1          static u8 cnt = 0;
+  49   1      
+  50   1          cnt++;
+  51   1          if (cnt >= 20) // 每1ms进入一次
+  52   1          {
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/29/2026 16:30:42 PAGE 2   
+
+  53   2              cnt = 0;
+  54   2              engine_speed_scan_ms++;
+  55   2      
+  56   2              if (engine_speed_scan_ms >= ENGINE_SPEED_SCAN_OVER_TIME &&
+  57   2                  flag_is_engine_speed_scan_over_time == 0) {
+  58   3                  engine_speed_scan_ms = 0;
+  59   3                  // 说明超时，脉冲计数一直没有加一
+  60   3                  flag_is_engine_speed_scan_over_time = 1;
+  61   3              }
+  62   2          }
+  63   1      
+  64   1          if (ENGINE_SPEED_SCAN_PIN) // 检测发动机转速的引脚
+  65   1          {
+  66   2              if (0 == last_engine_speed_scan_level) {
+  67   3                  // 如果之前检测到低电平，现在检测到高电平，说明有上升沿，对脉冲�
+             -��数加一
+  68   3                  engine_speed_scan_cnt++;
+  69   3                  update_engine_speed_scan_data();
+  70   3              }
+  71   2      
+  72   2              last_engine_speed_scan_level = 1;
+  73   2          } else {
+  74   2              // 如果现在检测到低电平
+  75   2              last_engine_speed_scan_level = 0;
+  76   2          }
+  77   1      }
+  78          
+  79          // 发动机转速扫描
+  80          void engine_speed_scan(void)
+  81          {
+  82   1      #define CONVER_ONE_MINUTE_TO_MS (60000UL) // 将1min转换成以ms为单位的数据
+  83   1          volatile u8 is_local_rpm_update = 0;
+  84   1          // 转速值是否有效，如果无效，不给 instrument.engine_speed 赋值
+  85   1          volatile u8 is_rpm_valid = 0;
+  86   1          // 初始化为 0，防止后续比较时使用未初始化的值
+  87   1          static volatile u32 rpm = 0;
+  88   1          volatile u32 final_rpm = 0;
+  89   1      
+  90   1          if (cur_engine_speed_scan_ms >= ENGINE_SPEED_SCAN_UPDATE_TIME ||
+  91   1              flag_is_engine_speed_scan_over_time) {
+  92   2      #if USER_DEBUG_ENABLE
+  93   2      // printf("cur_engine_speed_scan_ms:%lu\n", cur_engine_speed_scan_ms);
+  94   2      #endif
+  95   2              if (flag_is_engine_speed_scan_over_time) {
+  96   3                  flag_is_engine_speed_scan_over_time = 0;
+  97   3                  rpm = 0;
+  98   3              } else {
+  99   3                  /*
+ 100   3                      扫描时间内转过的圈数 == 一个脉冲对应转过的圈数 * 扫描时间内采�
+             -�到的脉冲个数
+ 101   3                      1min转过的圈数 == 扫描时间内转过的圈数 / 扫描时间 * 1min
+ 102   3                  */
+ 103   3                  rpm = (u32)cur_engine_speed_scan_cnt *
+ 104   3                        ENGINE_SPEED_SCAN_A_PULSE_PER_TURNS *
+ 105   3                        (CONVER_ONE_MINUTE_TO_MS / ENGINE_SPEED_SCAN_COMPONSATION) /
+ 106   3                        cur_engine_speed_scan_ms;
+ 107   3              }
+ 108   2      #if USER_DEBUG_ENABLE
+ 109   2              // 打印检测到的脉冲个数
+ 110   2              // printf("cur engine speed pulse cnt:%lu\n", cur_engine_speed_scan_cnt);
+ 111   2      #endif
+ 112   2      
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/29/2026 16:30:42 PAGE 3   
+
+ 113   2              cur_engine_speed_scan_cnt = 0;
+ 114   2              cur_engine_speed_scan_ms = 0;
+ 115   2      
+ 116   2              // 限制得到的发动机转速
+ 117   2              if (rpm >= 65535) {
+ 118   3                  rpm = 65535;
+ 119   3              }
+ 120   2      
+ 121   2              is_local_rpm_update = 1;
+ 122   2      
+ 123   2      #if USER_DEBUG_ENABLE
+ 124   2              // printf("cur rpm %lu\n", rpm);
+ 125   2      #endif
+ 126   2          }
+ 127   1      
+ 128   1          // 本地的转速有更新，则赋值。后续比较如果发现采集端的转速更大，则用采
+             -集端的转速
+ 129   1          if (is_local_rpm_update) {
+ 130   2              is_local_rpm_update = 0;
+ 131   2              final_rpm = rpm;
+ 132   2              is_rpm_valid = 1;
+ 133   2          }
+ 134   1      
+ 135   1          if (rpm_from_collector > final_rpm) {
+ 136   2              final_rpm = rpm_from_collector;
+ 137   2              is_rpm_valid = 1;
+ 138   2          }
+ 139   1      
+ 140   1          if (is_rpm_valid) {
+ 141   2              is_rpm_valid = 0;
+ 142   2      
+ 143   2      #if USER_DEBUG_ENABLE
+ 144   2              // printf("final_rpm == %lu\n", final_rpm);
+ 145   2      #endif
+ 146   2              instrument.engine_speed = final_rpm;
+ 147   2          }
+ 148   1      }
+ 149          
+ 150          /**
+ 151           * @brief 累加发动机转速的显示刷新时间
+ 152           * 
+ 153           */
+ 154          void aip3368h_display_engine_speed_refresh_time_add(void)
+ 155          {
+ 156   1          if (aip3368h_display_engine_speed_refresh_time_cnt < ((u16)-1)) {
+ 157   2              aip3368h_display_engine_speed_refresh_time_cnt++;
+ 158   2          }
+ 159   1      }
+ 160          
+ 161          // 将采集到的发动机转速转换为仪表对应的转速滑动条挡位
+ 162          u8 engine_speed_get_level(void)
+ 163          {
+ 164   1          u8 level = instrument.engine_speed / 500; // 仪表上的一格对应 500 rpm
+ 165   1      
+ 166   1          // 为了节省空间，这里可以删掉，对应的显示函数可以处理溢出的情况
+ 167   1          // if (level > 13 * 2) {
+ 168   1          //     level = 13 * 2;
+ 169   1          // }
+ 170   1      
+ 171   1          return level;
+ 172   1      }
+ 173          
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/29/2026 16:30:42 PAGE 4   
+
+ 174          void aip3368h_display_engine_speed_handle(void)
+ 175          {
+ 176   1          // 延迟显示的发动机转速
+ 177   1          static u8 engine_speed_level_of_lag = 0;
+ 178   1          static u8 is_initialized = 0;
+ 179   1          u8 cur_engine_speed_level = 0;
+ 180   1          u8 level_diff;              // 显示的和实际计算得到的挡位插值
+ 181   1          u16 refresh_time_threshold; // 刷新间隔阈值
+ 182   1      
+ 183   1          if (is_initialized == 0) {
+ 184   2              is_initialized = 1;
+ 185   2              engine_speed_level_of_lag = engine_speed_get_level();
+ 186   2              // aip3368h_display_x1000rpm_light(1);
+ 187   2          }
+ 188   1      
+ 189   1          // 如果当前发动机转速与显示的发动机转速很接近，延长刷新时间（样机大约
+             -是2s）
+ 190   1          cur_engine_speed_level = engine_speed_get_level();
+ 191   1          if (cur_engine_speed_level == 0) {
+ 192   2              // 转速为0时，快速更新
+ 193   2              refresh_time_threshold = AIP3368H_DISPLAY_ENGINE_SPEED_REFRESH_TIME;
+ 194   2          } else {
+ 195   2              level_diff = (cur_engine_speed_level > engine_speed_level_of_lag)
+ 196   2                               ? (cur_engine_speed_level - engine_speed_level_of_lag)
+ 197   2                               : (engine_speed_level_of_lag - cur_engine_speed_level);
+ 198   2      
+ 199   2              refresh_time_threshold =
+ 200   2                  (level_diff <= 1) ? (AIP3368H_DISPLAY_ENGINE_SPEED_REFRESH_TIME * 2)
+ 201   2                                    : AIP3368H_DISPLAY_ENGINE_SPEED_REFRESH_TIME;
+ 202   2          }
+ 203   1      
+ 204   1          if (aip3368h_display_engine_speed_refresh_time_cnt >=
+ 205   1              refresh_time_threshold) {
+ 206   2              aip3368h_display_engine_speed_refresh_time_cnt = 0;
+ 207   2              if (engine_speed_level_of_lag < cur_engine_speed_level) {
+ 208   3                  engine_speed_level_of_lag++;
+ 209   3              } else if (engine_speed_level_of_lag > cur_engine_speed_level) {
+ 210   3                  if (engine_speed_level_of_lag > 0) {
+ 211   4                      engine_speed_level_of_lag--;
+ 212   4                  }
+ 213   3              }
+ 214   2      
+ 215   2      
+ 216   2              aip3368h_display_engine_speed_lev(engine_speed_level_of_lag);
+ 217   2      
+ 218   2              // if (engine_speed_level_of_lag > 0) {
+ 219   2              //     aip3368h_display_engine_speed_lev(engine_speed_level_of_lag);
+ 220   2              // } else {
+ 221   2              //     aip3368h_display_engine_speed_lev(0);
+ 222   2              // }
+ 223   2          }
+ 224   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    582    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     28       9
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/29/2026 16:30:42 PAGE 5   
+
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -214,6 +214,10 @@ void aip3368h_display_engine_speed_lev(u8 lev)
     // 清空原来的显示
     u8 i;
 
+    if (lev >= ARRAY_SIZE(engine_speed_gear_map)) {
+        lev = ARRAY_SIZE(engine_speed_gear_map) - 1;
+    }
+
     for (i = 0; i < ARRAY_SIZE(engine_speed_gear_map); i++) {
         if (lev < i) {
             // 如果传参的挡位，比当前遍历的挡位还要小，清空对应的显示
@@ -1100,6 +1104,21 @@ void aip3368h_display_mileage_refresh(void)
                                                  : instrument.subtotal_mileage;
     u8 display_mode = is_display_total_mileage ? MILEAGE_DISPLAY_MODE_ODO
                                                : MILEAGE_DISPLAY_MODE_TRIP;
+
+    if (DISTANCE_UNIT_TYPE_IMPERIAL == instrument.distance_unit_type) {
+        // 使用 英制 单位
+        // 1 km == 0.6213712 mile
+        mileage_value = display_mode ? (mileage_value * 621 / 1000)    // ODO
+                                     : (mileage_value * 6213 / 10000); // TRIP
+    }
+
+    /*
+        限制显示的值，如果大计里程大于 99999，则显示 99999，
+        小计里程大于 9999.9，则显示 9999.9
+    */ 
+    if (mileage_value > 99999) {
+        mileage_value = 99999;
+    }
 
     aip3368h_display_mileage(mileage_value, display_mode);
     aip3368h_display_mileage_mode_lights(is_display_total_mileage);

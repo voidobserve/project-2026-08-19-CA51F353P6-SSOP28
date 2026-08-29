@@ -9,16 +9,19 @@
 ".\hex\system_clock.obj",
 ".\hex\flash.obj",
 ".\hex\ca51f3xsfr.obj",
-".\hex\ui.obj",
 ".\hex\user_debug.obj",
-".\hex\engine_speed_scan.obj",
 ".\hex\boot_animation.obj",
 ".\hex\instrument.obj",
 ".\hex\pin_level_scan.obj",
 ".\hex\uart_receiver.obj",
 ".\hex\key_event_process.obj",
 ".\hex\uart_transmitter.obj",
-".\hex\ui_speed_process.obj" 
+".\hex\engine_speed_process.obj",
+".\hex\ui.obj",
+".\hex\ui_instruct_light.obj",
+".\hex\ui_speed_process.obj",
+".\hex\ui_fuel_process.obj",
+".\hex\ui_bat_process.obj" 
 TO ".\hex\project" 
 
 PRINT(".\lst\project.map") REMOVEUNUSED 

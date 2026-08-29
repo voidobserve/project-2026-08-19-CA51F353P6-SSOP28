@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/28/2026 18:50:05 PAGE 1   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE INSTRUMENT
@@ -14,207 +14,213 @@ line level    source
    2          
    3          #include "user_config.h"
    4          #include "instrument.h"
-   5          #include "ca51f_config.h" // 包含芯片flash大小的定义
-   6          #include "flash.h"        // 芯片官方提供的flash接口
-   7          #include "ca51f3xsfr.h"   // PADRD 寄存器定义
-   8          
-   9          #if USER_DEBUG_ENABLE
-  10          #include <stdio.h>
-  11          #endif
-  12          
-  13          #define FLASH_SECTOR_0_ADDR (0)
-  14          #define FLASH_SECTOR_1_ADDR (128)
+   5          
+   6          #include "ca51f_config.h" // 包含芯片flash大小的定义
+   7          #include "flash.h"        // 芯片官方提供的flash接口
+   8          #include "ca51f3xsfr.h"   // PADRD 寄存器定义
+   9          
+  10          #include "key_event_process.h"
+  11          
+  12          #if USER_DEBUG_ENABLE
+  13          #include <stdio.h>
+  14          #endif
   15          
-  16          volatile instrument_t instrument = {0};
-  17          static volatile u8 is_intrument_save_enable = 0; // 是否允许保存数据到 flash
-  18          // 延时写入flash的时间计数
-  19          static volatile u16 instrument_info_save_time_cnt = 0;
-  20          
-  21          // 使用两个区域保存数据，避免flash读取和写入丢失的情况
-  22          volatile save_info_t save_info_area_1 = {0};
-  23          volatile save_info_t save_info_area_2 = {0};
-  24          
-  25          void instrument_info_init(void)
-  26          {
-  27   1          u8 check_sum_1 = 0; // 存放第一个区域数据的校验和
-  28   1          u8 check_sum_2 = 0; // 存放第二个区域数据的校验和
-  29   1          /*
-  30   1              存放写入flash的次数，用于验证出错时，
-  31   1              找到校验和通过的、写入次数较大的区域来进行初始化
-  32   1          */
-  33   1          u32 write_cnt = 0;
-  34   1          /*
-  35   1              两个区域的数据不一致，又或者是校验和没有通过，但是至少写入了一次�
+  16          #define FLASH_SECTOR_0_ADDR (0)
+  17          #define FLASH_SECTOR_1_ADDR (128)
+  18          
+  19          volatile instrument_t instrument = {0};
+  20          static volatile u8 is_intrument_save_enable = 0; // 是否允许保存数据到 flash
+  21          // 延时写入flash的时间计数
+  22          static volatile u16 instrument_info_save_time_cnt = 0;
+  23          
+  24          // 使用两个区域保存数据，避免flash读取和写入丢失的情况
+  25          volatile save_info_t save_info_area_1 = {0};
+  26          volatile save_info_t save_info_area_2 = {0};
+  27          
+  28          void instrument_info_init(void)
+  29          {
+  30   1          u8 check_sum_1 = 0; // 存放第一个区域数据的校验和
+  31   1          u8 check_sum_2 = 0; // 存放第二个区域数据的校验和
+  32   1          /*
+  33   1              存放写入flash的次数，用于验证出错时，
+  34   1              找到校验和通过的、写入次数较大的区域来进行初始化
+  35   1          */
+  36   1          u32 write_cnt = 0;
+  37   1          /*
+  38   1              两个区域的数据不一致，又或者是校验和没有通过，但是至少写入了一次�
              -�
-  36   1              用该变量判断是用哪个区域的数据来进行初始化
-  37   1              0：无效，都不使用
-  38   1              1：使用第一个区域的数据
-  39   1              2：使用第二个区域的数据
-  40   1          */
-  41   1          u8 use_data_area_index_to_init = 0;
-  42   1      
-  43   1          // 划分FLASH最后256字节为数据空间
-  44   1          // 当前芯片一个扇区为128字节
-  45   1          PADRD = CHIP_FLASH_SIZE * 4 - 1;
-  46   1      
-  47   1          // 从flash中读出数据
-  48   1          Data_Area_Mass_Read(FLASH_SECTOR_0_ADDR, (u8 *)&save_info_area_1,
-  49   1                              sizeof(save_info_t));
-  50   1          Data_Area_Mass_Read(FLASH_SECTOR_1_ADDR, (u8 *)&save_info_area_2,
-  51   1                              sizeof(save_info_t));
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/28/2026 18:50:05 PAGE 2   
+  39   1              用该变量判断是用哪个区域的数据来进行初始化
+  40   1              0：无效，都不使用
+  41   1              1：使用第一个区域的数据
+  42   1              2：使用第二个区域的数据
+  43   1          */
+  44   1          u8 use_data_area_index_to_init = 0;
+  45   1      
+  46   1          // 划分FLASH最后256字节为数据空间
+  47   1          // 当前芯片一个扇区为128字节
+  48   1          PADRD = CHIP_FLASH_SIZE * 4 - 1;
+  49   1      
+  50   1          // 从flash中读出数据
+  51   1          Data_Area_Mass_Read(FLASH_SECTOR_0_ADDR, (u8 *)&save_info_area_1,
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 2   
 
-  52   1      
-  53   1          // 遍历存储在flash中的数据的元素个数，不包括校验和
-  54   1          check_sum_1 += save_info_area_1.write_cnt;
-  55   1          check_sum_1 += save_info_area_1.is_display_total_mileage;
-  56   1          check_sum_1 += save_info_area_1.distance_unit_type;
-  57   1      
-  58   1          check_sum_2 += save_info_area_2.write_cnt;
-  59   1          check_sum_2 += save_info_area_2.is_display_total_mileage;
-  60   1          check_sum_2 += save_info_area_2.distance_unit_type;
-  61   1      
-  62   1          if ((memcmp(&save_info_area_1, &save_info_area_2, sizeof(save_info_t)) ==
-  63   1               0) &&
-  64   1              check_sum_1 == save_info_area_1.check_sum &&
-  65   1              check_sum_2 == save_info_area_2.check_sum &&
-  66   1              save_info_area_1.write_cnt != 0) {
-  67   2              /*
-  68   2                  两个区域的数据相同，校验和验证通过，并且至少写入了一次，
-  69   2                  说明其中存放的数据有效
-  70   2              */
-  71   2      #if USER_DEBUG_ENABLE
-  72   2              printf("read save data pass\n");
-  73   2      #endif
-  74   2      
-  75   2              instrument.distance_unit_type = save_info_area_1.distance_unit_type;
-  76   2              instrument.is_display_total_mileage =
-  77   2                  save_info_area_1.is_display_total_mileage;
-  78   2          } else {
-  79   2              // 两个区域的数据不一致，或者是没有写入过数据，又或者是校验和没有�
+  52   1                              sizeof(save_info_t));
+  53   1          Data_Area_Mass_Read(FLASH_SECTOR_1_ADDR, (u8 *)&save_info_area_2,
+  54   1                              sizeof(save_info_t));
+  55   1      
+  56   1          // 遍历存储在flash中的数据的元素个数，不包括校验和
+  57   1          check_sum_1 += save_info_area_1.write_cnt;
+  58   1          check_sum_1 += save_info_area_1.is_display_total_mileage;
+  59   1          check_sum_1 += save_info_area_1.distance_unit_type;
+  60   1      
+  61   1          check_sum_2 += save_info_area_2.write_cnt;
+  62   1          check_sum_2 += save_info_area_2.is_display_total_mileage;
+  63   1          check_sum_2 += save_info_area_2.distance_unit_type;
+  64   1      
+  65   1          if ((memcmp(&save_info_area_1, &save_info_area_2, sizeof(save_info_t)) ==
+  66   1               0) &&
+  67   1              check_sum_1 == save_info_area_1.check_sum &&
+  68   1              check_sum_2 == save_info_area_2.check_sum &&
+  69   1              save_info_area_1.write_cnt != 0) {
+  70   2              /*
+  71   2                  两个区域的数据相同，校验和验证通过，并且至少写入了一次，
+  72   2                  说明其中存放的数据有效
+  73   2              */
+  74   2      #if USER_DEBUG_ENABLE
+  75   2              printf("read save data pass\n");
+  76   2      #endif
+  77   2      
+  78   2              instrument.distance_unit_type = save_info_area_1.distance_unit_type;
+  79   2              instrument.is_display_total_mileage =
+  80   2                  save_info_area_1.is_display_total_mileage;
+  81   2          } else {
+  82   2              // 两个区域的数据不一致，或者是没有写入过数据，又或者是校验和没有�
              -�过
-  80   2      #if USER_DEBUG_ENABLE
-  81   2              printf("read save data err\n");
-  82   2      #endif
-  83   2              // 找到校验和通过的，并且写入次数较大的区域，作为有效数据
-  84   2              if (check_sum_1 == save_info_area_1.check_sum) {
-  85   3                  if (0 != save_info_area_1.write_cnt) {
-  86   4                      write_cnt = save_info_area_1.write_cnt;
-  87   4                      use_data_area_index_to_init = 1;
-  88   4                  }
-  89   3              }
-  90   2      
-  91   2              if (check_sum_2 == save_info_area_2.check_sum) {
-  92   3                  if (0 != save_info_area_2.write_cnt &&
-  93   3                      save_info_area_2.write_cnt > write_cnt) {
-  94   4                      write_cnt = save_info_area_2.write_cnt;
-  95   4                      use_data_area_index_to_init = 2;
-  96   4                  }
-  97   3              }
-  98   2      
-  99   2              switch (use_data_area_index_to_init) {
- 100   3              case 1:
- 101   3                  instrument.distance_unit_type = save_info_area_1.distance_unit_type;
- 102   3                  instrument.is_display_total_mileage =
- 103   3                      save_info_area_1.is_display_total_mileage;
- 104   3                  memcpy(&save_info_area_2, &save_info_area_1, sizeof(save_info_t));
- 105   3                  break;
- 106   3              case 2:
- 107   3                  instrument.distance_unit_type = save_info_area_2.distance_unit_type;
- 108   3                  instrument.is_display_total_mileage =
- 109   3                      save_info_area_2.is_display_total_mileage;
- 110   3                  memcpy(&save_info_area_1, &save_info_area_2, sizeof(save_info_t));
- 111   3                  break;
- 112   3              default:
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/28/2026 18:50:05 PAGE 3   
+  83   2      #if USER_DEBUG_ENABLE
+  84   2              printf("read save data err\n");
+  85   2      #endif
+  86   2              // 找到校验和通过的，并且写入次数较大的区域，作为有效数据
+  87   2              if (check_sum_1 == save_info_area_1.check_sum) {
+  88   3                  if (0 != save_info_area_1.write_cnt) {
+  89   4                      write_cnt = save_info_area_1.write_cnt;
+  90   4                      use_data_area_index_to_init = 1;
+  91   4                  }
+  92   3              }
+  93   2      
+  94   2              if (check_sum_2 == save_info_area_2.check_sum) {
+  95   3                  if (0 != save_info_area_2.write_cnt &&
+  96   3                      save_info_area_2.write_cnt > write_cnt) {
+  97   4                      write_cnt = save_info_area_2.write_cnt;
+  98   4                      use_data_area_index_to_init = 2;
+  99   4                  }
+ 100   3              }
+ 101   2      
+ 102   2              switch (use_data_area_index_to_init) {
+ 103   3              case 1:
+ 104   3                  instrument.distance_unit_type = save_info_area_1.distance_unit_type;
+ 105   3                  instrument.is_display_total_mileage =
+ 106   3                      save_info_area_1.is_display_total_mileage;
+ 107   3                  memcpy(&save_info_area_2, &save_info_area_1, sizeof(save_info_t));
+ 108   3                  break;
+ 109   3              case 2:
+ 110   3                  instrument.distance_unit_type = save_info_area_2.distance_unit_type;
+ 111   3                  instrument.is_display_total_mileage =
+ 112   3                      save_info_area_2.is_display_total_mileage;
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 3   
 
- 113   3                  instrument.distance_unit_type = DISTANCE_UNIT_TYPE_METRIC;
- 114   3                  instrument.is_display_total_mileage = 1;
- 115   3      
- 116   3                  save_info_area_1.distance_unit_type = instrument.distance_unit_type;
- 117   3                  save_info_area_1.is_display_total_mileage =
- 118   3                      instrument.is_display_total_mileage;
- 119   3                  save_info_area_1.write_cnt = 1;
+ 113   3                  memcpy(&save_info_area_1, &save_info_area_2, sizeof(save_info_t));
+ 114   3                  break;
+ 115   3              default:
+ 116   3                  // 存放数据的区域都无效，初始化为默认值
+ 117   3      
+ 118   3                  instrument.distance_unit_type = DISTANCE_UNIT_TYPE_METRIC;
+ 119   3                  instrument.is_display_total_mileage = 1;
  120   3      
- 121   3                  check_sum_1 = 0;
- 122   3                  check_sum_1 += save_info_area_1.write_cnt;
- 123   3                  check_sum_1 += save_info_area_1.is_display_total_mileage;
- 124   3                  check_sum_1 += save_info_area_1.distance_unit_type;
- 125   3                  memcpy(&save_info_area_2, &save_info_area_1, sizeof(save_info_t));
- 126   3                  break;
- 127   3              }
- 128   2      
- 129   2              // 初始化完成后，将数据写回flash
- 130   2              instrument_info_save_enable();
- 131   2          }
- 132   1      
- 133   1          // 每次上电，初始化非掉电保存的数据
- 134   1          instrument.gear = GEAR_UNKNOWN;
- 135   1          
- 136   1          // TEST ONLY 
- 137   1          // instrument.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL; 
- 138   1      }
- 139          
- 140          void instrument_info_save(void)
- 141          {
- 142   1          u8 check_sum = 0;
- 143   1      
- 144   1          save_info_area_1.write_cnt++;
- 145   1          save_info_area_1.distance_unit_type = instrument.distance_unit_type;
- 146   1          save_info_area_1.is_display_total_mileage =
- 147   1              instrument.is_display_total_mileage;
- 148   1      
- 149   1          check_sum += save_info_area_1.write_cnt;
- 150   1          check_sum += save_info_area_1.is_display_total_mileage;
- 151   1          check_sum += save_info_area_1.distance_unit_type;
- 152   1          save_info_area_1.check_sum = check_sum;
- 153   1      
- 154   1          memcpy(&save_info_area_2, &save_info_area_1, sizeof(save_info_t));
- 155   1      
- 156   1          Data_Area_Sector_Erase(0);
- 157   1          Data_Area_Mass_Write(FLASH_SECTOR_0_ADDR, (u8 *)&save_info_area_1,
- 158   1                               sizeof(save_info_t));
- 159   1          Data_Area_Sector_Erase(1);
- 160   1          Data_Area_Mass_Write(FLASH_SECTOR_1_ADDR, (u8 *)&save_info_area_2,
- 161   1                               sizeof(save_info_t));
- 162   1      
- 163   1      #if USER_DEBUG_ENABLE
- 164   1          printf("instrument_info_save\n");
- 165   1      #endif
- 166   1      }
- 167          
- 168          // 使能延时写入flash的操作
- 169          void instrument_info_save_enable(void)
- 170          {
- 171   1          instrument_info_save_time_cnt = 0;
- 172   1          is_intrument_save_enable = 1;
- 173   1      }
- 174          
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/28/2026 18:50:05 PAGE 4   
+ 121   3                  save_info_area_1.distance_unit_type = instrument.distance_unit_type;
+ 122   3                  save_info_area_1.is_display_total_mileage =
+ 123   3                      instrument.is_display_total_mileage;
+ 124   3                  save_info_area_1.write_cnt = 1;
+ 125   3      
+ 126   3                  check_sum_1 = 0;
+ 127   3                  check_sum_1 += save_info_area_1.write_cnt;
+ 128   3                  check_sum_1 += save_info_area_1.is_display_total_mileage;
+ 129   3                  check_sum_1 += save_info_area_1.distance_unit_type;
+ 130   3                  memcpy(&save_info_area_2, &save_info_area_1, sizeof(save_info_t));
+ 131   3                  break;
+ 132   3              }
+ 133   2      
+ 134   2              // 初始化完成后，将数据写回flash
+ 135   2              instrument_info_save_enable();
+ 136   2          }
+ 137   1      
+ 138   1          // 每次上电，初始化非掉电保存的数据
+ 139   1          instrument.key_event = KEY_EVENT_NONE;
+ 140   1          instrument.gear = GEAR_UNKNOWN;
+ 141   1      
+ 142   1          // TEST ONLY
+ 143   1          // instrument.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL;
+ 144   1      }
+ 145          
+ 146          void instrument_info_save(void)
+ 147          {
+ 148   1          u8 check_sum = 0;
+ 149   1      
+ 150   1          save_info_area_1.write_cnt++;
+ 151   1          save_info_area_1.distance_unit_type = instrument.distance_unit_type;
+ 152   1          save_info_area_1.is_display_total_mileage =
+ 153   1              instrument.is_display_total_mileage;
+ 154   1      
+ 155   1          check_sum += save_info_area_1.write_cnt;
+ 156   1          check_sum += save_info_area_1.is_display_total_mileage;
+ 157   1          check_sum += save_info_area_1.distance_unit_type;
+ 158   1          save_info_area_1.check_sum = check_sum;
+ 159   1      
+ 160   1          memcpy(&save_info_area_2, &save_info_area_1, sizeof(save_info_t));
+ 161   1      
+ 162   1          Data_Area_Sector_Erase(0);
+ 163   1          Data_Area_Mass_Write(FLASH_SECTOR_0_ADDR, (u8 *)&save_info_area_1,
+ 164   1                               sizeof(save_info_t));
+ 165   1          Data_Area_Sector_Erase(1);
+ 166   1          Data_Area_Mass_Write(FLASH_SECTOR_1_ADDR, (u8 *)&save_info_area_2,
+ 167   1                               sizeof(save_info_t));
+ 168   1      
+ 169   1      #if USER_DEBUG_ENABLE
+ 170   1          printf("instrument_info_save\n");
+ 171   1      #endif
+ 172   1      }
+ 173          
+ 174          // 使能延时写入flash的操作
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 4   
 
- 175          // 递增延时写入flash的时间
- 176          void instrument_info_save_time_add(void)
- 177          {
- 178   1          if (is_intrument_save_enable) {
- 179   2              instrument_info_save_time_cnt++;
- 180   2          }
- 181   1      }
- 182          
- 183          void instrument_info_save_handle(void)
- 184          {
- 185   1          if (is_intrument_save_enable &&
- 186   1              instrument_info_save_time_cnt >= INSTRUMENT_INFO_SAVE_TIME) {
- 187   2              is_intrument_save_enable = 0;
- 188   2              instrument_info_save_time_cnt = 0;
- 189   2              instrument_info_save();
- 190   2          }
- 191   1      }
+ 175          void instrument_info_save_enable(void)
+ 176          {
+ 177   1          instrument_info_save_time_cnt = 0;
+ 178   1          is_intrument_save_enable = 1;
+ 179   1      }
+ 180          
+ 181          // 递增延时写入flash的时间
+ 182          void instrument_info_save_time_add(void)
+ 183          {
+ 184   1          if (is_intrument_save_enable) {
+ 185   2              instrument_info_save_time_cnt++;
+ 186   2          }
+ 187   1      }
+ 188          
+ 189          void instrument_info_save_handle(void)
+ 190          {
+ 191   1          if (is_intrument_save_enable &&
+ 192   1              instrument_info_save_time_cnt >= INSTRUMENT_INFO_SAVE_TIME) {
+ 193   2              is_intrument_save_enable = 0;
+ 194   2              instrument_info_save_time_cnt = 0;
+ 195   2              instrument_info_save();
+ 196   2          }
+ 197   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    618    ----
+   CODE SIZE        =    622    ----
    CONSTANT SIZE    =     63    ----
-   XDATA SIZE       =     51       7
+   XDATA SIZE       =     48       7
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

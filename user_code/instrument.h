@@ -48,7 +48,7 @@ typedef struct
     // ==============================================================
     // ==============================================================
     // 需要掉电保存的数据：
-    u8 is_display_total_mileage; // 0：显示总里程，1：显示短距离里程
+    u8 is_display_total_mileage; // 0：显示短距离里程，1：显示总里程
     // 要显示的 单位类型，km/h 或 mph。在时速和里程中用到
     distance_unit_type_t distance_unit_type;
 
@@ -75,11 +75,11 @@ typedef struct
     u8 time_minute;             // 分钟
     u8 left_turn_valid;         // 左转灯是否有效
     u8 right_turn_valid;        // 右转灯是否有效
-    u8 engine_err_valid;        // 发动机故障是否有效
-    u8 abs_valid;               // ABS是否有效
-    u8 engine_oil_valid;        // 机油压力提示是否有效
     u8 temp_of_water_err_valid; // 水温异常提示是否有效
     u8 high_beam_valid;         // 远光灯是否有效
+    // u8 abs_valid; // ABS是否有效 (当前工程由芯片控制，不用从检测端接收)
+    // u8 engine_err_valid; // 发动机故障是否有效 (当前工程由芯片控制，不用从检测端接收)
+    // u8 engine_oil_valid; // 机油压力提示是否有效 (当前工程由芯片控制，不用从检测端接收)
 
     u8 key_event; // 按键事件
 

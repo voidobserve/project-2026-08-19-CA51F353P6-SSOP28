@@ -5,7 +5,7 @@
 
 // 接收数据的超时时间，单位：ms
 #define UART_RECEIVER_PROCESS_TIMEOUT ((u16)2 * 1000)
-#define UART_INSTRUCT_HEAD                   0xA5 // 格式头
+#define UART_INSTRUCT_HEAD            0xA5 // 格式头
 #define UART_MAX_FRAME_LENGTH         20   // 最大帧长度
 
 // 定义串口接收器使用到的各个状态
@@ -34,9 +34,9 @@ enum
     UART_INSTRUCT_SUBTOTAL_MILEAGE,  // 当前里程 TRIP
     UART_INSTRUCT_LEFT_TURN,         // 左转向
     UART_INSTRUCT_RIGHT_TURN,        // 右转向
-    UART_INSTRUCT_ENGINE_ERR,        // 发动机故障
-    UART_INSTRUCT_ABS,               // ABS故障
-    UART_INSTRUCT_ENGINE_OIL,        // 机油压力提示
+    UART_INSTRUCT_ENGINE_ERR,        // 发动机故障 （当前工程未使用）
+    UART_INSTRUCT_ABS,               // ABS故障 （当前工程未使用）
+    UART_INSTRUCT_ENGINE_OIL,        // 机油压力提示 （当前工程未使用）
     UART_INSTRUCT_TEMP_OF_WATER_ERR, // 水温异常提示
     UART_INSTRUCT_BRAKE,             // 刹车 （当前工程未使用）
     UART_INSTRUCT_HIGH_BEAM,         // 远光

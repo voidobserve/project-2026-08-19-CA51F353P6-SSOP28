@@ -4,6 +4,7 @@
 
 #include "instrument.h"
 #include "aip3368h_display.h"
+#include "engine_speed_process.h" // variable: rpm_from_collector
 
 #if USER_DEBUG_ENABLE
 #include <stdio.h>
@@ -215,8 +216,11 @@ void uart_receiver_process(void)
         break;
 
     case UART_INSTRUCT_ENGINE_SPEED:
-        instrument.engine_speed =
+        // instrument.engine_speed =
+        //     ((u16)uart_receiver.buffer[3] << 8) | (u16)uart_receiver.buffer[4];
+        rpm_from_collector =
             ((u16)uart_receiver.buffer[3] << 8) | (u16)uart_receiver.buffer[4];
+            // 后续交给 engine_speed_process 处理
         break;
 
     case UART_INSTRUCT_SPEED:
@@ -227,21 +231,13 @@ void uart_receiver_process(void)
         instrument.total_mileage = (u32)uart_receiver.buffer[3] << 24 |
                                    (u32)uart_receiver.buffer[4] << 16 |
                                    (u32)uart_receiver.buffer[5] << 8 |
-                                   (u32)uart_receiver.buffer[6];
-        // TODO 在显示时，根据公英制单位来限制
-        // if (instrument.total_mileage > (u32)99999) {
-        //     instrument.total_mileage = (u32)99999;
-        // }
+                                   (u32)uart_receiver.buffer[6]; 
         break;
     case UART_INSTRUCT_SUBTOTAL_MILEAGE:
         instrument.subtotal_mileage = (u32)uart_receiver.buffer[3] << 24 |
                                       (u32)uart_receiver.buffer[4] << 16 |
                                       (u32)uart_receiver.buffer[5] << 8 |
-                                      (u32)uart_receiver.buffer[6];
-        // TODO 在显示时，根据公英制单位来限制
-        // if (instrument.subtotal_mileage > (u32)99999) {
-        //     instrument.subtotal_mileage = (u32)99999;
-        // }
+                                      (u32)uart_receiver.buffer[6]; 
         break;
     case UART_INSTRUCT_LEFT_TURN:
         instrument.left_turn_valid = uart_receiver.buffer[3];
@@ -249,15 +245,15 @@ void uart_receiver_process(void)
     case UART_INSTRUCT_RIGHT_TURN:
         instrument.right_turn_valid = uart_receiver.buffer[3];
         break;
-    case UART_INSTRUCT_ENGINE_ERR:
-        instrument.engine_err_valid = uart_receiver.buffer[3];
-        break;
-    case UART_INSTRUCT_ABS:
-        instrument.abs_valid = uart_receiver.buffer[3];
-        break;
-    case UART_INSTRUCT_ENGINE_OIL:
-        instrument.engine_oil_valid = uart_receiver.buffer[3];
-        break;
+    // case UART_INSTRUCT_ENGINE_ERR:
+    //     instrument.engine_err_valid = uart_receiver.buffer[3];
+    //     break;
+    // case UART_INSTRUCT_ABS:
+    //     instrument.abs_valid = uart_receiver.buffer[3];
+    //     break;
+    // case UART_INSTRUCT_ENGINE_OIL:
+    //     instrument.engine_oil_valid = uart_receiver.buffer[3];
+    //     break;
     case UART_INSTRUCT_TEMP_OF_WATER_ERR:
         instrument.temp_of_water_err_valid = uart_receiver.buffer[3];
         break;

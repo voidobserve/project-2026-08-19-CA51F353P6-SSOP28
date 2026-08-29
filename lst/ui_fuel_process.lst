@@ -1,0 +1,124 @@
+C51 COMPILER V9.60.7.0   UI_FUEL_PROCESS                                                   08/29/2026 16:30:42 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI_FUEL_PROCESS
+OBJECT MODULE PLACED IN .\hex\ui_fuel_process.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE user_code\ui_fuel_process.c LARGE OMF2 OPTIMIZE(9,SIZE) BROWSE INCDIR(.\
+                    -user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includ
+                    -es;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\ui_fuel_process.lst) OBJE
+                    -CT(.\hex\ui_fuel_process.obj)
+
+line level    source
+
+   1          #include "ui_fuel_process.h"
+   2          #include "user_typedef.h"
+   3          #include "aip3368h_display.h"
+   4          #include "instrument.h"
+   5          
+   6          volatile u16 ui_fuel_process_cnt;
+   7          
+   8          void ui_fuel_process_cnt_add(void)
+   9          {
+  10   1          if (ui_fuel_process_cnt < ((u16)-1)) {
+  11   2              ui_fuel_process_cnt++;
+  12   2          }
+  13   1      }
+  14          
+  15          u8 fuel_percent_to_lev(u8 fuel_percent)
+  16          {
+  17   1          u8 ret = 0;
+  18   1          if (fuel_percent <= FUEL_LEV_0 || (fuel_percent == 0xFF)) {
+  19   2              ret = 0;
+  20   2          } else if (fuel_percent <= FUEL_LEV_1) {
+  21   2              ret = 1;
+  22   2          } else if (fuel_percent <= FUEL_LEV_2) {
+  23   2              ret = 2;
+  24   2          } else if (fuel_percent <= FUEL_LEV_3) {
+  25   2              ret = 3;
+  26   2          } else if (fuel_percent <= FUEL_LEV_4) {
+  27   2              ret = 4;
+  28   2          } else {
+  29   2              ret = 5;
+  30   2          }
+  31   1      
+  32   1          return ret;
+  33   1      }
+  34          
+  35          void ui_fuel_process(void)
+  36          {
+  37   1          static u8 is_initialized = 0;               //  是否已经初始化
+  38   1          static volatile u8 fuel_lev_to_display = 0; // 最终要显示的油量等级
+  39   1          volatile u8 cur_fuel_lev = 0;               // 当前油量等级
+  40   1          volatile u8 fuel_lev_diff = 0; // 当前的油量等级与显示的油量等级之间的差值
+  41   1      
+  42   1          if (0 == is_initialized) {
+  43   2              is_initialized = 1;
+  44   2              cur_fuel_lev = fuel_percent_to_lev(instrument.fuel_percent);
+  45   2              fuel_lev_to_display = cur_fuel_lev;
+  46   2      
+  47   2              if (0 == fuel_lev_to_display) {
+  48   3                  instrument.flag_is_in_warning_of_low_fuel = 1;
+  49   3              } else {
+  50   3                  instrument.flag_is_in_warning_of_low_fuel = 0;
+  51   3              }
+  52   2      
+C51 COMPILER V9.60.7.0   UI_FUEL_PROCESS                                                   08/29/2026 16:30:42 PAGE 2   
+
+  53   2              aip3368h_display_fuel_lev(fuel_lev_to_display);
+  54   2          }
+  55   1      
+  56   1          cur_fuel_lev = fuel_percent_to_lev(instrument.fuel_percent);
+  57   1          if (cur_fuel_lev != fuel_lev_to_display) {
+  58   2              if (cur_fuel_lev > fuel_lev_to_display) {
+  59   3                  fuel_lev_diff = cur_fuel_lev - fuel_lev_to_display;
+  60   3              } else {
+  61   3                  fuel_lev_diff = fuel_lev_to_display - cur_fuel_lev;
+  62   3              }
+  63   2          }
+  64   1      
+  65   1          if ((fuel_lev_diff >= 2 && ui_fuel_process_cnt < FUEL_UPDATE_TIME) ||
+  66   1              (fuel_lev_diff == 1 && ui_fuel_process_cnt < FUEL_UPDATE_TIME_EXTEND)) {
+  67   2              // 没有到油量挡位更新时间，直接返回
+  68   2              return;
+  69   2          }
+  70   1      
+  71   1          ui_fuel_process_cnt = 0;
+  72   1      
+  73   1          if (fuel_lev_to_display < cur_fuel_lev) {
+  74   2              fuel_lev_to_display++;
+  75   2          } else if (fuel_lev_to_display > cur_fuel_lev) {
+  76   2              fuel_lev_to_display--;
+  77   2          }
+  78   1      
+  79   1          if (fuel_lev_to_display == 0) {
+  80   2              // 打开低油量报警 
+  81   2              if (instrument.flag_is_in_warning_of_low_fuel == 0) {
+  82   3                  // 如果之前没有进入低油量报警
+  83   3                  aip3368h_display_fuel_lev(0); // 清空油量显示
+  84   3                  instrument.flag_is_in_warning_of_low_fuel = 1;
+  85   3              }
+  86   2          } else {
+  87   2              // 关闭低油量报警
+  88   2              instrument.flag_is_in_warning_of_low_fuel = 0;
+  89   2              // 正常显示油量
+  90   2              aip3368h_display_fuel_lev(fuel_lev_to_display); 
+  91   2          }
+  92   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    307    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

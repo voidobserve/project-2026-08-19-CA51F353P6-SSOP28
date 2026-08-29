@@ -1,7 +1,9 @@
 #include "timer1.h"
 #include "ca51f3sfr.h"
 
-#include "user_debug.h"
+// #include "user_debug.h"
+
+#include "engine_speed_process.h"
 
 void timer1_init(void)
 {
@@ -20,7 +22,6 @@ void timer1_isr(void) interrupt 3
     // 触发中断后，重新写入计数值
     TH1 = TIMER1_HVAL;
     TL1 = TIMER1_LVAL;
-
-	// TODO 待测试中断周期是否正确
-	user_debug_io_toggle();
+  
+    engine_speed_scan_timer_50us_isr();
 }

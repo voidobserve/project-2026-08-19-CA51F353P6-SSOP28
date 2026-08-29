@@ -1,0 +1,1 @@
+"user_code\ui_instruct_light.c" LARGE OMF2 OPTIMIZE (9,SIZE) BROWSE INCDIR(.\user_aip3368h;.\user_code;.\driver_on_chip\uart;..\project-2026-08-19-CA51F353P6-SSOP28;.\driver_on_chip\timer0;.\includes;.\driver\aip3368;.\driver\key;.\driver_on_chip\timer1;.\Library\Includes) DEBUG PRINT(.\lst\ui_instruct_light.lst) OBJECT(.\hex\ui_instruct_light.obj)

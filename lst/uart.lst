@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UART                                                              08/28/2026 18:50:04 PAGE 1   
+C51 COMPILER V9.60.7.0   UART                                                              08/29/2026 16:30:40 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART
@@ -62,7 +62,7 @@ line level    source
   50   1          ES1 = 1;               // UART1中断使能
   51   1      }
   52          
-C51 COMPILER V9.60.7.0   UART                                                              08/28/2026 18:50:04 PAGE 2   
+C51 COMPILER V9.60.7.0   UART                                                              08/29/2026 16:30:40 PAGE 2   
 
   53          /**
   54           * @brief 发送一个字节数据
@@ -126,7 +126,7 @@ line level    source
  112   1      }
  113          
  114          void uart1_rxbuffer_put(u8 byte)
-C51 COMPILER V9.60.7.0   UART                                                              08/28/2026 18:50:04 PAGE 3   
+C51 COMPILER V9.60.7.0   UART                                                              08/29/2026 16:30:40 PAGE 3   
 
  115          {
  116   1          // 目前的逻辑：缓冲区满，覆盖旧的数据
@@ -190,7 +190,7 @@ line level    source
  174           * 
  175           * @note 受制于芯片性能，不能频繁调用该函数，也不能一次发送过多数据
  176           * 
-C51 COMPILER V9.60.7.0   UART                                                              08/28/2026 18:50:04 PAGE 4   
+C51 COMPILER V9.60.7.0   UART                                                              08/29/2026 16:30:40 PAGE 4   
 
  177           * @param buff 
  178           * @param len 

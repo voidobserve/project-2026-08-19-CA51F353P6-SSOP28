@@ -452,19 +452,9 @@
           <GroupName>user_code</GroupName>
           <Files>
             <File>
-              <FileName>ui.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\user_code\ui.c</FilePath>
-            </File>
-            <File>
               <FileName>user_debug.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\user_code\user_debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>engine_speed_scan.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\user_code\engine_speed_scan.c</FilePath>
             </File>
             <File>
               <FileName>boot_animation.c</FileName>
@@ -497,9 +487,34 @@
               <FilePath>.\user_code\uart_transmitter.c</FilePath>
             </File>
             <File>
+              <FileName>engine_speed_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\engine_speed_process.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_instruct_light.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\ui_instruct_light.c</FilePath>
+            </File>
+            <File>
               <FileName>ui_speed_process.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\user_code\ui_speed_process.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_fuel_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\ui_fuel_process.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_bat_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\user_code\ui_bat_process.c</FilePath>
             </File>
           </Files>
         </Group>

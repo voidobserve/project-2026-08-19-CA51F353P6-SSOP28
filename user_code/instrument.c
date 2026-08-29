@@ -2,9 +2,12 @@
 
 #include "user_config.h"
 #include "instrument.h"
+
 #include "ca51f_config.h" // 包含芯片flash大小的定义
 #include "flash.h"        // 芯片官方提供的flash接口
 #include "ca51f3xsfr.h"   // PADRD 寄存器定义
+
+#include "key_event_process.h"
 
 #if USER_DEBUG_ENABLE
 #include <stdio.h>
@@ -110,6 +113,8 @@ void instrument_info_init(void)
             memcpy(&save_info_area_1, &save_info_area_2, sizeof(save_info_t));
             break;
         default:
+            // 存放数据的区域都无效，初始化为默认值
+
             instrument.distance_unit_type = DISTANCE_UNIT_TYPE_METRIC;
             instrument.is_display_total_mileage = 1;
 
@@ -131,10 +136,11 @@ void instrument_info_init(void)
     }
 
     // 每次上电，初始化非掉电保存的数据
+    instrument.key_event = KEY_EVENT_NONE;
     instrument.gear = GEAR_UNKNOWN;
-    
-    // TEST ONLY 
-    // instrument.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL; 
+
+    // TEST ONLY
+    // instrument.distance_unit_type = DISTANCE_UNIT_TYPE_IMPERIAL;
 }
 
 void instrument_info_save(void)

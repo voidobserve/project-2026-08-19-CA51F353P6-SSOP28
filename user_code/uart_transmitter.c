@@ -9,6 +9,7 @@ volatile u8 uart_transmitter_buffer[10] = {0};
 
 void uart_transmitter_send_instruct(uart_instruct_t uart_instruct)
 {
+    u8 i = 0;
     u8 check_sum = 0; // 存放校验和
 
     uart_transmitter_buffer[0] = UART_INSTRUCT_HEAD;
@@ -31,7 +32,8 @@ void uart_transmitter_send_instruct(uart_instruct_t uart_instruct)
         break;
     }
 
-    uart1_txbuffer_put_buff(uart_transmitter_buffer,
-                            ARRAY_SIZE(uart_transmitter_buffer));
+    for (i = 0; i < 3; i++) {
+        uart1_txbuffer_put_buff(uart_transmitter_buffer,
+                                ARRAY_SIZE(uart_transmitter_buffer));
+    }
 }
- 
