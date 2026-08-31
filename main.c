@@ -76,7 +76,6 @@ void user_1ms_isr(void)
     ui_timer_handle_isr();
     instrument_info_save_time_add();
     uart_receiver_process_timeout_add();
-  
 
 #if AIP3368H_DISPLAY_TEST_ENABLE
     // aip3368h_display_engine_speed_lev_test_1ms_isr();
@@ -117,8 +116,8 @@ void main(void)
     printf("sys init\n");
 #endif
 
-    // boot_animation_process();  
-    
+    // boot_animation_process();
+
     while (1) {
         WDFLG = 0xA5; // Î¹¹·
 
@@ -130,7 +129,7 @@ void main(void)
 
         engine_speed_scan();
         key_event_process();
-        ui_display_handle(); 
+        ui_display_handle();
         pin_level_handle();
         uart1_txbuffer_handle();
         uart_receiver_process();

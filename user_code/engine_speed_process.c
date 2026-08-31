@@ -212,13 +212,6 @@ void aip3368h_display_engine_speed_handle(void)
             }
         }
 
-
         aip3368h_display_engine_speed_lev(engine_speed_level_of_lag);
-
-        // if (engine_speed_level_of_lag > 0) {
-        //     aip3368h_display_engine_speed_lev(engine_speed_level_of_lag);
-        // } else {
-        //     aip3368h_display_engine_speed_lev(0);
-        // }
     }
 }

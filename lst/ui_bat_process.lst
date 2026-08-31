@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/29/2026 16:30:42 PAGE 1   
+C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/31/2026 14:48:42 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI_BAT_PROCESS
@@ -12,33 +12,162 @@ line level    source
 
    1          #include "ui_bat_process.h"
    2          #include "user_typedef.h"
-   3          
-   4          volatile u16 ui_bat_process_time = 0;
+   3          #include "instrument.h"
+   4          #include "aip3368h_display.h"
    5          
-   6          /**
-   7           * @brief 
-   8           * 
-   9           * @note 在1ms中断内调用
+   6          volatile u16 ui_bat_process_time = 0;
+   7          
+   8          /**
+   9           * @brief 
   10           * 
-  11           */
-  12          void ui_bat_process_time_add(void)
-  13          {
-  14   1          if (ui_bat_process_time < ((u16)-1)) {
-  15   2              ui_bat_process_time++;
-  16   2          }
-  17   1      }
-  18          
-  19          void ui_bat_process(void)
-  20          {
-  21   1          u16 cur_bat_voltage; // 当前电池电压,单位:mV
-  22   1      
-  23   1          static u8 is_initialized = 0;              // 是否初始化过
-  24   1          static volatile u8 bat_lev_to_display = 0; // 需要延迟显示的电池格子数
-  25   1          u8 bat_lev = 0;                            // 电池格子数
-  26   1          u8 bat_lev_diff = 0;                       // 电池格子数差值
-  27   1      
-  28   1          cur_bat_voltage = instrument.bat_voltage;
-*** ERROR C200 IN LINE 28 OF user_code\ui_bat_process.c: left side of '.' requires struct/union
-  29   1      }
+  11           * @note 在1ms中断内调用
+  12           * 
+  13           */
+  14          void ui_bat_process_time_add(void)
+  15          {
+  16   1          if (ui_bat_process_time < ((u16)-1)) {
+  17   2              ui_bat_process_time++;
+  18   2          }
+  19   1      }
+  20          
+  21          /**
+  22           * @brief 将电池电压转换为对应的格子数
+  23           *
+  24           * @param voltage 电池电压，单位：mV
+  25           *
+  26           * @return u8 电池格子数
+  27           *          0：低电量提示
+  28           *          1：1格
+  29           *          2：2格 
+  30           *          ...
+  31           *          7：7格，表示电池电压大于等于16V
+  32           *  
+  33           *          8V -> 1 格
+  34           *          12V -> 4 格
+  35           *          16V -> 7 格
+  36           *
+  37           */
+  38          u8 bat_vol_to_lev(u16 voltage)
+  39          {
+  40   1          u8 ret = 0;
+  41   1      
+  42   1          if (voltage >= BAT_VOLTAGE_OF_FULL_GRID) {
+  43   2              ret = 7;
+  44   2      #if BAT_SHOW_1_GRID_LED
+                  } else if (BAT_SHOW_1_GRID_LED && voltage >= BAT_VOLTAGE_OF_MIN_GRID) {
+                      /* 
+                          线性插值：8V ~ 16V 差值共 8V ，对应 1 ~ 7 格，
+                          有如下线性关系：
+                          (16000 - 8000) / (7 - 1) == 8000 / 6 
+                          每mV对应 6 / 8000 格 
+                          公式里的 + 4000 作为四舍五入
+                      */
+C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/31/2026 14:48:42 PAGE 2   
 
-C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)
+                      ret = 1 + (((u32)voltage - BAT_VOLTAGE_OF_MIN_GRID) * 6 + 4000) / 8000;
+                      if (ret > 7) {
+                          ret = 7;
+                      }
+              #endif
+  58   2          } else if (voltage >= BAT_VOLTAGE_OF_LOW_GRID) {
+  59   2              /*
+  60   2                  关闭 1 格显示时，9V 起从 2 格开始
+  61   2                  有如下线性关系：
+  62   2                  (16000 - 9000) / (7 - 2) == 7000 / 5
+  63   2                  每mV对应 5 / 7000 格
+  64   2                  公式里的 + 3500 作为四舍五入
+  65   2              */
+  66   2              ret = 2 + (((u32)voltage - BAT_VOLTAGE_OF_LOW_GRID) * 5 + 3500) / 7000;
+  67   2              if (ret > 7) {
+  68   3                  ret = 7;
+  69   3              }
+  70   2          } else {
+  71   2              ret = 0;
+  72   2          }
+  73   1      
+  74   1          return ret;
+  75   1      }
+  76          
+  77          void ui_bat_process(void)
+  78          {
+  79   1          u16 cur_bat_voltage; // 当前电池电压,单位:mV
+  80   1      
+  81   1          static u8 is_initialized = 0;              // 是否初始化过
+  82   1          static volatile u8 bat_lev_to_display = 0; // 需要延迟显示的电池格子数
+  83   1          u8 bat_lev = 0;                            // 电池格子数
+  84   1          u8 bat_lev_diff = 0;                       // 电池格子数差值
+  85   1      
+  86   1          cur_bat_voltage = instrument.bat_voltage;
+  87   1      
+  88   1          if (0 == is_initialized) {
+  89   2              is_initialized = 1;
+  90   2              bat_lev = bat_vol_to_lev(cur_bat_voltage);
+  91   2              bat_lev_to_display = bat_lev;
+  92   2      
+  93   2              if (0 == bat_lev_to_display) {
+  94   3                  // 电池格子数为0，进入低电量提示
+  95   3                  instrument.flag_is_in_warning_of_low_battery = 1;
+  96   3              }
+  97   2      
+  98   2              aip3368h_display_bat_lev_light(bat_lev_to_display);
+  99   2          }
+ 100   1      
+ 101   1          bat_lev = bat_vol_to_lev(cur_bat_voltage);
+ 102   1          if (bat_lev_to_display != bat_lev) {
+ 103   2              if (bat_lev > bat_lev_to_display) {
+ 104   3                  bat_lev_diff = bat_lev - bat_lev_to_display;
+ 105   3              } else {
+ 106   3                  bat_lev_diff = bat_lev_to_display - bat_lev;
+ 107   3              }
+ 108   2          }
+ 109   1      
+ 110   1          if (bat_lev_diff == 0) {
+ 111   2              // 电池格子数没有变化，清空时间计数，再返回
+ 112   2              ui_bat_process_time = 0;
+ 113   2              return;
+ 114   2          } else if ((bat_lev_diff >= 2 &&
+C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/31/2026 14:48:42 PAGE 3   
+
+ 115   1                      ui_bat_process_time < BAT_DISPLAY_UPDATE_PERIOD) ||
+ 116   1                     (bat_lev_diff <= 1 &&
+ 117   1                      ui_bat_process_time <
+ 118   1                          BAT_DISPLAY_UPDATE_PERIOD_WHEN_BAT_CLOSE)) {
+ 119   2              // 电池电量格子数有变化，但是更新显示的时间没有到来，直接返回
+ 120   2              return;
+ 121   2          }
+ 122   1      
+ 123   1          ui_bat_process_time = 0;
+ 124   1      
+ 125   1          if (bat_lev_to_display < bat_lev) {
+ 126   2              bat_lev_to_display++;
+ 127   2          } else if (bat_lev_to_display > bat_lev) {
+ 128   2              bat_lev_to_display--;
+ 129   2          }
+ 130   1      
+ 131   1          if (0 == bat_lev_to_display) {
+ 132   2              // 打开低电量提示
+ 133   2              instrument.flag_is_in_warning_of_low_battery = 1;
+ 134   2          } else {
+ 135   2              instrument.flag_is_in_warning_of_low_battery = 0;
+ 136   2          }
+ 137   1      
+ 138   1          aip3368h_display_bat_lev_light(bat_lev_to_display);
+ 139   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    325    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

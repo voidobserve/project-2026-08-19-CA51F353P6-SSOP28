@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 1   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/31/2026 14:48:41 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE INSTRUMENT
@@ -62,7 +62,7 @@ line level    source
   49   1      
   50   1          // 从flash中读出数据
   51   1          Data_Area_Mass_Read(FLASH_SECTOR_0_ADDR, (u8 *)&save_info_area_1,
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 2   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/31/2026 14:48:41 PAGE 2   
 
   52   1                              sizeof(save_info_t));
   53   1          Data_Area_Mass_Read(FLASH_SECTOR_1_ADDR, (u8 *)&save_info_area_2,
@@ -126,7 +126,7 @@ line level    source
  110   3                  instrument.distance_unit_type = save_info_area_2.distance_unit_type;
  111   3                  instrument.is_display_total_mileage =
  112   3                      save_info_area_2.is_display_total_mileage;
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 3   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/31/2026 14:48:41 PAGE 3   
 
  113   3                  memcpy(&save_info_area_1, &save_info_area_2, sizeof(save_info_t));
  114   3                  break;
@@ -190,7 +190,7 @@ line level    source
  172   1      }
  173          
  174          // 使能延时写入flash的操作
-C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/29/2026 16:30:41 PAGE 4   
+C51 COMPILER V9.60.7.0   INSTRUMENT                                                        08/31/2026 14:48:41 PAGE 4   
 
  175          void instrument_info_save_enable(void)
  176          {

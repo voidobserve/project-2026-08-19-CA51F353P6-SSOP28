@@ -62,8 +62,13 @@ void ui_fuel_process(void)
         }
     }
 
-    if ((fuel_lev_diff >= 2 && ui_fuel_process_cnt < FUEL_UPDATE_TIME) ||
-        (fuel_lev_diff == 1 && ui_fuel_process_cnt < FUEL_UPDATE_TIME_EXTEND)) {
+    if (fuel_lev_diff == 0) {
+        // 油量等级没有变化，清空计数值，再返回
+        ui_fuel_process_cnt = 0;
+        return;
+    } else if ((fuel_lev_diff >= 2 && ui_fuel_process_cnt < FUEL_UPDATE_TIME) ||
+               (fuel_lev_diff == 1 &&
+                ui_fuel_process_cnt < FUEL_UPDATE_TIME_EXTEND)) {
         // 没有到油量挡位更新时间，直接返回
         return;
     }
@@ -77,7 +82,7 @@ void ui_fuel_process(void)
     }
 
     if (fuel_lev_to_display == 0) {
-        // 打开低油量报警 
+        // 打开低油量报警
         if (instrument.flag_is_in_warning_of_low_fuel == 0) {
             // 如果之前没有进入低油量报警
             aip3368h_display_fuel_lev(0); // 清空油量显示
@@ -87,6 +92,6 @@ void ui_fuel_process(void)
         // 关闭低油量报警
         instrument.flag_is_in_warning_of_low_fuel = 0;
         // 正常显示油量
-        aip3368h_display_fuel_lev(fuel_lev_to_display); 
+        aip3368h_display_fuel_lev(fuel_lev_to_display);
     }
 }

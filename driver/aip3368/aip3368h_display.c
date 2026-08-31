@@ -361,7 +361,7 @@ void __aip3368h_display_bat_lev_light__(u8 idx, u8 is_display)
 /**
  * @brief 根据传参，显示对应的电池电量等级（不包括低电量提示）
  *
- * @param bat_lev 1 ~ 8，第 idx 个指示灯（从左往右，从0开始）
+ * @param bat_lev 1 ~ 7，第 idx 个指示灯（从左往右，从0开始）
  *              0：清空显示
  *              1：显示第 0 个指示灯
  *              2：显示第 1 个指示灯
