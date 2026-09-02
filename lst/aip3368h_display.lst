@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 1   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE AIP3368H_DISPLAY
@@ -19,9 +19,9 @@ line level    source
    7          
    8          // #include <string.h>
    9          #if USER_DEBUG_ENABLE
-  10          #include <stdio.h> //
-  11          #include "user_debug.h"
-  12          #endif
+              #include <stdio.h> //
+              #include "user_debug.h"
+              #endif
   13          
   14          /**
   15           * @brief 7段数码管段码定义 (a,b,c,d,e,f,g)
@@ -62,7 +62,7 @@ line level    source
   50              // a 段 ~ g 段
   51              {5, 0}, {5, 1}, {5, 2}, {5, 3}, {5, 4}, {5, 5}, {5, 6},
   52          };
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 2   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 2   
 
   53          
   54          /*
@@ -126,7 +126,7 @@ line level    source
  112              {
  113                  {5, 15},
  114                  {4, 0},
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 3   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 3   
 
  115                  {4, 1},
  116                  {4, 2},
@@ -190,7 +190,7 @@ line level    source
  174              指示灯和显存的映射关系
  175              时速第 1 位对应的指示灯（从右往左，从0开始）
  176              对应的显存： aip3368h_speed_panel_display_buff
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 4   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 4   
 
  177          */
  178          static const aip3368h_display_mapping_t speed_bit_1_map[] = {
@@ -254,7 +254,7 @@ line level    source
  236          /**
  237           * @brief N 字样对应的指示灯
  238           *
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 5   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 5   
 
  239           * @param is_display 是否显示
  240           *
@@ -318,7 +318,7 @@ line level    source
  298           * @brief 电池电量 8 字样对应的指示灯
  299           *
  300           * @param is_display
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 6   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 6   
 
  301           *
  302           */
@@ -382,7 +382,7 @@ line level    source
  360          
  361          /**
  362           * @brief 根据传参，显示对应的电池电量等级（不包括低电量提示）
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 7   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 7   
 
  363           *
  364           * @param bat_lev 1 ~ 7，第 idx 个指示灯（从左往右，从0开始）
@@ -446,7 +446,7 @@ line level    source
  422   4                                                                   .buff_index] |=
  423   4                          (0x01 << hour_bit_1_map[i].bit_offset);
  424   4                  } else {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 8   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 8   
 
  425   4                      aip3368h_engine_speed_panel_display_buff[hour_bit_1_map[i]
  426   4                                                                   .buff_index] &=
@@ -510,7 +510,7 @@ line level    source
  484           * @param is_display 是否显示
  485           *
  486           */
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 9   
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 9   
 
  487          void aip3368h_display_time_colon_light(u8 is_display)
  488          {
@@ -574,7 +574,7 @@ line level    source
  546   2              if (is_setting_min) {
  547   3                  __aip3368h_display_minute_digit__(0, num % 10);
  548   3                  __aip3368h_display_minute_digit__(1, num / 10);
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 10  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 10  
 
  549   3              } else {
  550   3                  __aip3368h_display_hour_digit__(0, num % 10);
@@ -638,7 +638,7 @@ line level    source
  608   2              // x1000RPM 字样，第 1 个指示灯
  609   2              aip3368h_engine_speed_panel_display_buff[1] |= (0x01 << 6);
  610   2          } else {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 11  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 11  
 
  611   2              // x1000RPM 字样，第 0 个指示灯
  612   2              aip3368h_engine_speed_panel_display_buff[1] &= ~(0x01 << 5);
@@ -702,7 +702,7 @@ line level    source
  670           */
  671          void aip3368h_display_km_light(u8 is_display)
  672          {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 12  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 12  
 
  673   1          if (is_display) {
  674   2              aip3368h_speed_panel_display_buff[4] |= (0x01 << 7);
@@ -766,7 +766,7 @@ line level    source
  732           * @param mileage_display_mode
  733           *
  734           */
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 13  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 13  
 
  735          void aip3368h_display_mileage(u32 mileage,
  736                                        mileage_display_mode_t mileage_display_mode)
@@ -830,7 +830,7 @@ line level    source
  794          void aip3368h_display_left_turn_light(u8 is_display)
  795          {
  796   1          if (is_display) {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 14  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 14  
 
  797   2              aip3368h_speed_panel_display_buff[4] |= (0x01 << 8);
  798   2          } else {
@@ -894,7 +894,7 @@ line level    source
  855           *
  856           * @param num 0 ~ 9 
  857           *      如果 is_display == 0，num 的值无效
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 15  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 15  
 
  858           *
  859           * @param is_display
@@ -958,7 +958,7 @@ line level    source
  917           * @param speed 0 ~ 199，如果超过了 199，会显示 199
  918           *      数码管从右往左排序
  919           *      参数小于 10 ，只有第 0 位数码管在显示
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 16  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 16  
 
  920           *      参数小于 100 ，只有第 0、1 位数码管在显示
  921           *
@@ -989,8 +989,8 @@ line level    source
  946   2          }
  947   1      
  948   1      #if USER_DEBUG_ENABLE
- 949   1          // printf("valid_bits == %u\n", (u16)valid_bits);
- 950   1      #endif
+                  // printf("valid_bits == %u\n", (u16)valid_bits);
+              #endif
  951   1      
  952   1          // 遍历第 0 ~ 3 位数码管
  953   1          for (i = 0; i < 3; i++) {
@@ -1022,7 +1022,7 @@ line level    source
  979          /**
  980           * @brief abs 指示灯
  981           * 
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 17  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 17  
 
  982           * @param is_display 
  983           */
@@ -1086,7 +1086,7 @@ line level    source
 1041           *
 1042           * @param is_display 是否显示
 1043           *
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 18  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 18  
 
 1044           */
 1045          void __aip3368h_display_fuel_lev__(u8 idx, u8 is_display)
@@ -1150,7 +1150,7 @@ line level    source
 1101          {
 1102   1          u8 is_display_total_mileage = instrument.is_display_total_mileage;
 1103   1          u32 mileage_value = is_display_total_mileage ? instrument.total_mileage
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 19  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 19  
 
 1104   1                                                       : instrument.subtotal_mileage;
 1105   1          u8 display_mode = is_display_total_mileage ? MILEAGE_DISPLAY_MODE_ODO
@@ -1214,7 +1214,7 @@ line level    source
 1163   2          }
 1164   1      
 1165   1          if ((lev >= ARRAY_SIZE(engine_speed_gear_map)) || (lev == 0)) {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 20  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 20  
 
 1166   2              dir = !dir;
 1167   2          }
@@ -1278,7 +1278,7 @@ line level    source
 1225   1          if (cnt < 500) {
 1226   2              return;
 1227   2          } else {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 21  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 21  
 
 1228   2              cnt = 0;
 1229   2          }
@@ -1342,7 +1342,7 @@ line level    source
               
                   num++;
                   if (num > 9) {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 22  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 22  
 
                       num = 0;
                   }
@@ -1406,7 +1406,7 @@ line level    source
 1349   1          static u8 is_display = 0;
 1350   1          cnt++;
 1351   1          if (cnt < 500) {
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 23  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 23  
 
 1352   2              return;
 1353   2          } else {
@@ -1470,7 +1470,7 @@ line level    source
              -个指示灯(正上方为第0个，按顺时针排序)
 1399   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 13; // 发动机转速面板边框，第 14 
              -个指示灯(正上方为第0个，按顺时针排序)
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 24  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 24  
 
 1400   1          // aip3368h_engine_speed_panel_display_buff[0] |= 0x01 << 14; // 发动机转速面板边框，第 13 
              -个指示灯(正上方为第0个，按顺时针排序)
@@ -1534,7 +1534,7 @@ line level    source
              -��绿色(从0开始排序)
 1432   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 12; // 发动机转速，第 8 格指示灯�
              -��绿色(从0开始排序)
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 25  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 25  
 
 1433   1          // aip3368h_engine_speed_panel_display_buff[2] |= 0x01 << 13; // 发动机转速，第 7 格指示灯�
              -��绿色(从0开始排序)
@@ -1598,7 +1598,7 @@ line level    source
 1467   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 13; // 发动机转速，刻度 8 指示灯�
              -��白色
 1468   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 14; // 发动机转速，刻度 7 指示灯�
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 26  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 26  
 
              -��白色
 1469   1          // aip3368h_engine_speed_panel_display_buff[4] |= 0x01 << 15; // 发动机转速，刻度 6 指示灯�
@@ -1662,7 +1662,7 @@ line level    source
 1517   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 12; // 小时个位数码管, E 段
 1518   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 13; // 小时个位数码管, F 段
 1519   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 14; // 小时个位数码管, G 段
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 27  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 27  
 
 1520   1          // aip3368h_engine_speed_panel_display_buff[7] |= 0x01 << 15; // 时间分隔符, 第 0 个指示灯
 1521   1      
@@ -1726,7 +1726,7 @@ line level    source
              -面最上边是第 0 个，按顺时针排序）
 1553   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 14;// 时速面板边框，第 3 个指示灯（正
              -面最上边是第 0 个，按顺时针排序）
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 28  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 28  
 
 1554   1          // aip3368h_speed_panel_display_buff[1] |= 0x01 << 15;// 时速面板边框，第 2 个指示灯（正
              -面最上边是第 0 个，按顺时针排序）
@@ -1790,7 +1790,7 @@ line level    source
 1588   1          // aip3368h_speed_panel_display_buff[3] |= 0x01 << 15; // 机油图标对应的指示灯
 1589   1      
 1590   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 0; // 里程 第 4 个数码管， B 段指示灯(�
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 29  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 29  
 
              -��码管从左边第0个开始排序)
 1591   1          // aip3368h_speed_panel_display_buff[4] |= 0x01 << 1;// 里程 第 4 个数码管， C 段指示灯(�
@@ -1854,7 +1854,7 @@ line level    source
 1623   1      
 1624   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 0; // ODO 字样对应的指示灯
 1625   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 1; // 油量边框，第 0 个指示灯(从面板�
-C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  08/31/2026 14:48:40 PAGE 30  
+C51 COMPILER V9.60.7.0   AIP3368H_DISPLAY                                                  09/02/2026 08:43:30 PAGE 30  
 
              -�下方第 0 个开始，顺时针排序)
 1626   1          // aip3368h_speed_panel_display_buff[6] |= 0x01 << 2; // 里程 第 0 个数码管， A 段指示灯(�

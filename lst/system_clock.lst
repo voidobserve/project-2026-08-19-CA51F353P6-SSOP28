@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   SYSTEM_CLOCK                                                      08/31/2026 14:48:40 PAGE 1   
+C51 COMPILER V9.60.7.0   SYSTEM_CLOCK                                                      09/02/2026 08:43:31 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE SYSTEM_CLOCK
@@ -62,7 +62,7 @@ line level    source
   48          {
   49   1          P32F = P32_XOSC_IN_SETTING;  //设置P32为晶振引脚
   50   1          P33F = P33_XOSC_OUT_SETTING; //设置P33为晶振引脚
-C51 COMPILER V9.60.7.0   SYSTEM_CLOCK                                                      08/31/2026 14:48:40 PAGE 2   
+C51 COMPILER V9.60.7.0   SYSTEM_CLOCK                                                      09/02/2026 08:43:31 PAGE 2   
 
   51   1      
   52   1          CKCON |= XLCKE; //使能XOSCL时钟

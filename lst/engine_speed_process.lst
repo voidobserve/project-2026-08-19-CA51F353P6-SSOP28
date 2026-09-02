@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/31/2026 14:48:41 PAGE 1   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              09/02/2026 08:43:32 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE ENGINE_SPEED_PROCESS
@@ -21,8 +21,8 @@ line level    source
    9          
   10          #include "user_config.h"
   11          #if USER_DEBUG_ENABLE
-  12          #include <stdio.h>
-  13          #endif
+              #include <stdio.h>
+              #endif
   14          
   15          // 由采集端通过串口发送过来的发动机转速
   16          volatile u32 rpm_from_collector;
@@ -62,7 +62,7 @@ line level    source
   50   1          cnt++;
   51   1          if (cnt >= 20) // 每1ms进入一次
   52   1          {
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/31/2026 14:48:41 PAGE 2   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              09/02/2026 08:43:32 PAGE 2   
 
   53   2              cnt = 0;
   54   2              engine_speed_scan_ms++;
@@ -105,8 +105,8 @@ line level    source
   90   1          if (cur_engine_speed_scan_ms >= ENGINE_SPEED_SCAN_UPDATE_TIME ||
   91   1              flag_is_engine_speed_scan_over_time) {
   92   2      #if USER_DEBUG_ENABLE
-  93   2      // printf("cur_engine_speed_scan_ms:%lu\n", cur_engine_speed_scan_ms);
-  94   2      #endif
+              // printf("cur_engine_speed_scan_ms:%lu\n", cur_engine_speed_scan_ms);
+              #endif
   95   2              if (flag_is_engine_speed_scan_over_time) {
   96   3                  flag_is_engine_speed_scan_over_time = 0;
   97   3                  rpm = 0;
@@ -122,11 +122,11 @@ line level    source
  106   3                        cur_engine_speed_scan_ms;
  107   3              }
  108   2      #if USER_DEBUG_ENABLE
- 109   2              // 打印检测到的脉冲个数
- 110   2              // printf("cur engine speed pulse cnt:%lu\n", cur_engine_speed_scan_cnt);
- 111   2      #endif
+                      // 打印检测到的脉冲个数
+                      // printf("cur engine speed pulse cnt:%lu\n", cur_engine_speed_scan_cnt);
+              #endif
  112   2      
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/31/2026 14:48:41 PAGE 3   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              09/02/2026 08:43:32 PAGE 3   
 
  113   2              cur_engine_speed_scan_cnt = 0;
  114   2              cur_engine_speed_scan_ms = 0;
@@ -139,8 +139,8 @@ line level    source
  121   2              is_local_rpm_update = 1;
  122   2      
  123   2      #if USER_DEBUG_ENABLE
- 124   2              // printf("cur rpm %lu\n", rpm);
- 125   2      #endif
+                      // printf("cur rpm %lu\n", rpm);
+              #endif
  126   2          }
  127   1      
  128   1          // 本地的转速有更新，则赋值。后续比较如果发现采集端的转速更大，则用采
@@ -160,8 +160,8 @@ line level    source
  141   2              is_rpm_valid = 0;
  142   2      
  143   2      #if USER_DEBUG_ENABLE
- 144   2              // printf("final_rpm == %lu\n", final_rpm);
- 145   2      #endif
+                      // printf("final_rpm == %lu\n", final_rpm);
+              #endif
  146   2              instrument.engine_speed = final_rpm;
  147   2          }
  148   1      }
@@ -190,7 +190,7 @@ line level    source
  171   1          return level;
  172   1      }
  173          
-C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              08/31/2026 14:48:41 PAGE 4   
+C51 COMPILER V9.60.7.0   ENGINE_SPEED_PROCESS                                              09/02/2026 08:43:32 PAGE 4   
 
  174          void aip3368h_display_engine_speed_handle(void)
  175          {

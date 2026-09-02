@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI_FUEL_PROCESS                                                   08/31/2026 14:48:42 PAGE 1   
+C51 COMPILER V9.60.7.0   UI_FUEL_PROCESS                                                   09/02/2026 08:43:33 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI_FUEL_PROCESS
@@ -62,7 +62,7 @@ line level    source
   50   3                  instrument.flag_is_in_warning_of_low_fuel = 0;
   51   3              }
   52   2      
-C51 COMPILER V9.60.7.0   UI_FUEL_PROCESS                                                   08/31/2026 14:48:42 PAGE 2   
+C51 COMPILER V9.60.7.0   UI_FUEL_PROCESS                                                   09/02/2026 08:43:33 PAGE 2   
 
   53   2              aip3368h_display_fuel_lev(fuel_lev_to_display);
   54   2          }

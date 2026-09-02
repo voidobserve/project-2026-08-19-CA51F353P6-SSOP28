@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI                                                                08/31/2026 14:48:41 PAGE 1   
+C51 COMPILER V9.60.7.0   UI                                                                09/02/2026 08:43:32 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI
@@ -62,7 +62,7 @@ line level    source
   51   3                  ui_manager.auto_exit_setting_time_cnt++;
   52   3              }
   53   2          } else {
-C51 COMPILER V9.60.7.0   UI                                                                08/31/2026 14:48:41 PAGE 2   
+C51 COMPILER V9.60.7.0   UI                                                                09/02/2026 08:43:32 PAGE 2   
 
   54   2              ui_manager.blink_timer_cnt = 0;
   55   2              ui_manager.auto_exit_setting_time_cnt = 0;
@@ -126,7 +126,7 @@ line level    source
  113   3              }
  114   2          } else {
  115   2              aip3368h_display_battery_icon_light(1);
-C51 COMPILER V9.60.7.0   UI                                                                08/31/2026 14:48:41 PAGE 3   
+C51 COMPILER V9.60.7.0   UI                                                                09/02/2026 08:43:32 PAGE 3   
 
  116   2          }
  117   1      
@@ -148,7 +148,7 @@ line level    source
  133   2              // 正常显示时
  134   2      
  135   2              // TEST ONLY 在测试时会屏蔽
- 136   2              // aip3368h_display_time(instrument.time_hour, instrument.time_minute);
+ 136   2              aip3368h_display_time(instrument.time_hour, instrument.time_minute);
  137   2      
  138   2              break;
  139   2      
@@ -190,7 +190,7 @@ line level    source
  175   2          case UI_STATE_SETTING_TIME_MINUTE:
  176   2              // 设置 时间 分钟
  177   2      
-C51 COMPILER V9.60.7.0   UI                                                                08/31/2026 14:48:41 PAGE 4   
+C51 COMPILER V9.60.7.0   UI                                                                09/02/2026 08:43:32 PAGE 4   
 
  178   2              if (ui_manager.blink_timer_cnt < UI_SETTING_BLINK_PERIOD) {
  179   3                  break;
@@ -246,66 +246,67 @@ line level    source
  229   2              instrument_info_save_enable();
  230   2          }
  231   1      
- 232   1          ui_instruct_light_process();
- 233   1          // TEST ONLY 测试时会屏蔽部分显示功能
- 234   1          // ui_speed_process();                     // 显示时速
- 235   1          // aip3368h_display_engine_speed_handle(); // 显示发动机转速
- 236   1          ui_display_err_handle();                // 显示错误提示（例如低油量提示）
- 237   1          // aip3368h_display_mileage_refresh();
- 238   1          // ui_fuel_process();
- 239   1          // ui_bat_process();
-C51 COMPILER V9.60.7.0   UI                                                                08/31/2026 14:48:41 PAGE 5   
+ 232   1          aip3368h_display_gear(instrument.gear); // 显示档位
+ 233   1          ui_instruct_light_process();
+ 234   1          // TEST ONLY 测试时会屏蔽部分显示功能
+ 235   1          ui_speed_process();                     // 显示时速
+ 236   1          aip3368h_display_engine_speed_handle(); // 显示发动机转速
+ 237   1          ui_display_err_handle();                // 显示错误提示（例如低油量提示）
+ 238   1          aip3368h_display_mileage_refresh();
+ 239   1          ui_fuel_process();
+C51 COMPILER V9.60.7.0   UI                                                                09/02/2026 08:43:32 PAGE 5   
 
- 240   1      
- 241   1          aip3368h_module_display();
- 242   1      }
- 243          
- 244          /**
- 245           * @brief
- 246           *              清空所有计时
- 247           *              立即显示内容
- 248           *
- 249           * @note 只在切换了状态，需要立即刷新显示时使用，不能在每次显示时调用
- 250           *
- 251           */
- 252          void ui_display_refresh(void)
- 253          {
- 254   1          ui_manager.blink_dir = 0;
- 255   1          ui_manager.blink_timer_cnt = 0;
- 256   1          ui_manager.auto_exit_setting_time_cnt = 0;
- 257   1      
- 258   1          switch (ui_manager.state) {
- 259   2          case UI_STATE_NORMAL:
- 260   2              // 正常显示时
- 261   2      
- 262   2              // 显示时速
- 263   2              aip3368h_display_speed_by_unit_type(instrument.speed_to_display);
- 264   2      
- 265   2              break;
- 266   2          }
- 267   1      
- 268   1          // 立即显示 时速 单位类型
- 269   1          if (DISTANCE_UNIT_TYPE_METRIC == instrument.distance_unit_type) {
- 270   2              // 公制单位
- 271   2              aip3368h_display_mph_light(0);
- 272   2              aip3368h_display_kmh_light(1);
- 273   2          } else {
- 274   2              // 英制单位
- 275   2              aip3368h_display_kmh_light(0);
- 276   2              aip3368h_display_mph_light(1);
- 277   2          }
- 278   1      
- 279   1          // 立即更新里程显示：
- 280   1          aip3368h_display_mileage_refresh();
- 281   1          aip3368h_display_mileage_unit_lights(instrument.distance_unit_type);
- 282   1      
- 283   1          // 立即更新时间显示：
- 284   1          aip3368h_display_time(instrument.time_hour, instrument.time_minute);
- 285   1      }
+ 240   1          ui_bat_process();
+ 241   1      
+ 242   1          aip3368h_module_display();
+ 243   1      }
+ 244          
+ 245          /**
+ 246           * @brief
+ 247           *              清空所有计时
+ 248           *              立即显示内容
+ 249           *
+ 250           * @note 只在切换了状态，需要立即刷新显示时使用，不能在每次显示时调用
+ 251           *
+ 252           */
+ 253          void ui_display_refresh(void)
+ 254          {
+ 255   1          ui_manager.blink_dir = 0;
+ 256   1          ui_manager.blink_timer_cnt = 0;
+ 257   1          ui_manager.auto_exit_setting_time_cnt = 0;
+ 258   1      
+ 259   1          switch (ui_manager.state) {
+ 260   2          case UI_STATE_NORMAL:
+ 261   2              // 正常显示时
+ 262   2      
+ 263   2              // 显示时速
+ 264   2              aip3368h_display_speed_by_unit_type(instrument.speed_to_display);
+ 265   2      
+ 266   2              break;
+ 267   2          }
+ 268   1      
+ 269   1          // 立即显示 时速 单位类型
+ 270   1          if (DISTANCE_UNIT_TYPE_METRIC == instrument.distance_unit_type) {
+ 271   2              // 公制单位
+ 272   2              aip3368h_display_mph_light(0);
+ 273   2              aip3368h_display_kmh_light(1);
+ 274   2          } else {
+ 275   2              // 英制单位
+ 276   2              aip3368h_display_kmh_light(0);
+ 277   2              aip3368h_display_mph_light(1);
+ 278   2          }
+ 279   1      
+ 280   1          // 立即更新里程显示：
+ 281   1          aip3368h_display_mileage_refresh();
+ 282   1          aip3368h_display_mileage_unit_lights(instrument.distance_unit_type);
+ 283   1      
+ 284   1          // 立即更新时间显示：
+ 285   1          aip3368h_display_time(instrument.time_hour, instrument.time_minute);
+ 286   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    604    ----
+   CODE SIZE        =    643    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =      9    ----
    PDATA SIZE       =   ----    ----
@@ -317,6 +318,8 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    XDATA CONST SIZE =   ----    ----
    FAR CONST SIZE   =   ----    ----
 END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.7.0   UI                                                                09/02/2026 08:43:32 PAGE 6   
 
 
 C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

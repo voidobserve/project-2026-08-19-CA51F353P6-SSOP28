@@ -133,7 +133,7 @@ void ui_display_handle(void)
         // 正常显示时
 
         // TEST ONLY 在测试时会屏蔽
-        // aip3368h_display_time(instrument.time_hour, instrument.time_minute);
+        aip3368h_display_time(instrument.time_hour, instrument.time_minute);
 
         break;
 
@@ -229,14 +229,15 @@ void ui_display_handle(void)
         instrument_info_save_enable();
     }
 
+    aip3368h_display_gear(instrument.gear); // 显示档位
     ui_instruct_light_process();
     // TEST ONLY 测试时会屏蔽部分显示功能
-    // ui_speed_process();                     // 显示时速
-    // aip3368h_display_engine_speed_handle(); // 显示发动机转速
+    ui_speed_process();                     // 显示时速
+    aip3368h_display_engine_speed_handle(); // 显示发动机转速
     ui_display_err_handle();                // 显示错误提示（例如低油量提示）
-    // aip3368h_display_mileage_refresh();
-    // ui_fuel_process();
-    // ui_bat_process();
+    aip3368h_display_mileage_refresh();
+    ui_fuel_process();
+    ui_bat_process();
 
     aip3368h_module_display();
 }

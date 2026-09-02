@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   USER_DEBUG                                                        08/31/2026 14:48:41 PAGE 1   
+C51 COMPILER V9.60.7.0   USER_DEBUG                                                        09/02/2026 08:43:31 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE USER_DEBUG
@@ -17,24 +17,24 @@ line level    source
    5          #include "ca51f3sfr.h"
    6          
    7          #if USER_DEBUG_ENABLE
-   8           
-   9          
-  10          void user_debug_io_init(void)
-  11          {
-  12   1          GPIO_Init(P35F, OUTPUT);
-  13   1      }
-  14          
-  15          void user_debug_io_toggle(void)
-  16          {
-  17   1          // USER_DEBUG_IO ^= 1; // 这种方法更占程序空间
-  18   1          USER_DEBUG_IO = !USER_DEBUG_IO;
-  19   1      }
-  20          
-  21          #endif
+               
+              
+              void user_debug_io_init(void)
+              {
+                  GPIO_Init(P35F, OUTPUT);
+              }
+              
+              void user_debug_io_toggle(void)
+              {
+                  // USER_DEBUG_IO ^= 1; // 这种方法更占程序空间
+                  USER_DEBUG_IO = !USER_DEBUG_IO;
+              }
+              
+              #endif
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =     10    ----
+   CODE SIZE        =   ----    ----
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

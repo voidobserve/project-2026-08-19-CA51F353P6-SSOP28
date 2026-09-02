@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UART                                                              08/31/2026 14:48:40 PAGE 1   
+C51 COMPILER V9.60.7.0   UART                                                              09/02/2026 08:43:30 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UART
@@ -23,8 +23,8 @@ line level    source
   11          #include <string.h>
   12          
   13          #if USER_DEBUG_ENABLE
-  14          #include <stdio.h>
-  15          #endif
+              #include <stdio.h>
+              #endif
   16          
   17          volatile bit uart1_tx_busy_flag; // 发送忙碌标志
   18          volatile uart1_rx_buffer_t uart1_rx_buffer;
@@ -32,13 +32,13 @@ line level    source
   20          volatile uart1_tx_buffer_t uart1_tx_buffer;
   21          
   22          #if USER_DEBUG_ENABLE
-  23          // 重写puchar()函数
-  24          char putchar(char c)
-  25          {
-  26   1          uart1_send_byte(c);
-  27   1          return c;
-  28   1      }
-  29          #endif
+              // 重写puchar()函数
+              char putchar(char c)
+              {
+                  uart1_send_byte(c);
+                  return c;
+              }
+              #endif
   30          
   31          void uart1_init(void)
   32          {
@@ -62,7 +62,7 @@ line level    source
   50   1          ES1 = 1;               // UART1中断使能
   51   1      }
   52          
-C51 COMPILER V9.60.7.0   UART                                                              08/31/2026 14:48:40 PAGE 2   
+C51 COMPILER V9.60.7.0   UART                                                              09/02/2026 08:43:30 PAGE 2   
 
   53          /**
   54           * @brief 发送一个字节数据
@@ -126,7 +126,7 @@ line level    source
  112   1      }
  113          
  114          void uart1_rxbuffer_put(u8 byte)
-C51 COMPILER V9.60.7.0   UART                                                              08/31/2026 14:48:40 PAGE 3   
+C51 COMPILER V9.60.7.0   UART                                                              09/02/2026 08:43:30 PAGE 3   
 
  115          {
  116   1          // 目前的逻辑：缓冲区满，覆盖旧的数据
@@ -190,7 +190,7 @@ line level    source
  174           * 
  175           * @note 受制于芯片性能，不能频繁调用该函数，也不能一次发送过多数据
  176           * 
-C51 COMPILER V9.60.7.0   UART                                                              08/31/2026 14:48:40 PAGE 4   
+C51 COMPILER V9.60.7.0   UART                                                              09/02/2026 08:43:30 PAGE 4   
 
  177           * @param buff 
  178           * @param len 
@@ -238,9 +238,9 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    345    ----
+   CODE SIZE        =    331    ----
    CONSTANT SIZE    =   ----    ----
-   XDATA SIZE       =    206       4
+   XDATA SIZE       =    206       3
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

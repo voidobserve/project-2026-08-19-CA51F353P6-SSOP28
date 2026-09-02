@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/31/2026 14:48:42 PAGE 1   
+C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    09/02/2026 08:43:33 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE UI_BAT_PROCESS
@@ -62,7 +62,7 @@ line level    source
                           每mV对应 6 / 8000 格 
                           公式里的 + 4000 作为四舍五入
                       */
-C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/31/2026 14:48:42 PAGE 2   
+C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    09/02/2026 08:43:33 PAGE 2   
 
                       ret = 1 + (((u32)voltage - BAT_VOLTAGE_OF_MIN_GRID) * 6 + 4000) / 8000;
                       if (ret > 7) {
@@ -126,7 +126,7 @@ line level    source
  112   2              ui_bat_process_time = 0;
  113   2              return;
  114   2          } else if ((bat_lev_diff >= 2 &&
-C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    08/31/2026 14:48:42 PAGE 3   
+C51 COMPILER V9.60.7.0   UI_BAT_PROCESS                                                    09/02/2026 08:43:33 PAGE 3   
 
  115   1                      ui_bat_process_time < BAT_DISPLAY_UPDATE_PERIOD) ||
  116   1                     (bat_lev_diff <= 1 &&

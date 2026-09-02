@@ -62,15 +62,8 @@ void SystemInit(void)
     WDFLG = 0xA5;
 }
 
-// TEST ONLY
-volatile uint8_t user_debug_1ms_cnt = 0;
-
 void user_1ms_isr(void)
 {
-
-    if (user_debug_1ms_cnt < ((u8)-1)) {
-        user_debug_1ms_cnt++;
-    }
 
     boot_animation_time_base_add_1ms_isr();
     ui_timer_handle_isr();
@@ -116,7 +109,7 @@ void main(void)
     printf("sys init\n");
 #endif
 
-    // boot_animation_process();
+    boot_animation_process();
 
     while (1) {
         WDFLG = 0xA5; // Î¹¹·
@@ -126,6 +119,8 @@ void main(void)
         //     byte = uart1_rxbuffer_get_byte();
         //     printf("%x ", (u16)byte);
         // }
+
+        // printf("main\n");
 
         engine_speed_scan();
         key_event_process();
